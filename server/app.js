@@ -55,7 +55,7 @@ app.post('/config/error', (req, res) => {
 const appUrl = new URL(config.app.url)
 app.use('/app', proxy({
   target: appUrl.origin,
-  pathRewrite: { '^/app': '' },
+  pathRewrite: { '^/app': appUrl.pathname === '/' ? '' : appUrl.pathname },
   secure: false,
   changeOrigin: true,
   ws: true,
@@ -63,11 +63,12 @@ app.use('/app', proxy({
   onProxyRes (proxyRes, req, res) {
     const configuration = fs.existsSync('.dev-config.json') ? fs.readJsonSync('.dev-config.json') : {}
     // console.log('inject config', configuration)
-    let body = ''
-    proxyRes.on('data', (data) => { body += data.toString() })
+    const dataBuffers = []
+    proxyRes.on('data', (data) => { dataBuffers.push(data) })
     proxyRes.on('end', () => {
       try {
-        let output = body
+        let output = Buffer.concat(dataBuffers)
+        const body = output.toString()
         if (body.includes('%APPLICATION%')) {
           const document = parse5.parse(body.replace(/%APPLICATION%/g, JSON.stringify({
             id: 'dev-application',
