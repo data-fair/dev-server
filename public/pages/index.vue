@@ -98,7 +98,7 @@ export default {
       }
     },
     validationErrors() {
-      if (!this.schema) return
+      if (!this.schema || !this.schemaValidate) return
       const valid = this.schemaValidate(this.editConfig)
       return !valid && this.schemaValidate.errors
     }
@@ -163,6 +163,7 @@ export default {
         this.schemaValidate = ajv.compile(this.schema)
         this.compileError = null
       } catch (err) {
+        console.error(err)
         this.compileError = err.message
       }
     },
