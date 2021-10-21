@@ -47,7 +47,7 @@
     "ws": "^7.3.0"
   },
   "devDependencies": {
-    "@koumoul/v-iframe": "^0.2.3",
+    "@koumoul/v-iframe": "^0.5.4",
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/vuetify": "^1.11.3",
     "babel-eslint": "^10.1.0",
