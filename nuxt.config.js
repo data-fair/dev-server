@@ -24,7 +24,7 @@ module.exports = {
       }
     }
   },
-  env: { app: config.app, dataFair: config.dataFair },
+  env: { app: config.app, dataFair: config.dataFair, iframeLog: config.iframeLog },
   head: {
     title: 'DataFair - Dev server',
     meta: [

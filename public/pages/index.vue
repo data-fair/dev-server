@@ -41,7 +41,7 @@
           </v-btn>
         </v-row>
         <v-card>
-          <v-iframe v-if="showPreview" src="http://localhost:5888/app?draft=true" :log="true" />
+          <v-iframe v-if="showPreview" src="http://localhost:5888/app?draft=true" :log="iframeLog" />
         </v-card>
       </v-col>
     </v-row>
@@ -75,7 +75,8 @@ export default {
     editConfig: null,
     showPreview: true,
     compileError: null,
-    formValid: false
+    formValid: false,
+    iframeLog: false
   }),
   computed: {
     options() {
@@ -105,6 +106,7 @@ export default {
   },
   async created() {
     this.dataFair = process.env.dataFair
+    this.iframeLog = process.env.iframeLog
     this.editConfig = await this.$axios.$get('http://localhost:5888/config')
     this.fetchSchema()
   },

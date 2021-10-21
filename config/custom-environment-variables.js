@@ -9,5 +9,9 @@ module.exports = {
   },
   app: {
     url: 'APP_URL'
+  },
+  iframeLog: {
+    __name: 'IFRAME_LOG',
+    __format: 'json'
   }
 }
