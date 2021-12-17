@@ -31,7 +31,9 @@
             </v-icon>
           </v-btn>
         </v-row>
-        <h2 class="text-h6 mt-2">{{$t('config')}}</h2>
+        <h2 class="text-h6 mt-2">
+          {{ $t('config') }}
+        </h2>
         <v-form
           ref="form"
           v-model="formValid"
@@ -67,38 +69,79 @@
           </v-btn>
         </v-row>
 
-        <v-row v-if="meta" class="mt-4">
+        <v-row
+          v-if="meta"
+          class="mt-4"
+        >
           <v-col class="app-meta">
-            <h2 class="text-h6">{{$t('metadata')}}</h2>
+            <h2 class="text-h6">
+              {{ $t('metadata') }}
+            </h2>
 
-            <p v-if="meta['application-name']"><b>application-name:</b> {{meta['application-name']}}</p>
-            <v-alert type="error" dense v-else>
-              {{$t('missingApplicationName')}}
+            <p v-if="meta['application-name']">
+              <b>application-name:</b> {{ meta['application-name'] }}
+            </p>
+            <v-alert
+              v-else
+              type="error"
+              dense
+            >
+              {{ $t('missingApplicationName') }}
             </v-alert>
 
-            <p v-if="meta.title && meta.title[$i18n.locale]"><b>title:</b> {{meta.title[$i18n.locale]}}</p>
-            <v-alert type="error" dense v-else>
-              {{$t('missingTitle', {locale: $i18n.locale})}}
+            <p v-if="meta.title && meta.title[$i18n.locale]">
+              <b>title:</b> {{ meta.title[$i18n.locale] }}
+            </p>
+            <v-alert
+              v-else
+              type="error"
+              dense
+            >
+              {{ $t('missingTitle', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta.description && meta.description[$i18n.locale]"><b>description:</b> {{meta.description[$i18n.locale]}}</p>
-            <v-alert type="error" dense v-else>
-              {{$t('missingDesc', {locale: $i18n.locale})}}
+            <p v-if="meta.description && meta.description[$i18n.locale]">
+              <b>description:</b> {{ meta.description[$i18n.locale] }}
+            </p>
+            <v-alert
+              v-else
+              type="error"
+              dense
+            >
+              {{ $t('missingDesc', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta.keywords && meta.keywords[$i18n.locale]"><b>keywords:</b> {{meta.keywords[$i18n.locale]}}</p>
-            <v-alert type="error" dense v-else>
-              {{$t('missingKeywords', {locale: $i18n.locale})}}
+            <p v-if="meta.keywords && meta.keywords[$i18n.locale]">
+              <b>keywords:</b> {{ meta.keywords[$i18n.locale] }}
+            </p>
+            <v-alert
+              v-else
+              type="error"
+              dense
+            >
+              {{ $t('missingKeywords', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta['vocabulary-accept'] && meta['vocabulary-accept']"><b>vocabulary-accept:</b> {{meta['vocabulary-accept']}}</p>
-            <v-alert type="info" dense v-else>
-              {{$t('missingVocabAccept', {locale: $i18n.locale})}}
+            <p v-if="meta['vocabulary-accept'] && meta['vocabulary-accept']">
+              <b>vocabulary-accept:</b> {{ meta['vocabulary-accept'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              dense
+            >
+              {{ $t('missingVocabAccept', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta['vocabulary-require'] && meta['vocabulary-require']"><b>vocabulary-require:</b> {{meta['vocabulary-require']}}</p>
-            <v-alert type="info" dense v-else>
-              {{$t('missingVocabRequire', {locale: $i18n.locale})}}
+            <p v-if="meta['vocabulary-require'] && meta['vocabulary-require']">
+              <b>vocabulary-require:</b> {{ meta['vocabulary-require'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              dense
+            >
+              {{ $t('missingVocabRequire', {locale: $i18n.locale}) }}
             </v-alert>
           </v-col>
         </v-row>
@@ -275,10 +318,10 @@ export default {
       const htmlText = await this.$axios.$get('http://localhost:5888/app/index.html')
       const document = parse5.parse(htmlText)
       const html = document.childNodes.find(c => c.tagName === 'html')
-      if (!html) throw new Error(__('errors.brokenHTML', { url: app.url }))
-      const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || config.i18n.defaultLocale
+      if (!html) throw new Error('broken HTML')
+      const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || this.$i18n.defaultLocale
       const head = html.childNodes.find(c => c.tagName === 'head')
-      if (!head) throw new Error(__('errors.brokenHTML', { url: app.url }))
+      if (!head) throw new Error('broken HTML, missing head tag')
 
       const meta = { title: {} }
       for (const node of head.childNodes.filter(c => c.tagName === 'title')) {
@@ -316,7 +359,7 @@ export default {
           }
         }
       }
-      
+
       this.meta = meta
 
       // fetch config schema

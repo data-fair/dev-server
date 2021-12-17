@@ -28,7 +28,6 @@
   "homepage": "https://github.com/koumoul-dev/df-dev-server#readme",
   "eslintConfig": {
     "root": true,
-    "parser": "babel-eslint",
     "env": {
       "node": true
     },
