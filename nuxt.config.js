@@ -5,11 +5,27 @@ if (process.argv.slice(-1)[0] === 'generate') {
   config = nuxtConfigInject.prepare(config)
 }
 
+const locales = ['en', 'fr']
+
 module.exports = {
-  mode: 'spa',
+  ssr: false,
+  components: true,
   srcDir: 'public/',
   telemetry: false,
-  modules: ['@nuxtjs/axios'],
+  modules: ['@nuxtjs/axios', ['@nuxtjs/i18n', {
+    seo: false,
+    locales,
+    defaultLocale: 'en',
+    vueI18nLoader: true,
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_lang'
+    },
+    vueI18n: {
+      fallbackLocale: 'en'
+    }
+  }]],
   axios: {
     browserBaseURL: 'http://localhost:5888/data-fair'
   },
@@ -25,7 +41,7 @@ module.exports = {
       }
     }
   },
-  env: { app: config.app, dataFair: config.dataFair, iframeLog: config.iframeLog },
+  env: { app: config.app, dataFair: config.dataFair, iframeLog: config.iframeLog, locales },
   head: {
     title: 'DataFair - Dev server',
     meta: [

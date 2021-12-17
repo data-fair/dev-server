@@ -23,13 +23,15 @@
             dark
             small
             color="primary"
-            @click="fetchSchema"
+            :loading="loading"
+            @click="fetchInfo"
           >
             <v-icon dark>
               mdi-refresh
             </v-icon>
           </v-btn>
         </v-row>
+        <h2 class="text-h6 mt-2">{{$t('config')}}</h2>
         <v-form
           ref="form"
           v-model="formValid"
@@ -55,7 +57,7 @@
             @change="validate"
           />
         </v-form>
-        <v-row class="mt-2">
+        <v-row class="mr-2">
           <v-spacer />
           <v-btn
             color="warning"
@@ -63,6 +65,42 @@
           >
             Empty
           </v-btn>
+        </v-row>
+
+        <v-row v-if="meta" class="mt-4">
+          <v-col class="app-meta">
+            <h2 class="text-h6">{{$t('metadata')}}</h2>
+
+            <p v-if="meta['application-name']"><b>application-name:</b> {{meta['application-name']}}</p>
+            <v-alert type="error" dense v-else>
+              {{$t('missingApplicationName')}}
+            </v-alert>
+
+            <p v-if="meta.title && meta.title[$i18n.locale]"><b>title:</b> {{meta.title[$i18n.locale]}}</p>
+            <v-alert type="error" dense v-else>
+              {{$t('missingTitle', {locale: $i18n.locale})}}
+            </v-alert>
+
+            <p v-if="meta.description && meta.description[$i18n.locale]"><b>description:</b> {{meta.description[$i18n.locale]}}</p>
+            <v-alert type="error" dense v-else>
+              {{$t('missingDesc', {locale: $i18n.locale})}}
+            </v-alert>
+
+            <p v-if="meta.keywords && meta.keywords[$i18n.locale]"><b>keywords:</b> {{meta.keywords[$i18n.locale]}}</p>
+            <v-alert type="error" dense v-else>
+              {{$t('missingKeywords', {locale: $i18n.locale})}}
+            </v-alert>
+
+            <p v-if="meta['vocabulary-accept'] && meta['vocabulary-accept']"><b>vocabulary-accept:</b> {{meta['vocabulary-accept']}}</p>
+            <v-alert type="info" dense v-else>
+              {{$t('missingVocabAccept', {locale: $i18n.locale})}}
+            </v-alert>
+
+            <p v-if="meta['vocabulary-require'] && meta['vocabulary-require']"><b>vocabulary-require:</b> {{meta['vocabulary-require']}}</p>
+            <v-alert type="info" dense v-else>
+              {{$t('missingVocabRequire', {locale: $i18n.locale})}}
+            </v-alert>
+          </v-col>
         </v-row>
       </v-col>
       <v-col
@@ -85,6 +123,7 @@
               mdi-refresh
             </v-icon>
           </v-btn>
+          <lang-switcher />
         </v-row>
         <v-card>
           <v-iframe
@@ -97,6 +136,18 @@
     </v-row>
   </v-container>
 </template>
+
+<i18n lang="yaml">
+en:
+  metadata: Metadata read from index.html
+  missingApplicationName: "Metadata \"application-name\" is missing. Add a tag <meta name=\"application-name\" content=\"my-application\">"
+  missingTitle: "Add a tag <title lang=\"{locale}\">My title</title>"
+  missingDesc: "Metadata \"description\" is missing. Add a tag <meta name=\"description\" lang=\"{locale}\" content=\"My description\">"
+  missingKeywords: "Metadata \"keywords\" is missing. Add a tag <meta name=\"keywords\" lang=\"{locale}\" content=\"My keyword\">"
+  missingVocabAccept: "Metadata \"vocabulary-accept\" is missing. Add a tag <meta name=\"vocabulary-accept\" lang=\"{locale}\" content=\"http://www.w3.org/2000/01/rdf-schema#label\">"
+  missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" lang=\"{locale}\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
+  config: Configuration form created from config-schema.json
+</i18n>
 
 <script>
 
@@ -111,6 +162,7 @@ import dotProp from 'dot-prop'
 import 'iframe-resizer/js/iframeResizer'
 import VIframe from '@koumoul/v-iframe'
 import ScreenshotSimulation from '~/components/screenshot-simulation.vue'
+const parse5 = require('parse5')
 
 const Ajv = require('ajv')
 const ajvFormats = require('ajv-formats')
@@ -129,7 +181,9 @@ export default {
     showPreview: true,
     compileError: null,
     formValid: false,
-    iframeLog: false
+    iframeLog: false,
+    loading: false,
+    meta: null
   }),
   computed: {
     options () {
@@ -165,7 +219,7 @@ export default {
     this.dataFair = process.env.dataFair
     this.iframeLog = process.env.iframeLog
     this.editConfig = await this.$axios.$get('http://localhost:5888/config')
-    this.fetchSchema()
+    this.fetchInfo()
   },
   mounted () {
     console.log('connect to to ws://localhost:5888')
@@ -214,7 +268,58 @@ export default {
       await this.$axios.$put('http://localhost:5888/config', config)
       await this.reloadIframe()
     },
-    async fetchSchema () {
+    async fetchInfo () {
+      this.loading = true
+
+      // read meta from index.html
+      const htmlText = await this.$axios.$get('http://localhost:5888/app/index.html')
+      const document = parse5.parse(htmlText)
+      const html = document.childNodes.find(c => c.tagName === 'html')
+      if (!html) throw new Error(__('errors.brokenHTML', { url: app.url }))
+      const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || config.i18n.defaultLocale
+      const head = html.childNodes.find(c => c.tagName === 'head')
+      if (!head) throw new Error(__('errors.brokenHTML', { url: app.url }))
+
+      const meta = { title: {} }
+      for (const node of head.childNodes.filter(c => c.tagName === 'title')) {
+        meta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes?.[0].value
+      }
+
+      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require']
+      const localizedMetaTags = ['description', 'keywords']
+      const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
+
+      const metaNodes = head.childNodes
+        .filter(c => c.tagName === 'meta')
+        .map(c => ({
+          name: c.attrs.find(a => a.name === 'name')?.value,
+          locale: c.attrs.find(a => a.name === 'lang')?.value || defaultLocale,
+          content: c.attrs.find(a => a.name === 'content')?.value
+        }))
+        .filter(m => metaTags.includes(m.name))
+      console.log(metaNodes)
+      for (const metaNode of metaNodes) {
+        if (localizedMetaTags.includes(metaNode.name)) {
+          meta[metaNode.name] = meta[metaNode.name] || {}
+          if (multiValuedMetaTags.includes(metaNode.name)) {
+            meta[metaNode.name][metaNode.locale] = meta[metaNode.name][metaNode.locale] || []
+            if (metaNode.content) meta[metaNode.name][metaNode.locale].push(metaNode.content)
+          } else {
+            meta[metaNode.name][metaNode.locale] = metaNode.content
+          }
+        } else {
+          if (multiValuedMetaTags.includes(metaNode.name)) {
+            meta[metaNode.name] = meta[metaNode.name] || []
+            if (metaNode.content) meta[metaNode.name].push(metaNode.content)
+          } else {
+            meta[metaNode.name] = metaNode.content
+          }
+        }
+      }
+      
+      this.meta = meta
+
+      // fetch config schema
       this.schema = null
       this.schema = await this.$axios.$get('http://localhost:5888/app/config-schema.json')
       this.schema['x-display'] = 'tabs'
@@ -225,6 +330,7 @@ export default {
         console.error(err)
         this.compileError = err.message
       }
+      this.loading = false
     },
     async reloadIframe () {
       this.showPreview = false
@@ -236,4 +342,7 @@ export default {
 </script>
 
 <style lang="css" scoped>
+.app-meta p {
+  margin-bottom: 4px;
+}
 </style>

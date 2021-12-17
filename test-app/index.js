@@ -17,6 +17,8 @@
     return
   }
 
+  log('Read localization cookie ' + document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('i18n_lang')))
+
   $.ajax({url: application.configuration.datasets[0].href + '/lines?size=0', json: true})
     .then(function(data) {
       log('Consumed the API of the configured dataset: ' + JSON.stringify(data))
