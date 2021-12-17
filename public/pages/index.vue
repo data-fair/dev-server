@@ -200,6 +200,7 @@ import '@koumoul/vjsf/lib/VJsf.css'
 // load third-party dependencies for vjsf (markdown-it, vuedraggable)
 // you can also load them separately based on your needs
 import '@koumoul/vjsf/lib/deps/third-party.js'
+import jsonRefs from '@koumoul/vjsf/lib/utils/json-refs.js'
 import dotProp from 'dot-prop'
 
 import 'iframe-resizer/js/iframeResizer'
@@ -233,7 +234,8 @@ export default {
       // same as application-config.vue in data-fair
       return {
         context: { owner: this.dataFair && this.dataFair.owner },
-        locale: 'fr',
+        locale: this.$i18n.locale,
+        defaultLocale: this.$i18n.defaultLocale,
         rootDisplay: 'expansion-panels',
         // rootDisplay: 'tabs',
         expansionPanelsProps: {
@@ -252,7 +254,7 @@ export default {
       if (!this.schema || !this.schemaValidate) return
       const valid = this.schemaValidate(this.editConfig)
       if (!valid) {
-        ajvLocalize.fr(this.schemaValidate.errors)
+        ajvLocalize[this.$i18n.locale](this.schemaValidate.errors)
         return this.schemaValidate.errors
       }
       return null
@@ -364,8 +366,10 @@ export default {
 
       // fetch config schema
       this.schema = null
-      this.schema = await this.$axios.$get('http://localhost:5888/app/config-schema.json')
-      this.schema['x-display'] = 'tabs'
+      const schema = await this.$axios.$get('http://localhost:5888/app/config-schema.json')
+      schema['x-display'] = 'tabs'
+
+      this.schema = jsonRefs.resolve(schema, { '~$locale~': this.$i18n.locale === this.$i18n.defaultLocale ? this.$i18n.locale : [this.$i18n.locale, this.$i18n.defaultLocale] })
       try {
         this.schemaValidate = ajv.compile(this.schema)
         this.compileError = null
