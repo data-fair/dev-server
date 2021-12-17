@@ -7,7 +7,7 @@ const config = require('config')
 const eventToPromise = require('event-to-promise')
 const http = require('http')
 const fs = require('fs-extra')
-const proxy = require('http-proxy-middleware')
+const { createProxyMiddleware } = require('http-proxy-middleware')
 const cors = require('cors')
 const open = require('open')
 const kill = require('tree-kill')
@@ -25,7 +25,7 @@ wss.on('connection', (_ws) => {
   if (ws) ws.terminate()
   ws = _ws
 
-  ws.on('message', function incoming(message) {
+  ws.on('message', function incoming (message) {
     if (!message.includes('"pong"')) console.log('received: %s', message)
   })
   ws.send(JSON.stringify({ type: 'ping' }))
@@ -53,7 +53,7 @@ app.post('/config/error', (req, res) => {
 
 // re-expose the application performing similar modifications to the body as data-fair
 const appUrl = new URL(config.app.url)
-app.use('/app', proxy({
+app.use('/app', createProxyMiddleware({
   target: appUrl.origin,
   pathRewrite: { '^/app': appUrl.pathname === '/' ? '' : appUrl.pathname },
   secure: false,
@@ -151,14 +151,14 @@ setTimeout(function() {
 
 // re-expose a data-fair instance to access datasets, etc.
 const dfUrl = new URL(config.dataFair.url)
-app.use('/data-fair', proxy({
+app.use('/data-fair', createProxyMiddleware({
   target: dfUrl.origin,
   pathRewrite: { '^/data-fair': dfUrl.pathname },
   secure: false,
   changeOrigin: true,
   ws: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
-  onProxyReq(proxyReq) {
+  onProxyReq (proxyReq) {
     // no gzip so that we can process the content
     proxyReq.setHeader('accept-encoding', 'identity')
     proxyReq.setHeader('cookie', '')
@@ -218,7 +218,7 @@ exports.run = async () => {
   return server
 }
 
-exports.stop = async() => {
+exports.stop = async () => {
   if (spawnedDevSrc) kill(spawnedDevSrc.pid)
   if (ws) ws.terminate()
   server.close()

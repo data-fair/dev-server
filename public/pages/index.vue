@@ -1,47 +1,97 @@
 <template lang="html">
-  <v-container fluid class="pt-4">
+  <v-container
+    fluid
+    class="pt-4"
+  >
     <v-row>
-      <v-col xs="12" md="6" lg="4">
-        <v-alert v-if="error" color="error">
+      <v-col
+        xs="12"
+        md="6"
+        lg="4"
+      >
+        <v-alert
+          v-if="error"
+          color="error"
+        >
           {{ error.message || error }}
         </v-alert>
         <v-row class="mb-2">
           <v-spacer />
-          <v-btn class="mx-2" fab dark small color="primary" @click="fetchSchema">
+          <v-btn
+            class="mx-2"
+            fab
+            dark
+            small
+            color="primary"
+            @click="fetchSchema"
+          >
             <v-icon dark>
               mdi-refresh
             </v-icon>
           </v-btn>
         </v-row>
-        <v-form ref="form" v-model="formValid">
-          <v-alert :value="!!compileError" type="error">
+        <v-form
+          ref="form"
+          v-model="formValid"
+        >
+          <v-alert
+            :value="!!compileError"
+            type="error"
+          >
             {{ compileError }}
           </v-alert>
-          <v-alert :value="!!validationErrors && formValid" type="error">
+          <v-alert
+            :value="!!validationErrors && formValid"
+            type="error"
+          >
             Formulaire valide pourtant le modèle ne respecte pas le schéma:
             <p>{{ validationErrors }}</p>
           </v-alert>
-          <v-jsf v-if="schema && editConfig" v-model="editConfig" :schema="schema" :options="options" @change="validate" />
+          <v-jsf
+            v-if="schema && editConfig"
+            v-model="editConfig"
+            :schema="schema"
+            :options="options"
+            @change="validate"
+          />
         </v-form>
         <v-row class="mt-2">
           <v-spacer />
-          <v-btn color="warning" @click="empty">
+          <v-btn
+            color="warning"
+            @click="empty"
+          >
             Empty
           </v-btn>
         </v-row>
       </v-col>
-      <v-col xs="12" md="6" lg="8">
+      <v-col
+        xs="12"
+        md="6"
+        lg="8"
+      >
         <v-row class="mb-2">
           <v-spacer />
           <screenshot-simulation />
-          <v-btn class="mx-2" fab dark small color="primary" @click="reloadIframe">
+          <v-btn
+            class="mx-2"
+            fab
+            dark
+            small
+            color="primary"
+            @click="reloadIframe"
+          >
             <v-icon dark>
               mdi-refresh
             </v-icon>
           </v-btn>
         </v-row>
         <v-card>
-          <v-iframe v-if="showPreview" src="http://localhost:5888/app?draft=true" :log="iframeLog" />
+          <v-iframe
+            v-if="showPreview"
+            src="http://localhost:5888/app?draft=true"
+            :log="iframeLog"
+          />
         </v-card>
       </v-col>
     </v-row>
@@ -63,8 +113,11 @@ import VIframe from '@koumoul/v-iframe'
 import ScreenshotSimulation from '~/components/screenshot-simulation.vue'
 
 const Ajv = require('ajv')
-const ajv = new Ajv()
+const ajvFormats = require('ajv-formats')
+const ajvLocalize = require('ajv-i18n')
+const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
+ajvFormats(ajv)
 
 export default {
   components: { VIframe, VJsf, ScreenshotSimulation },
@@ -79,7 +132,7 @@ export default {
     iframeLog: false
   }),
   computed: {
-    options() {
+    options () {
       // same as application-config.vue in data-fair
       return {
         context: { owner: this.dataFair && this.dataFair.owner },
@@ -98,19 +151,23 @@ export default {
         dialogCardProps: { outlined: true }
       }
     },
-    validationErrors() {
+    validationErrors () {
       if (!this.schema || !this.schemaValidate) return
       const valid = this.schemaValidate(this.editConfig)
-      return !valid && this.schemaValidate.errors
+      if (!valid) {
+        ajvLocalize.fr(this.schemaValidate.errors)
+        return this.schemaValidate.errors
+      }
+      return null
     }
   },
-  async created() {
+  async created () {
     this.dataFair = process.env.dataFair
     this.iframeLog = process.env.iframeLog
     this.editConfig = await this.$axios.$get('http://localhost:5888/config')
     this.fetchSchema()
   },
-  mounted() {
+  mounted () {
     console.log('connect to to ws://localhost:5888')
     this.socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
     this.socketDevServer.onopen = () => {
@@ -137,27 +194,27 @@ export default {
       console.log('ws message from 5888', event.data)
     } */
   },
-  destroyed() {
+  destroyed () {
     console.log('destroyed')
     if (this.socketDevServer) this.socketDevServer.close()
   },
   methods: {
-    async empty() {
+    async empty () {
       this.editConfig = null
       await this.save({})
       this.editConfig = {}
     },
-    async validate() {
+    async validate () {
       if (this.$refs.form.validate()) {
         this.save(this.editConfig)
         this.error = null
       }
     },
-    async save(config) {
+    async save (config) {
       await this.$axios.$put('http://localhost:5888/config', config)
       await this.reloadIframe()
     },
-    async fetchSchema() {
+    async fetchSchema () {
       this.schema = null
       this.schema = await this.$axios.$get('http://localhost:5888/app/config-schema.json')
       this.schema['x-display'] = 'tabs'
@@ -169,7 +226,7 @@ export default {
         this.compileError = err.message
       }
     },
-    async reloadIframe() {
+    async reloadIframe () {
       this.showPreview = false
       await new Promise(resolve => setTimeout(resolve, 10))
       this.showPreview = true

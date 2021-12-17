@@ -8,6 +8,7 @@ if (process.argv.slice(-1)[0] === 'generate') {
 module.exports = {
   mode: 'spa',
   srcDir: 'public/',
+  telemetry: false,
   modules: ['@nuxtjs/axios'],
   axios: {
     browserBaseURL: 'http://localhost:5888/data-fair'
