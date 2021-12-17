@@ -89,6 +89,20 @@
               {{ $t('missingApplicationName') }}
             </v-alert>
 
+            <p v-if="meta.thumbnail">
+              <b>thumbnail:</b> <img
+                width="25"
+                :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : 'http://localhost:5888/app/' + meta.thumbnail"
+              >
+            </p>
+            <v-alert
+              v-else
+              type="error"
+              dense
+            >
+              {{ $t('missingThumbnail') }}
+            </v-alert>
+
             <p v-if="meta.title && meta.title[$i18n.locale]">
               <b>title:</b> {{ meta.title[$i18n.locale] }}
             </p>
@@ -184,6 +198,7 @@
 en:
   metadata: Metadata read from index.html
   missingApplicationName: "Metadata \"application-name\" is missing. Add a tag <meta name=\"application-name\" content=\"my-application\">"
+  missingThumbnail: "Metadata \"thumbnail\" is missing. Add a tag <meta name=\"thumbnail\" content=\"http://my/thumbnail.png\">"
   missingTitle: "Add a tag <title lang=\"{locale}\">My title</title>"
   missingDesc: "Metadata \"description\" is missing. Add a tag <meta name=\"description\" lang=\"{locale}\" content=\"My description\">"
   missingKeywords: "Metadata \"keywords\" is missing. Add a tag <meta name=\"keywords\" lang=\"{locale}\" content=\"My keyword\">"
@@ -330,7 +345,7 @@ export default {
         meta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes?.[0].value
       }
 
-      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require']
+      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail']
       const localizedMetaTags = ['description', 'keywords']
       const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
 
@@ -342,7 +357,7 @@ export default {
           content: c.attrs.find(a => a.name === 'content')?.value
         }))
         .filter(m => metaTags.includes(m.name))
-      console.log(metaNodes)
+
       for (const metaNode of metaNodes) {
         if (localizedMetaTags.includes(metaNode.name)) {
           meta[metaNode.name] = meta[metaNode.name] || {}
