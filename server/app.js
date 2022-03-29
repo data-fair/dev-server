@@ -85,8 +85,8 @@ app.use('/app', createProxyMiddleware({
           const bodyNode = html.childNodes.find(c => c.tagName === 'body')
           if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
 
-          // ad a script to simulate instrumentation by capture service
-          if (req.query.capture === 'true') {
+          // add a script to simulate instrumentation by capture service
+          if (req.query.thumbnail === 'true') {
             headNode.childNodes.push({
               nodeName: 'script',
               tagName: 'script',

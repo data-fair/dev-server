@@ -42,14 +42,18 @@
     window.parent.postMessage({ type: 'set-config', content: { field: 'field1', value: 'Field 1, value ' + configTriggerNb } }, '*')
   })
 
-  // check that we are in a screenshot capture context
-  if (window.triggerCapture) {
-    // preparing a slightly different rendering for screenshot might be a good idea
+  // preparing a slightly different rendering for screenshot might be a good idea
+  var thumbnail = (new URL(window.location.href)).searchParams.get('thumbnail') === 'true'
+  if (thumbnail) {
     $('#actions-title').remove()
     $('#error-trigger').remove()
+    $('#set-config-trigger').remove()
     $('#log-title').remove()
     $('#log').remove()
+  }
 
+  // check that we are in a screenshot capture context
+  if (window.triggerCapture) {
     // declare that the application is ready to be captured, meaning that the whole page should be rendered by this point
     // the true parameter signifies that this application supports animated screenshots
     var animate = window.triggerCapture(true)
