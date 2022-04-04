@@ -202,8 +202,8 @@ en:
   missingTitle: "Add a tag <title lang=\"{locale}\">My title</title>"
   missingDesc: "Metadata \"description\" is missing. Add a tag <meta name=\"description\" lang=\"{locale}\" content=\"My description\">"
   missingKeywords: "Metadata \"keywords\" is missing. Add a tag <meta name=\"keywords\" lang=\"{locale}\" content=\"My keyword\">"
-  missingVocabAccept: "Metadata \"vocabulary-accept\" is missing. Add a tag <meta name=\"vocabulary-accept\" lang=\"{locale}\" content=\"http://www.w3.org/2000/01/rdf-schema#label\">"
-  missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" lang=\"{locale}\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
+  missingVocabAccept: "Metadata \"vocabulary-accept\" is missing. Add a tag <meta name=\"vocabulary-accept\" content=\"http://www.w3.org/2000/01/rdf-schema#label\">"
+  missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
   config: Configuration form created from config-schema.json
 </i18n>
 
