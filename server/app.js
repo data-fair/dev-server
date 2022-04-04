@@ -60,6 +60,9 @@ app.use('/app', createProxyMiddleware({
   changeOrigin: true,
   ws: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
+  onProxyReq (proxyReq, req, res) {
+    proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
+  },
   onProxyRes (proxyRes, req, res) {
     const configuration = fs.existsSync('.dev-config.json') ? fs.readJsonSync('.dev-config.json') : {}
     // console.log('inject config', configuration)
