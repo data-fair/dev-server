@@ -59,7 +59,7 @@
             @change="validate"
           />
         </v-form>
-        <v-row class="mr-2">
+        <v-row class="ma-2">
           <v-spacer />
           <v-btn
             color="warning"
