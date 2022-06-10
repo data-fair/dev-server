@@ -9,6 +9,7 @@ const locales = ['en', 'fr']
 
 module.exports = {
   ssr: false,
+  target: 'static',
   components: true,
   srcDir: 'public/',
   telemetry: false,
