@@ -80,7 +80,8 @@ app.use('/app', createProxyMiddleware({
             exposedUrl: 'http://localhost:5888/app',
             href: 'http://localhost:5888/config',
             apiUrl: 'http://localhost:5888/data-fair/api/v1',
-            wsUrl: 'ws://localhost:5888/data-fair'
+            wsUrl: 'ws://localhost:5888/data-fair',
+            owner: config.dataFair && config.dataFair.owner
           })))
           const html = document.childNodes.find(c => c.tagName === 'html')
           if (!html) throw new Error('HTML structure is broken, expect html, head and body elements')
