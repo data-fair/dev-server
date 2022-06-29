@@ -300,7 +300,7 @@ export default {
       console.log('received message from iframe', msg.data)
       if (msg.data.type === 'set-config') {
         this.editConfig = dotProp.set({ ...this.editConfig }, msg.data.content.field, msg.data.content.value)
-        this.validate(false)
+        this.validate()
       }
     })
 
@@ -325,9 +325,9 @@ export default {
         this.error = null
       }
     },
-    async save (config, reload = true) {
+    async save (config) {
       await this.$axios.$put('http://localhost:5888/config', config)
-      if (reload) await this.reloadIframe()
+      await this.reloadIframe()
     },
     async fetchInfo () {
       this.loading = true
