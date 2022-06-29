@@ -58,7 +58,6 @@
     "express": "^4.17.2",
     "fs-extra": "^10.0.0",
     "http-proxy-middleware": "^2.0.1",
-    "open": "^8.4.0",
     "parse5": "^6.0.1",
     "tree-kill": "^1.2.2",
     "ws": "^8.3.0"

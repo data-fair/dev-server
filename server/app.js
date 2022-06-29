@@ -9,12 +9,12 @@ const http = require('http')
 const fs = require('fs-extra')
 const { createProxyMiddleware } = require('http-proxy-middleware')
 const cors = require('cors')
-const open = require('open')
 const kill = require('tree-kill')
 const escapeStringRegexp = require('escape-string-regexp')
 const parse5 = require('parse5')
 const WebSocket = require('ws')
 const debug = require('debug')('df-dev-server')
+const chalk = require('chalk')
 
 const app = express()
 const server = http.createServer(app)
@@ -189,14 +189,6 @@ app.use('/data-fair', createProxyMiddleware({
 
 // run the dev-src command from current project
 let spawnedDevSrc
-if (fs.existsSync('package.json')) {
-  const pJson = fs.readJsonSync('package.json')
-  if (pJson.scripts && pJson.scripts['dev-src']) {
-    spawnedDevSrc = spawn('npm', ['run', 'dev-src'], { stdio: 'inherit' }).on('error', () => {})
-  } else {
-    console.error('No script "dev-src" in package.json')
-  }
-}
 
 // Run app and return it in a promise
 exports.run = async () => {
@@ -218,7 +210,18 @@ exports.run = async () => {
   }
   server.listen(config.port)
   await eventToPromise(server, 'listening')
-  if (process.env.NODE_ENV !== 'development') open('http://localhost:5888')
+  console.log(chalk.bold.blue('\nDataFair dev server available on ') + chalk.underline.bold.blue(`http://localhost:${config.port}`))
+
+  if (fs.existsSync('package.json')) {
+    const pJson = fs.readJsonSync('package.json')
+    if (pJson.scripts && pJson.scripts['dev-src']) {
+      console.log(chalk.blue('running application with "npm run dev-src"'))
+      spawnedDevSrc = spawn('npm', ['run', 'dev-src'], { stdio: 'inherit' }).on('error', () => {})
+    } else {
+      console.error(chalk.red('No script "dev-src" in package.json'))
+    }
+  }
+  // if (process.env.NODE_ENV !== 'development') open('http://localhost:5888')
   return server
 }
 
