@@ -7,7 +7,7 @@ const config = require('config')
 const eventToPromise = require('event-to-promise')
 const http = require('http')
 const fs = require('fs-extra')
-const { createProxyMiddleware } = require('http-proxy-middleware')
+const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware')
 const cors = require('cors')
 const kill = require('tree-kill')
 const escapeStringRegexp = require('escape-string-regexp')
@@ -180,11 +180,13 @@ app.use('/data-fair', createProxyMiddleware({
   secure: false,
   changeOrigin: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
-  onProxyReq (proxyReq) {
+  onProxyReq (proxyReq, req, res) {
     // no gzip so that we can process the content
     proxyReq.setHeader('accept-encoding', 'identity')
     proxyReq.setHeader('cookie', '')
     if (config.dataFair.apiKey) proxyReq.setHeader('x-apiKey', config.dataFair.apiKey)
+    // body was already parsed by body-parser and no longer available as a stream
+    fixRequestBody(proxyReq, req, res)
   },
   onProxyRes (proxyRes, req, res) {
     if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].startsWith('application/json')) {

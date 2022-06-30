@@ -310,9 +310,9 @@ export default {
       await this.save({})
       this.editConfig = {}
     },
-    async validate (reload = true) {
+    async validate () {
       if (this.$refs.form.validate()) {
-        this.save(this.editConfig, reload)
+        this.save(this.editConfig)
         this.error = null
       }
     },
