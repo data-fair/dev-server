@@ -69,4 +69,14 @@
       }
     }
   }
+
+  const socket = new WebSocket(application.wsUrl)
+  socket.addEventListener('open', function (event) {
+    const channel = `datasets/${application.configuration.datasets[0].id}/journal`
+    log('websocket opened, subscribe to dataset channel : ' + channel)
+    socket.send(JSON.stringify({type: 'subscribe', channel}))
+  })
+  socket.addEventListener('message', function (event) {
+    log('websocket received a message : ' + event.data)
+  })
 })();

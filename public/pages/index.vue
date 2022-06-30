@@ -290,9 +290,6 @@ export default {
         if (data.type === 'app-error') {
           this.error = data.data.message
         }
-        if (data.type === 'ping') {
-          this.socketDevServer.send(JSON.stringify({ type: 'pong' }))
-        }
       }
     }
 
@@ -303,14 +300,8 @@ export default {
         this.validate()
       }
     })
-
-    /* const socketApp = new WebSocket('ws://localhost:3000')
-    socketApp.onmessage = (event) => {
-      console.log('ws message from 5888', event.data)
-    } */
   },
   destroyed () {
-    console.log('destroyed')
     if (this.socketDevServer) this.socketDevServer.close()
   },
   methods: {

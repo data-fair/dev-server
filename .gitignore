@@ -12,3 +12,4 @@ dist
 dist-config
 
 .dev-config.json
+config/local-*

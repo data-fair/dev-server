@@ -12,24 +12,43 @@ const cors = require('cors')
 const kill = require('tree-kill')
 const escapeStringRegexp = require('escape-string-regexp')
 const parse5 = require('parse5')
-const WebSocket = require('ws')
+const { WebSocket, WebSocketServer } = require('ws')
 const debug = require('debug')('df-dev-server')
 const chalk = require('chalk')
 
 const app = express()
 const server = http.createServer(app)
 
-const wss = new WebSocket.Server({ server })
-let ws
-wss.on('connection', (_ws) => {
-  if (ws) ws.terminate()
-  ws = _ws
-
-  ws.on('message', function incoming (message) {
-    if (!message.includes('"pong"')) console.log('received: %s', message)
+// web socket server, used both by dev-server UI (opened on / path)
+// and by application (opened on /data-fair), in this case we transmit all messages to and from data-fair
+const wss = new WebSocketServer({ noServer: true })
+let devServerWS, dataFairWS
+server.on('upgrade', function upgrade (req, socket, head) {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    if (req.url === '/data-fair') {
+      console.log('data-fair websocket connection from application')
+      if (dataFairWS) dataFairWS.terminate()
+      dataFairWS = ws
+      ws.on('message', (data) => {
+        if (dataFairOutputWS) {
+          const message = JSON.parse(data)
+          if (message.type === 'subscribe') message.apiKey = config.dataFair.apiKey
+          dataFairOutputWS.send(JSON.stringify(message))
+        }
+      })
+    } else {
+      if (devServerWS) devServerWS.terminate()
+      devServerWS = ws
+    }
+    wss.emit('connection', ws, req)
   })
-  ws.send(JSON.stringify({ type: 'ping' }))
 })
+
+const dfWsUrl = config.dataFair.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/'
+const dataFairOutputWS = new WebSocket(dfWsUrl)
+dataFairOutputWS.on('open', () => dataFairOutputWS.send('connect to external websocket server', dfWsUrl))
+dataFairOutputWS.on('message', (data) => { if (dataFairWS) dataFairWS.send(data.toString()) })
+dataFairOutputWS.on('error', (err) => console.error('failed to connect to external websocket server', dfWsUrl, err))
 
 app.use(bodyParser.json())
 app.use(cors())
@@ -47,7 +66,8 @@ app.put('/config', (req, res, next) => {
 })
 app.post('/config/error', (req, res) => {
   console.log('Application sent an error', req.body)
-  if (ws) ws.send(JSON.stringify({ type: 'app-error', data: req.body }))
+  if (devServerWS) devServerWS.send(JSON.stringify({ type: 'app-error', data: req.body }))
+  else console.error('no dev-server websocket open to send error to')
   res.send()
 })
 
@@ -58,7 +78,6 @@ app.use('/app', createProxyMiddleware({
   pathRewrite: { '^/app': appUrl.pathname === '/' ? '' : appUrl.pathname },
   secure: false,
   changeOrigin: true,
-  ws: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
   onProxyReq (proxyReq, req, res) {
     proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
@@ -160,7 +179,6 @@ app.use('/data-fair', createProxyMiddleware({
   pathRewrite: { '^/data-fair': dfUrl.pathname },
   secure: false,
   changeOrigin: true,
-  ws: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
   onProxyReq (proxyReq) {
     // no gzip so that we can process the content
@@ -227,7 +245,8 @@ exports.run = async () => {
 
 exports.stop = async () => {
   if (spawnedDevSrc) kill(spawnedDevSrc.pid)
-  if (ws) ws.terminate()
+  if (devServerWS) devServerWS.terminate()
+  if (dataFairWS) dataFairWS.terminate()
   server.close()
   await eventToPromise(server, 'close')
   await app.get('client').close()
