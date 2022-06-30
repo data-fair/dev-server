@@ -52,7 +52,7 @@
             <p>{{ validationErrors }}</p>
           </v-alert>
           <v-jsf
-            v-if="schema && editConfig"
+            v-if="schema && editConfig && !loading"
             v-model="editConfig"
             :schema="schema"
             :options="options"
@@ -293,11 +293,13 @@ export default {
       }
     }
 
-    window.addEventListener('message', msg => {
+    window.addEventListener('message', async msg => {
       console.log('received message from iframe', msg.data)
       if (msg.data.type === 'set-config') {
+        this.loading = true
         this.editConfig = dotProp.set({ ...this.editConfig }, msg.data.content.field, msg.data.content.value)
-        this.validate()
+        await this.validate()
+        this.loading = false
       }
     })
   },
@@ -312,8 +314,8 @@ export default {
     },
     async validate () {
       if (this.$refs.form.validate()) {
-        this.save(this.editConfig)
         this.error = null
+        await this.save(this.editConfig)
       }
     },
     async save (config) {
