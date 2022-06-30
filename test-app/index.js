@@ -36,10 +36,11 @@
     })
   })
 
-  var configTriggerNb = 0
   $('#set-config-trigger').on('click', function() {
-    configTriggerNb += 1
-    window.parent.postMessage({ type: 'set-config', content: { field: 'field1', value: 'Field 1, value ' + configTriggerNb } }, '*')
+    window.parent.postMessage({ type: 'set-config', content: {
+      field: 'field1',
+      value: (application.configuration.field1 || 'patched field value') + '+'
+    } }, '*')
   })
 
   // preparing a slightly different rendering for screenshot might be a good idea
