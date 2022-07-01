@@ -26,7 +26,6 @@ let devServerWS, dataFairWS
 server.on('upgrade', function upgrade (req, socket, head) {
   wss.handleUpgrade(req, socket, head, (ws) => {
     if (req.url === '/data-fair') {
-      console.log('data-fair websocket connection from application')
       if (dataFairWS) dataFairWS.terminate()
       dataFairWS = ws
       ws.on('message', (data) => {
