@@ -50,8 +50,8 @@ dataFairOutputWS.on('open', () => dataFairOutputWS.send('connect to external web
 dataFairOutputWS.on('message', (data) => { if (dataFairWS) dataFairWS.send(data.toString()) })
 dataFairOutputWS.on('error', (err) => console.error('failed to connect to external websocket server', dfWsUrl, err))
 
-app.use(bodyParser.json())
 app.use(cors())
+app.use(bodyParser.json())
 
 // very basic CRUD of config
 app.get('/config', (req, res, next) => {
@@ -183,8 +183,11 @@ app.use('/data-fair', createProxyMiddleware({
   onProxyReq (proxyReq, req, res) {
     // no gzip so that we can process the content
     proxyReq.setHeader('accept-encoding', 'identity')
+
+    // authentication through api key only
     proxyReq.setHeader('cookie', '')
     if (config.dataFair.apiKey) proxyReq.setHeader('x-apiKey', config.dataFair.apiKey)
+
     // body was already parsed by body-parser and no longer available as a stream
     fixRequestBody(proxyReq, req, res)
   },
@@ -206,6 +209,15 @@ app.use('/data-fair', createProxyMiddleware({
     }
   }
 }))
+
+// also re-expose the simple-directory instance matching data-fair
+if (dfUrl.pathname === '/data-fair') {
+  app.use('/simple-directory', createProxyMiddleware({
+    target: dfUrl.origin,
+    secure: false,
+    changeOrigin: true
+  }))
+}
 
 // run the dev-src command from current project
 let spawnedDevSrc
