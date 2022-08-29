@@ -1,4 +1,5 @@
 // Express app for TaxMan own API and UI
+const util = require('util')
 const path = require('path')
 const { spawn } = require('child_process')
 const express = require('express')
@@ -15,6 +16,11 @@ const parse5 = require('parse5')
 const { WebSocket, WebSocketServer } = require('ws')
 const debug = require('debug')('df-dev-server')
 const chalk = require('chalk')
+const Extractor = require('html-extractor')
+const htmlExtractor = new Extractor()
+htmlExtractor.extract = util.promisify(htmlExtractor.extract)
+const vIframeVersion = require('../node_modules/@koumoul/v-iframe/package.json').version
+const iframeResizerVersion = require('../node_modules/iframe-resizer/package.json').version
 
 const app = express()
 const server = http.createServer(app)
@@ -86,12 +92,12 @@ app.use('/app', createProxyMiddleware({
     // console.log('inject config', configuration)
     const dataBuffers = []
     proxyRes.on('data', (data) => { dataBuffers.push(data) })
-    proxyRes.on('end', () => {
+    proxyRes.on('end', async () => {
       try {
         let output = Buffer.concat(dataBuffers)
         const body = output.toString()
         if (body.includes('%APPLICATION%')) {
-          const document = parse5.parse(body.replace(/%APPLICATION%/g, JSON.stringify({
+          const filledBody = body.replace(/%APPLICATION%/g, JSON.stringify({
             id: 'dev-application',
             title: 'Dev application',
             configuration,
@@ -100,7 +106,8 @@ app.use('/app', createProxyMiddleware({
             apiUrl: 'http://localhost:5888/data-fair/api/v1',
             wsUrl: 'ws://localhost:5888/data-fair',
             owner: config.dataFair && config.dataFair.owner
-          })))
+          }))
+          const document = parse5.parse(filledBody)
           const html = document.childNodes.find(c => c.tagName === 'html')
           if (!html) throw new Error('HTML structure is broken, expect html, head and body elements')
           const headNode = html.childNodes.find(c => c.tagName === 'head')
@@ -148,6 +155,30 @@ setTimeout(function() {
 }, 5000)
                 `
               }]
+            })
+          }
+
+          const { meta } = await htmlExtractor.extract(filledBody)
+          // add @koumoul/v-iframe/content-window.min.js to support state sync with portals, etc.
+          if (meta['df:sync-state'] === 'true') {
+            bodyNode.childNodes.push({
+              nodeName: 'script',
+              tagName: 'script',
+              attrs: [
+                { name: 'type', value: 'text/javascript' },
+                { name: 'src', value: `https://cdn.jsdelivr.net/npm/@koumoul/v-iframe@${vIframeVersion}/content-window.min.js` }
+              ]
+            })
+          }
+          // add iframe-resizer/js/iframeResizer.contentWindow.min.js to support dynamic resizing of the iframe in portals, etc
+          if (meta['df:overflow'] === 'true') {
+            bodyNode.childNodes.push({
+              nodeName: 'script',
+              tagName: 'script',
+              attrs: [
+                { name: 'type', value: 'text/javascript' },
+                { name: 'src', value: `https://cdn.jsdelivr.net/npm/iframe-resizer@${iframeResizerVersion}/js/iframeResizer.contentWindow.min.js` }
+              ]
             })
           }
 

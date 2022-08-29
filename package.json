@@ -57,6 +57,7 @@
     "event-to-promise": "^0.8.0",
     "express": "^4.17.2",
     "fs-extra": "^10.0.0",
+    "html-extractor": "^0.2.2",
     "http-proxy-middleware": "^2.0.1",
     "parse5": "^6.0.1",
     "tree-kill": "^1.2.2",
@@ -64,7 +65,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.0",
-    "@koumoul/v-iframe": "^0.10.0",
+    "@koumoul/v-iframe": "^0.19.4",
     "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/i18n": "^7.2.0",
     "@nuxtjs/vuetify": "^1.12.3",

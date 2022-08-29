@@ -19,12 +19,15 @@
       </v-card-title>
       <v-card-text>
         <p>Data Fair will automatically render the visualization after each configuration change and take a screenshot to be used as a thumbnail.</p>
-        <p>The screenshot will be rendered in a box of 1050x450 pixels (21/9 resolution) and the URL will have the query parameter ?thumbnail=true.</p>
+        <p>The screenshot for the thumbnail will be rendered in a box of 1050x450 pixels (21/9 resolution) and the URL will have the query parameter ?thumbnail=true.</p>
+        <p>Screenshots can also be created manually including with a state persisted in query parameters (see df:sync-state meta). Animated screenshots can also beexported to gif files.</p>
+        <p>Portals will look for the metas df:capture-width and df:capture-height to chose default screenshots sizes.</p>
         <p>For performance it is a recommended to call the window.triggerCapture method as soon as the application is fully rendered. For guidance look for messages prefixed with "[capture]" in your browser developper's console.</p>
         <v-iframe
           v-if="dialog"
           style="border: 1px solid grey;width: 1050px;"
           :aspect-ratio="21/9"
+          :iframe-resizer="false"
           src="http://localhost:5888/app?thumbnail=true"
         />
       </v-card-text>

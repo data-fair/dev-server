@@ -25,6 +25,7 @@
     })
 
   $('#error-trigger').on('click', function() {
+    log('Send an error to be stored on the application state')
     $.ajax({
       method: 'POST',
       url: application.href + '/error',
@@ -36,25 +37,36 @@
     })
   })
 
+  var configTriggerNb = 0
   $('#set-config-trigger').on('click', function() {
-    window.parent.postMessage({ type: 'set-config', content: {
-      field: 'field1',
-      value: (application.configuration.field1 || 'patched field value') + '+'
-    } }, '*')
+    log('Patch the application configuration from inside it instead of the usual form edition')
+    configTriggerNb += 1
+    window.parent.postMessage({ type: 'set-config', content: { field: 'field1', value: 'Field 1, value ' + configTriggerNb } }, '*')
   })
 
-  // preparing a slightly different rendering for screenshot might be a good idea
-  var thumbnail = (new URL(window.location.href)).searchParams.get('thumbnail') === 'true'
-  if (thumbnail) {
-    $('#actions-title').remove()
-    $('#error-trigger').remove()
-    $('#set-config-trigger').remove()
-    $('#log-title').remove()
-    $('#log').remove()
-  }
+  var queryParamTriggerNb = 0
+  $('#set-query-param-trigger').on('click', function() {
+    queryParamTriggerNb += 1
+    const currentUrl = new URL(window.location)
+    const queryParams = {param1: 'value' + queryParamTriggerNb}
+    log('Set query parameters in the URL bar and allow parent to mirror it if it wants to ' + JSON.stringify(queryParams))
+    Object.keys(queryParams).forEach(key => {
+      currentUrl.searchParams.set(key, queryParams[key])
+    })
+    history.pushState(null, '', currentUrl)
+    window.parent.postMessage({ viframe: true, queryParams }, '*')
+  })
 
   // check that we are in a screenshot capture context
   if (window.triggerCapture) {
+    // preparing a slightly different rendering for screenshot might be a good idea
+    $('#actions-title').remove()
+    $('#error-trigger').remove()
+    $('#set-config-trigger').remove()
+    $('#set-query-param-trigger').remove()
+    $('#log-title').remove()
+    $('#log').remove()
+
     // declare that the application is ready to be captured, meaning that the whole page should be rendered by this point
     // the true parameter signifies that this application supports animated screenshots
     var animate = window.triggerCapture(true)
@@ -70,14 +82,4 @@
       }
     }
   }
-
-  const socket = new WebSocket(application.wsUrl)
-  socket.addEventListener('open', function (event) {
-    const channel = `datasets/${application.configuration.datasets[0].id}/journal`
-    log('websocket opened, subscribe to dataset channel : ' + channel)
-    socket.send(JSON.stringify({type: 'subscribe', channel}))
-  })
-  socket.addEventListener('message', function (event) {
-    log('websocket received a message : ' + event.data)
-  })
 })();

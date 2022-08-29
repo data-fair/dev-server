@@ -136,7 +136,7 @@
               {{ $t('missingKeywords', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta['vocabulary-accept'] && meta['vocabulary-accept']">
+            <p v-if="meta['vocabulary-accept']">
               <b>vocabulary-accept:</b> {{ meta['vocabulary-accept'] }}
             </p>
             <v-alert
@@ -147,7 +147,7 @@
               {{ $t('missingVocabAccept', {locale: $i18n.locale}) }}
             </v-alert>
 
-            <p v-if="meta['vocabulary-require'] && meta['vocabulary-require']">
+            <p v-if="meta['vocabulary-require']">
               <b>vocabulary-require:</b> {{ meta['vocabulary-require'] }}
             </p>
             <v-alert
@@ -156,6 +156,27 @@
               dense
             >
               {{ $t('missingVocabRequire', {locale: $i18n.locale}) }}
+            </v-alert>
+            <p v-if="meta['df:overflow']">
+              <b>df:overflow:</b> {{ meta['df:overflow'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              dense
+            >
+              {{ $t('missingDFOverflow', {locale: $i18n.locale}) }}
+            </v-alert>
+
+            <p v-if="meta['df:sync-state']">
+              <b>df:sync-state:</b> {{ meta['df:sync-state'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              dense
+            >
+              {{ $t('missingDFSyncState', {locale: $i18n.locale}) }}
             </v-alert>
           </v-col>
         </v-row>
@@ -174,19 +195,37 @@
             dark
             small
             color="primary"
+            title="reload iframe content"
             @click="reloadIframe"
           >
             <v-icon dark>
               mdi-refresh
             </v-icon>
           </v-btn>
+          <v-btn
+            class="mx-2"
+            fab
+            dark
+            small
+            color="primary"
+            href="http://localhost:5888/app"
+            title="open in full page"
+            target="blank"
+          >
+            <v-icon dark>
+              mdi-open-in-new
+            </v-icon>
+          </v-btn>
           <lang-switcher />
         </v-row>
         <v-card>
           <v-iframe
-            v-if="showPreview"
-            src="http://localhost:5888/app?draft=true"
+            v-if="showPreview && meta"
+            src="http://localhost:5888/app"
             :log="iframeLog"
+            :iframe-resizer="meta['df:overflow'] === 'true'"
+            :sync-state="meta['df:sync-state'] === 'true'"
+            :query-params-extra="{draft: true}"
           />
         </v-card>
       </v-col>
@@ -204,6 +243,8 @@ en:
   missingKeywords: "Metadata \"keywords\" is missing. Add a tag <meta name=\"keywords\" lang=\"{locale}\" content=\"My keyword\">"
   missingVocabAccept: "Metadata \"vocabulary-accept\" is missing. Add a tag <meta name=\"vocabulary-accept\" content=\"http://www.w3.org/2000/01/rdf-schema#label\">"
   missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
+  missingDFOverflow: "Metadata \"df:overflow\" is missing. Set it to \"true\" to signify that the application might overflow its initial boundaries and require either resizing of these boundaries or scroll bars."
+  missingDFSyncState: "Metadata \"df:sync-state\" is missing. Set it to \"true\" to signify that the application can have some state synchronized in its url (path and query params) that might be used by portals to create more useful links and screenshots."
   config: Configuration form created from config-schema.json
 </i18n>
 
@@ -339,7 +380,7 @@ export default {
         meta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes?.[0].value
       }
 
-      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail']
+      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state']
       const localizedMetaTags = ['description', 'keywords']
       const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
 
