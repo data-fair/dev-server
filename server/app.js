@@ -19,8 +19,8 @@ const chalk = require('chalk')
 const Extractor = require('html-extractor')
 const htmlExtractor = new Extractor()
 htmlExtractor.extract = util.promisify(htmlExtractor.extract)
-const vIframeVersion = require('../node_modules/@koumoul/v-iframe/package.json').version
-const iframeResizerVersion = require('../node_modules/iframe-resizer/package.json').version
+const vIframeVersion = require('@koumoul/v-iframe/package.json').version
+const iframeResizerVersion = require('iframe-resizer/package.json').version
 
 const app = express()
 const server = http.createServer(app)
