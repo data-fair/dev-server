@@ -288,8 +288,15 @@ export default {
   computed: {
     options () {
       // same as application-config.vue in data-fair
+      const owner = this.dataFair && this.dataFair.owner
+      let datasetFilter = ''
+      if (owner) {
+        datasetFilter = `owner=${owner.type}:${owner.id}`
+        if (owner.department) datasetFilter += ':' + owner.department
+      }
+
       return {
-        context: { owner: this.dataFair && this.dataFair.owner },
+        context: { owner, datasetFilter },
         locale: this.$i18n.locale,
         defaultLocale: this.$i18n.defaultLocale,
         rootDisplay: 'expansion-panels',
