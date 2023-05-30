@@ -8,7 +8,11 @@ module.exports = {
     apiKey: 'DATAFAIR_API_KEY'
   },
   app: {
-    url: 'APP_URL'
+    url: 'APP_URL',
+    proxyPaths: {
+      __name: 'APP_PROXY_PATHS',
+      __format: 'json'
+    }
   },
   iframeLog: {
     __name: 'IFRAME_LOG',

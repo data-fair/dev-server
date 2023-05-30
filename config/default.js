@@ -9,7 +9,8 @@ module.exports = {
     apiKey: null
   },
   app: {
-    url: 'http://localhost:3000'
+    url: 'http://localhost:3000',
+    proxyPaths: ['/_nuxt/']
   },
   iframeLog: false
 }

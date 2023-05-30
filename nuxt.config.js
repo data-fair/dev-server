@@ -13,6 +13,9 @@ module.exports = {
   components: true,
   srcDir: 'public/',
   telemetry: false,
+  build: {
+    publicPath: '/_dev-server-nuxt'
+  },
   modules: ['@nuxtjs/axios', ['@nuxtjs/i18n', {
     seo: false,
     locales,

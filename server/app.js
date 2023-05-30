@@ -202,6 +202,15 @@ setTimeout(function() {
   }
 }))
 
+for (const proxyPath of config.app.proxyPaths) {
+  app.use(proxyPath, createProxyMiddleware({
+    target: appUrl.origin,
+    secure: false,
+    changeOrigin: true,
+    ws: true
+  }))
+}
+
 // re-expose a data-fair instance to access datasets, etc.
 const dfUrl = new URL(config.dataFair.url)
 app.use('/data-fair', createProxyMiddleware({
