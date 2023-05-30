@@ -178,6 +178,17 @@
             >
               {{ $t('missingDFSyncState', {locale: $i18n.locale}) }}
             </v-alert>
+
+            <p v-if="meta['df:filter-concepts']">
+              <b>df:filter-concepts:</b> {{ meta['df:filter-concepts'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              dense
+            >
+              {{ $t('missingDFFilterConcepts', {locale: $i18n.locale}) }}
+            </v-alert>
           </v-col>
         </v-row>
       </v-col>
@@ -245,6 +256,7 @@ en:
   missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
   missingDFOverflow: "Metadata \"df:overflow\" is missing. Set it to \"true\" to signify that the application might overflow its initial boundaries and require either resizing of these boundaries or scroll bars."
   missingDFSyncState: "Metadata \"df:sync-state\" is missing. Set it to \"true\" to signify that the application can have some state synchronized in its url (path and query params) that might be used by portals to create more useful links and screenshots."
+  missingDFFilterConcepts: "Metadata \"df:filter-concepts\" is missing. Set it to \"true\" to signify that the application supports filtering its datasets based on concepts values."
   config: Configuration form created from config-schema.json
 </i18n>
 
@@ -387,7 +399,7 @@ export default {
         meta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes?.[0].value
       }
 
-      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state']
+      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts']
       const localizedMetaTags = ['description', 'keywords']
       const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
 
