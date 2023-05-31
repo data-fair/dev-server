@@ -301,14 +301,16 @@ export default {
     options () {
       // same as application-config.vue in data-fair
       const owner = this.dataFair && this.dataFair.owner
+      let ownerFilter = ''
       let datasetFilter = ''
       if (owner) {
-        datasetFilter = `owner=${owner.type}:${owner.id}`
-        if (owner.department) datasetFilter += ':' + owner.department
+        ownerFilter = `${owner.type}:${owner.id}`
+        if (owner.department) ownerFilter += ':' + owner.department
+        datasetFilter = `owner=${ownerFilter}`
       }
 
       return {
-        context: { owner, datasetFilter },
+        context: { owner, ownerFilter, datasetFilter },
         locale: this.$i18n.locale,
         defaultLocale: this.$i18n.defaultLocale,
         rootDisplay: 'expansion-panels',
