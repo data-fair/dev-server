@@ -303,14 +303,16 @@ export default {
       const owner = this.dataFair && this.dataFair.owner
       let ownerFilter = ''
       let datasetFilter = ''
+      let remoteServiceFilter = ''
       if (owner) {
         ownerFilter = `${owner.type}:${owner.id}`
         if (owner.department) ownerFilter += ':' + owner.department
         datasetFilter = `owner=${ownerFilter}`
+        if (this.dataFair.apiKey) remoteServiceFilter = `privateAccess=${ownerFilter}`
       }
 
       return {
-        context: { owner, ownerFilter, datasetFilter },
+        context: { owner, ownerFilter, datasetFilter, remoteServiceFilter },
         locale: this.$i18n.locale,
         defaultLocale: this.$i18n.defaultLocale,
         rootDisplay: 'expansion-panels',
