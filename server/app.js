@@ -166,7 +166,7 @@ setTimeout(function() {
               tagName: 'script',
               attrs: [
                 { name: 'type', value: 'text/javascript' },
-                { name: 'src', value: `https://cdn.jsdelivr.net/npm/@koumoul/v-iframe@${vIframeVersion}/content-window.min.js` }
+                { name: 'src', value: `https://cdn.jsdelivr.net/npm/@koumoul/v-iframe@${vIframeVersion}/content-window.js` }
               ]
             })
           }
