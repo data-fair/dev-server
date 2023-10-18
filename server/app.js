@@ -287,7 +287,9 @@ exports.run = async () => {
     const pJson = fs.readJsonSync('package.json')
     if (pJson.scripts && pJson.scripts['dev-src']) {
       console.log(chalk.blue('running application with "npm run dev-src"'))
-      spawnedDevSrc = spawn('npm', ['run', 'dev-src'], { stdio: 'inherit' }).on('error', () => {})
+      spawnedDevSrc = spawn('npm', ['run', 'dev-src'], { stdio: 'inherit', shell: true }).on('error', (err) => {
+        console.error('failure in spawned "dev-src" command', err)
+      })
     } else {
       console.error(chalk.red('No script "dev-src" in package.json'))
     }
