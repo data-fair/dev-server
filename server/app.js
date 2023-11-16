@@ -285,13 +285,13 @@ exports.run = async () => {
 
   if (fs.existsSync('package.json')) {
     const pJson = fs.readJsonSync('package.json')
-    if (pJson.scripts && pJson.scripts['dev-src']) {
-      console.log(chalk.blue('running application with "npm run dev-src"'))
-      spawnedDevSrc = spawn('npm', ['run', 'dev-src'], { stdio: 'inherit', shell: true }).on('error', (err) => {
-        console.error('failure in spawned "dev-src" command', err)
+    if (pJson.scripts && pJson.scripts[config.app.script]) {
+      console.log(chalk.blue(`running application with "npm run ${config.app.script}"`))
+      spawnedDevSrc = spawn('npm', ['run', config.app.script], { stdio: 'inherit', shell: true }).on('error', (err) => {
+        console.error(`failure in spawned "${config.app.script}" command`, err)
       })
     } else {
-      console.error(chalk.red('No script "dev-src" in package.json'))
+      console.error(chalk.red(`No script "${config.app.script}" in package.json`))
     }
   }
   // if (process.env.NODE_ENV !== 'development') open('http://localhost:5888')

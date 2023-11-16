@@ -12,7 +12,8 @@ module.exports = {
     proxyPaths: {
       __name: 'APP_PROXY_PATHS',
       __format: 'json'
-    }
+    },
+    script: 'APP_SCRIPT'
   },
   iframeLog: {
     __name: 'IFRAME_LOG',

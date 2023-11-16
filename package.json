@@ -7,8 +7,10 @@
     "df-dev-server": "server/index.js"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon server",
-    "dev-src": "http-server test-app --port=3000 --cors --silent",
+    "dev": "NODE_ENV=development nodemon server",
+    "dev-src": "http-server test-apps/minimal --port=3000 --cors --silent",
+    "dev-vue3": "APP_URL=http://localhost:3000/app/ APP_SCRIPT=dev-src-vue3 NODE_ENV=development nodemon server",
+    "dev-src-vue3": "cd test-apps/vue3 && npm run dev",
     "prepare": "npm run lint && nuxt generate",
     "lint": "eslint --ext .js,.vue ."
   },
@@ -70,7 +72,6 @@
     "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/i18n": "^7.2.0",
     "@nuxtjs/vuetify": "^1.12.3",
-    "cross-env": "^7.0.3",
     "eslint": "^7.12.1",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.2",

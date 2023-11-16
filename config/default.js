@@ -10,7 +10,8 @@ module.exports = {
   },
   app: {
     url: 'http://localhost:3000',
-    proxyPaths: ['/_nuxt/']
+    proxyPaths: ['/_nuxt/'],
+    script: 'dev-src'
   },
   iframeLog: false
 }
