@@ -23,9 +23,10 @@
 
 <script setup>
 import { useUrlSearchParams } from '@vueuse/core'
-import {application} from '@data-fair/lib/vue/app-info.js'
+import { application } from '@data-fair/lib/vue/app-info.js'
 
 const searchParams = useUrlSearchParams('history')
 
-window.vIframeOptions = {reactiveParams: searchParams}
+// @ts-ignore
+window.vIframeOptions = { reactiveParams: searchParams }
 </script>
