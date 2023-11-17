@@ -1,5 +1,5 @@
 node_modules
-test-apps/minimal
+test-apps
 .nuxt
 dist
 dist-config

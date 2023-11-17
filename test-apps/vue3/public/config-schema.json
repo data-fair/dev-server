@@ -15,7 +15,8 @@
           "id": {"type": "string"},
           "href": {"type": "string"},
           "title": {"type": "string"},
-          "page": {"type": "string"}
+          "page": {"type": "string"},
+          "schema": {"type": "array"}
         }
       }]
     },

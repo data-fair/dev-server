@@ -1,7 +1,11 @@
 import { createApp } from 'vue'
-import { registerPlugins } from '@/plugins'
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import { defaultOptions } from '@data-fair/lib/vuetify.js'
 import App from './App.vue'
 
 const app = createApp(App)
-registerPlugins(app)
+
+app.use(createVuetify(defaultOptions))
+
 app.mount('#app')

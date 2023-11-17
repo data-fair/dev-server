@@ -69,6 +69,14 @@
           </v-btn>
         </v-row>
 
+        <v-row class="ma-2">
+          <v-jsf
+            v-model="extraParams"
+            :schema="extraParamsSchema"
+            :options="{ editMode: 'inline' }"
+          />
+        </v-row>
+
         <v-row
           v-if="meta"
           class="mt-4"
@@ -236,7 +244,7 @@
             :log="iframeLog"
             :iframe-resizer="meta['df:overflow'] === 'true'"
             :sync-state="meta['df:sync-state'] === 'true'"
-            :query-params-extra="{draft: true}"
+            :query-params-extra="iframeExtraParams"
           />
         </v-card>
       </v-col>
@@ -295,7 +303,19 @@ export default {
     formValid: false,
     iframeLog: false,
     loading: false,
-    meta: null
+    meta: null,
+    extraParams: [],
+    extraParamsSchema: {
+      type: 'array',
+      title: 'Extra query params',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          value: { type: 'string' }
+        }
+      }
+    }
   }),
   computed: {
     options () {
@@ -337,6 +357,11 @@ export default {
         return this.schemaValidate.errors
       }
       return null
+    },
+    iframeExtraParams () {
+      return this.extraParams
+        .filter(p => p.name && p.value)
+        .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: true })
     }
   },
   async created () {
