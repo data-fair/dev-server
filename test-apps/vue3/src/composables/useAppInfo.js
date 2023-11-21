@@ -1,5 +1,6 @@
-// this composable read into window.APPLICATION (set in index.html) to get the application configuration
-// it applies types built using the config schema or fragments from @data-fair/lib
+// this composable reads from window.APPLICATION (set in index.html)
+// it performs some pre-checks on the configuration
+// it applies types from @data-fair/lib or built using the config schema
 
 export default function useAppInfo () {
   // @ts-ignore
