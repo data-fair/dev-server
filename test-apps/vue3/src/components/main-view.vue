@@ -41,7 +41,6 @@ import useAppInfo from '../composables/useAppInfo'
 const { application } = useAppInfo()
 
 const setError = (/** @type {string} */message) => {
-  // @ts-ignore
-  ofetch(window.APPLICATION.href + '/error', { body: { message }, method: 'POST' })
+  ofetch(application.href + '/error', { body: { message }, method: 'POST' })
 }
 </script>
