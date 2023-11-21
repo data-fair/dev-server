@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "x-exports": ["types", "resolvedSchemaJson"],
+  "required": [
+    "datasets"
+  ],
+  "properties": {
+    "datasets": {
+      "type": "array",
+      "items": [
+        {
+          "title": "Dataset",
+          "type": "object",
+          "x-fromUrl": "api/v1/datasets?status=finalized&q={q}&{context.datasetFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "href",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "href": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "page": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "https://github.com/data-fair/lib/application#/$defs/field"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "field1": {
+      "type": "string",
+      "title": "Readonly property filled by the application",
+      "readOnly": true
+    }
+  }
+}

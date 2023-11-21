@@ -1,39 +1,100 @@
 {
   "type": "object",
-  "required": ["datasets"],
+  "required": [
+    "datasets"
+  ],
   "properties": {
     "datasets": {
       "type": "array",
-      "items": [{
-        "title": {"$ref": "#/i18n/~$locale~/dataset"},
-        "type": "object",
-        "x-fromUrl": "api/v1/datasets?status=finalized&q={q}&{context.datasetFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "href",
-        "properties": {
-          "id": {"type": "string"},
-          "href": {"type": "string"},
-          "title": {"type": "string"},
-          "page": {"type": "string"},
-          "schema": {"type": "array"}
+      "items": [
+        {
+          "title": "Dataset",
+          "type": "object",
+          "x-fromUrl": "api/v1/datasets?status=finalized&q={q}&{context.datasetFilter}",
+          "x-itemsProp": "results",
+          "x-itemTitle": "title",
+          "x-itemKey": "href",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "href": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "page": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "type"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "format": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "x-originalName": {
+                    "type": "string"
+                  },
+                  "x-group": {
+                    "type": "string"
+                  },
+                  "x-refersTo": {
+                    "deprecated": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "x-concept": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "primary": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "x-labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "x-labelsRestricted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
         }
-      }]
+      ]
     },
     "field1": {
       "type": "string",
-      "title": {"$ref": "#/i18n/~$locale~/field1"},
+      "title": "Readonly property filled by the application",
       "readOnly": true
-    }
-  },
-  "i18n": {
-    "fr": {
-      "dataset": "Jeu de données",
-      "field1": "Propriété lecture seule renseignée par l'application"
-    },
-    "en": {
-      "dataset": "Dataset",
-      "field1": "Readonly property filled by the application"
     }
   }
 }
