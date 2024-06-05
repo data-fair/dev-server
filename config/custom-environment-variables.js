@@ -3,7 +3,8 @@ module.exports = {
     url: 'DATAFAIR_URL',
     owner: {
       type: 'DATAFAIR_OWNER_TYPE',
-      id: 'DATAFAIR_OWNER_ID'
+      id: 'DATAFAIR_OWNER_ID',
+      department: 'DATAFAIR_OWNER_DEPARTMENT'
     },
     apiKey: 'DATAFAIR_API_KEY'
   },

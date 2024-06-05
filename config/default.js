@@ -4,7 +4,8 @@ module.exports = {
     url: 'https://koumoul.com/data-fair',
     owner: {
       type: 'organization',
-      id: '5a5dc47163ebd4a6f438589b'
+      id: '5a5dc47163ebd4a6f438589b',
+      department: null
     },
     apiKey: null
   },
