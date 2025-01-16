@@ -332,7 +332,22 @@ export default {
       }
 
       return {
-        context: { owner, ownerFilter, datasetFilter, remoteServiceFilter },
+        context: {
+          owner,
+          ownerFilter,
+          datasetFilter,
+          remoteServiceFilter,
+          // a pseudo attachments array, temporary until we have a real one
+          attachments: [
+            {
+              title: 'Attachment 1',
+              name: 'attachment.png',
+              size: 4705,
+              mimetype: 'image/png',
+              updatedAt: '2025-01-15T09:00:48.787Z'
+            }
+          ]
+        },
         locale: this.$i18n.locale,
         defaultLocale: this.$i18n.defaultLocale,
         rootDisplay: 'expansion-panels',
