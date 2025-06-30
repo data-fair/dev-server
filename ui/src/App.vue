@@ -268,9 +268,11 @@ en:
   config: Configuration form created from config-schema.json
 </i18n>
 
-<script lang="ts">
+<script lang="ts" type="setup">
 
-import ReconnectingWebSocket from 'reconnecting-websocket'
+import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
+import {ref, computed} from 'vue'
+import reconnectingWebSocketModule from 'reconnecting-websocket'
 import jsonRefs from '@koumoul/vjsf/lib/utils/json-refs.js'
 import dotProp from 'dot-prop'
 
@@ -282,30 +284,31 @@ import ajvLocalize from 'ajv-i18n'
 import { $uiConfig } from './context'
 import { useI18n } from 'vue-i18n'
 import {fetch} from 'ofetch'
+import {useFetch} from '@data-fair/lib-vue/fetch.js'
+import {useAsyncAction} from '@data-fair/lib-vue/async-action.js'
+
+const ReconnectingWebSocket = reconnectingWebSocketModule as unknown as typeof reconnectingWebSocketModule.default
 
 const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
 ajvFormats(ajv)
 
-export default {
-  components: { VIframe, VJsf, ScreenshotSimulation },
-  setup() {
-    const i18n = useI18n()
+type Meta = Record<string, string>
 
-    return {i18n}
-  },
-  data: () => ({
-    error: null,
-    schema: null,
-    editConfig: null,
-    showPreview: true,
-    compileError: null,
-    formValid: false,
-    iframeLog: false,
-    loading: false,
-    meta: null,
-    extraParams: [],
-    extraParamsSchema: {
+const {t} = useI18n()
+
+const error = ref<string>()
+const schema = ref<any>()
+const editConfig = ref<any>()
+const showPreview = ref(true)
+const compileError = ref<string>()
+const formValid = ref(false)
+const iframeLog = ref(false)
+const loading = ref(false)
+const meta = ref<Meta>()
+const extraParams = ref<{name: string, value: string}[]>()
+
+const extraParamsSchema = {
       type: 'array',
       title: 'Extra query params',
       items: {
@@ -316,29 +319,24 @@ export default {
         }
       }
     }
-  }),
-  computed: {
-    options () {
-      // same as application-config.vue in data-fair
-      const owner = $uiConfig.dataFair.owner
-      let ownerFilter = ''
-      let datasetFilter = ''
-      let remoteServiceFilter = ''
-      if (owner) {
-        ownerFilter = `${owner.type}:${owner.id}`
-        if (owner.department) ownerFilter += ':' + owner.department
-        datasetFilter = `owner=${ownerFilter}`
-        if ($uiConfig.dataFair.apiKey) remoteServiceFilter = `privateAccess=${ownerFilter}`
-      }
 
-      return {
-        context: {
-          owner,
-          ownerFilter,
-          datasetFilter,
-          remoteServiceFilter,
-          // a pseudo attachments array, temporary until we have a real one
-          attachments: [
+const vjsfOptions = computed<VjsfOptions | null>(() => {
+  const owner = $uiConfig.dataFair.owner
+  let ownerFilter = `${owner.type}:${owner.id}`
+  if (owner.department) ownerFilter += ':' + owner.department
+  const datasetFilter = `owner=${ownerFilter}`
+  const remoteServiceFilter = `privateAccess=${ownerFilter}`
+  return {
+    titleDepth: 4,
+    density: 'comfortable',
+    locale: 'fr',
+    fetchBaseURL: '/data-fair/',
+    context: {
+      owner,
+      ownerFilter,
+      datasetFilter,
+      remoteServiceFilter, // a pseudo attachments array, temporary until we have a real one
+      attachments: [
             {
               title: 'Attachment 1',
               name: 'attachment.png',
@@ -346,54 +344,39 @@ export default {
               mimetype: 'image/png',
               updatedAt: '2025-01-15T09:00:48.787Z'
             }
-          ]
-        },
-        locale: this.i18n.locale,
-        defaultLocale: this.i18n.fallbackLocale,
-        rootDisplay: 'expansion-panels',
-        // rootDisplay: 'tabs',
-        expansionPanelsProps: {
-          value: 0,
-          hover: true
-        },
-        dialogProps: {
-          maxWidth: 500,
-          overlayOpacity: 0 // better when inside an iframe
-        },
-        arrayItemCardProps: { outlined: true, tile: true },
-        dialogCardProps: { outlined: true }
-      }
-    },
-    validationErrors () {
-      if (!this.schema || !this.schemaValidate) return
+          ] },
+    updateOn: 'blur',
+    initialValidation: 'always',
+  }
+})
+
+const validationErrors = computed(() => {
+  if (!schema.value || !schemaValidate) return
       const valid = this.schemaValidate(this.editConfig)
       if (!valid) {
         ajvLocalize[this.$i18n.locale as 'en' | 'fr'](this.schemaValidate.errors)
         return this.schemaValidate.errors
       }
       return null
-    },
-    iframeExtraParams () {
-      return this.extraParams
-        .filter(p => p.name && p.value)
-        .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: true })
+})
+
+const iframeExtraParams = computed(() => {
+  return extraParams.value
+    .filter(p => p.name && p.value)
+    .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: 'true' } as Record<string, string>)
+})
+
+const editConfig = useFetch('http://localhost:5888/config')
+
+const socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
+socketDevServer.onopen = () => {
+  socketDevServer.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    if (data.type === 'app-error') {
+      this.error = data.data.message
     }
-  },
-  async created () {
-    this.editConfig = await fetch('http://localhost:5888/config')
-    this.fetchInfo()
-  },
-  mounted () {
-    console.log('connect to to ws://localhost:5888')
-    this.socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
-    this.socketDevServer.onopen = () => {
-      this.socketDevServer.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        if (data.type === 'app-error') {
-          this.error = data.data.message
-        }
-      }
-    }
+  }
+}
 
     window.addEventListener('message', async msg => {
       console.log('received message from iframe', msg.data)
@@ -404,6 +387,21 @@ export default {
         this.loading = false
       }
     })
+
+
+export default {
+  computed: {
+    
+    iframeExtraParams () {
+      
+    }
+  },
+  async created () {
+    this.fetchInfo()
+  },
+  mounted () {
+    console.log('connect to to ws://localhost:5888')
+    
   },
   destroyed () {
     if (this.socketDevServer) this.socketDevServer.close()
