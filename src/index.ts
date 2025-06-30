@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
-const path = require('path')
-require('dotenv').config()
-process.env.NODE_CONFIG_DIR = path.join(__dirname, '../config')
-const app = require('./app')
+import 'dotenv/config'
+import path from 'node:path'
+
+process.env.NODE_CONFIG_DIR = path.join(import.meta.dirname, '../config')
+const app = await import('./app.js')
 
 app.run().then(app => {
   // nothing to do
 }, error => {
-  console.error('Failure in customers process', error)
+  console.error('Failure in dev server process', error)
   process.exit(-1)
 })
 

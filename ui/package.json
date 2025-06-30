@@ -1,0 +1,14 @@
+{
+  "name": "@dev-server/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_CONFIG_DIR=../config/ vite --port 6220",
+    "build": "vue-tsc -b && vite build",
+    "check-types": "vue-tsc",
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix ."
+  },
+  "dependencies": {}
+}
