@@ -11,8 +11,6 @@ module.exports = {
   },
   app: {
     url: 'http://localhost:3000',
-    proxyPaths: ['/_nuxt/'],
-    script: 'dev-src'
-  },
-  iframeLog: false
+    proxyPaths: ['/_nuxt/']
+  }
 }
