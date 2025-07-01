@@ -44,6 +44,8 @@
     "@types/node": "^24.0.7",
     "@types/ws": "^8.18.1",
     "eslint": "^9.30.0",
+    "eslint-plugin-vue": "^10.2.0",
+    "eslint-plugin-vuetify": "^2.5.2",
     "neostandard": "^0.12.1",
     "typescript": "^5.8.3"
   },

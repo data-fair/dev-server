@@ -10,5 +10,5 @@
     "checkJs": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "public", "data"]
+  "exclude": ["node_modules", "public", "data", "ui", "test-apps"]
 }

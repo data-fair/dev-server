@@ -1,11 +1,11 @@
-<template lang="html">
+<template>
   <v-container
     fluid
     class="pt-4"
   >
     <v-row>
       <v-col
-        xs="12"
+        class="xs"
         md="6"
         lg="4"
       >
@@ -19,20 +19,15 @@
           <v-spacer />
           <v-btn
             class="mx-2"
-            fab
-            dark
-            small
+            size="small"
             color="primary"
+            :icon="mdiRefresh"
             :loading="loading"
             @click="fetchInfo"
-          >
-            <v-icon dark>
-              mdi-refresh
-            </v-icon>
-          </v-btn>
+          />
         </v-row>
         <h2 class="text-h6 mt-2">
-          {{ $t('config') }}
+          {{ t('config') }}
         </h2>
         <v-form
           ref="form"
@@ -55,7 +50,7 @@
             v-if="schema && editConfig && !loading"
             v-model="editConfig"
             :schema="schema"
-            :options="options"
+            :options="vjsfOptions"
             @change="validate"
           />
         </v-form>
@@ -83,7 +78,7 @@
         >
           <v-col class="app-meta">
             <h2 class="text-h6">
-              {{ $t('metadata') }}
+              {{ t('metadata') }}
             </h2>
 
             <p v-if="meta['application-name']">
@@ -92,56 +87,56 @@
             <v-alert
               v-else
               type="error"
-              dense
+              density="compact"
             >
-              {{ $t('missingApplicationName') }}
+              {{ t('missingApplicationName') }}
             </v-alert>
 
             <p v-if="meta.thumbnail">
               <b>thumbnail:</b> <img
                 width="25"
-                :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : 'http://localhost:5888/app/' + meta.thumbnail"
+                :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : '/app/' + meta.thumbnail"
               >
             </p>
             <v-alert
               v-else
               type="error"
-              dense
+              density="compact"
             >
-              {{ $t('missingThumbnail') }}
+              {{ t('missingThumbnail') }}
             </v-alert>
 
-            <p v-if="meta.title && meta.title[$i18n.locale]">
-              <b>title:</b> {{ meta.title[$i18n.locale] }}
+            <p v-if="meta.title && meta.title[locale]">
+              <b>title:</b> {{ meta.title[locale] }}
             </p>
             <v-alert
               v-else
               type="error"
-              dense
+              density="compact"
             >
-              {{ $t('missingTitle', {locale: $i18n.locale}) }}
+              {{ t('missingTitle', {locale: locale}) }}
             </v-alert>
 
-            <p v-if="meta.description && meta.description[$i18n.locale]">
-              <b>description:</b> {{ meta.description[$i18n.locale] }}
+            <p v-if="meta.description && meta.description[locale]">
+              <b>description:</b> {{ meta.description[locale] }}
             </p>
             <v-alert
               v-else
               type="error"
-              dense
+              density="compact"
             >
-              {{ $t('missingDesc', {locale: $i18n.locale}) }}
+              {{ t('missingDesc', {locale: locale}) }}
             </v-alert>
 
-            <p v-if="meta.keywords && meta.keywords[$i18n.locale]">
-              <b>keywords:</b> {{ meta.keywords[$i18n.locale] }}
+            <p v-if="meta.keywords && meta.keywords[locale]">
+              <b>keywords:</b> {{ meta.keywords[locale] }}
             </p>
             <v-alert
               v-else
               type="error"
-              dense
+              density="compact"
             >
-              {{ $t('missingKeywords', {locale: $i18n.locale}) }}
+              {{ t('missingKeywords', {locale: locale}) }}
             </v-alert>
 
             <p v-if="meta['vocabulary-accept']">
@@ -150,9 +145,9 @@
             <v-alert
               v-else
               type="info"
-              dense
+              density="compact"
             >
-              {{ $t('missingVocabAccept', {locale: $i18n.locale}) }}
+              {{ t('missingVocabAccept', {locale: locale}) }}
             </v-alert>
 
             <p v-if="meta['vocabulary-require']">
@@ -161,9 +156,9 @@
             <v-alert
               v-else
               type="info"
-              dense
+              density="compact"
             >
-              {{ $t('missingVocabRequire', {locale: $i18n.locale}) }}
+              {{ t('missingVocabRequire', {locale: locale}) }}
             </v-alert>
             <p v-if="meta['df:overflow']">
               <b>df:overflow:</b> {{ meta['df:overflow'] }}
@@ -171,9 +166,9 @@
             <v-alert
               v-else
               type="info"
-              dense
+              density="compact"
             >
-              {{ $t('missingDFOverflow', {locale: $i18n.locale}) }}
+              {{ t('missingDFOverflow', {locale: locale}) }}
             </v-alert>
 
             <p v-if="meta['df:sync-state']">
@@ -182,9 +177,9 @@
             <v-alert
               v-else
               type="info"
-              dense
+              density="compact"
             >
-              {{ $t('missingDFSyncState', {locale: $i18n.locale}) }}
+              {{ t('missingDFSyncState', {locale: locale}) }}
             </v-alert>
 
             <p v-if="meta['df:filter-concepts']">
@@ -193,15 +188,15 @@
             <v-alert
               v-else
               type="info"
-              dense
+              density="compact"
             >
-              {{ $t('missingDFFilterConcepts', {locale: $i18n.locale}) }}
+              {{ t('missingDFFilterConcepts', {locale: locale}) }}
             </v-alert>
           </v-col>
         </v-row>
       </v-col>
       <v-col
-        xs="12"
+        class="xs"
         md="6"
         lg="8"
       >
@@ -210,37 +205,27 @@
           <screenshot-simulation />
           <v-btn
             class="mx-2"
-            fab
-            dark
-            small
+            size="small"
             color="primary"
             title="reload iframe content"
+            :icon="mdiRefresh"
             @click="reloadIframe"
-          >
-            <v-icon dark>
-              mdi-refresh
-            </v-icon>
-          </v-btn>
+          />
           <v-btn
             class="mx-2"
-            fab
-            dark
-            small
+            size="small"
             color="primary"
-            href="http://localhost:5888/app"
+            href="/app"
             title="open in full page"
             target="blank"
-          >
-            <v-icon dark>
-              mdi-open-in-new
-            </v-icon>
-          </v-btn>
+            :icon="mdiOpenInNew"
+          />
           <lang-switcher />
         </v-row>
         <v-card>
           <v-iframe
             v-if="showPreview && meta"
-            src="http://localhost:5888/app"
+            src="/app"
             :log="iframeLog"
             :iframe-resizer="meta['df:overflow'] === 'true'"
             :sync-state="meta['df:sync-state'] === 'true'"
@@ -268,59 +253,70 @@ en:
   config: Configuration form created from config-schema.json
 </i18n>
 
-<script lang="ts" type="setup">
+<script lang="ts" setup>
 
-import {ref, computed, watch} from 'vue'
-import reconnectingWebSocketModule from 'reconnecting-websocket'
-import jsonRefs from '@koumoul/vjsf/lib/utils/json-refs.js'
-import {setProperty} from 'dot-prop'
-
+import { ref, computed, watch } from 'vue'
+import ReconnectingWebSocket from 'reconnecting-websocket'
+import { setProperty } from 'dot-prop'
 // import ScreenshotSimulation from '~/components/screenshot-simulation.vue'
 import * as parse5 from 'parse5'
-import Ajv from 'ajv'
+import Ajv, { ValidateFunction } from 'ajv'
 import ajvFormats from 'ajv-formats'
 import ajvLocalize from 'ajv-i18n'
 import { $uiConfig } from './context'
 import { useI18n } from 'vue-i18n'
-import {fetch} from 'ofetch'
-import {useFetch} from '@data-fair/lib-vue/fetch.js'
-import {useAsyncAction} from '@data-fair/lib-vue/async-action.js'
 import '@data-fair/frame/lib/d-frame.js'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
-import { v2compat } from '@koumoul/vjsf/compat/v2'
-
-const ReconnectingWebSocket = reconnectingWebSocketModule as unknown as typeof reconnectingWebSocketModule.default
+// import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { mdiOpenInNew, mdiRefresh } from '@mdi/js'
+import { ofetch } from 'ofetch'
+import { isElementNode, isTextNode } from '@parse5/tools'
+import { resolveLocaleRefs } from '@json-layout/core/compile'
+import langSwitcher from './components/lang-switcher.vue'
+import screenshotSimulation from './components/screenshot-simulation.vue'
 
 const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
 ajvFormats(ajv)
 
-type Meta = Record<string, string>
+type Locale = 'fr' | 'en'
+type Meta = {
+  title?: Record<string, string>,
+  description?: Record<string, string>,
+  keywords?: Record<string, string>,
+  'application-name'?: string,
+  'vocabulary-accept'?: string,
+  'vocabulary-require'?: string,
+  thumbnail?: string,
+  'df:overflow'?: string,
+  'df:sync-state'?: string,
+  'df:filter-concepts'?: string
+}
 
-const {t} = useI18n()
+const { t, locale } = useI18n()
 
 const error = ref<string>()
 const schema = ref<any>()
-const editConfig = ref<any>()
 const showPreview = ref(true)
 const compileError = ref<string>()
 const formValid = ref(false)
 const iframeLog = ref(false)
 const loading = ref(false)
 const meta = ref<Meta>()
-const extraParams = ref<{name: string, value: string}[]>()
+const extraParams = ref<{ name: string, value: string }[]>()
+let schemaValidate: ValidateFunction
 
 const extraParamsSchema = {
-      type: 'array',
-      title: 'Extra query params',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          value: { type: 'string' }
-        }
-      }
+  type: 'array',
+  title: 'Extra query params',
+  items: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      value: { type: 'string' }
     }
+  }
+}
 
 const vjsfOptions = computed<VjsfOptions | null>(() => {
   const owner = $uiConfig.dataFair.owner
@@ -339,14 +335,15 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
       datasetFilter,
       remoteServiceFilter, // a pseudo attachments array, temporary until we have a real one
       attachments: [
-            {
-              title: 'Attachment 1',
-              name: 'attachment.png',
-              size: 4705,
-              mimetype: 'image/png',
-              updatedAt: '2025-01-15T09:00:48.787Z'
-            }
-          ] },
+        {
+          title: 'Attachment 1',
+          name: 'attachment.png',
+          size: 4705,
+          mimetype: 'image/png',
+          updatedAt: '2025-01-15T09:00:48.787Z'
+        }
+      ]
+    },
     updateOn: 'blur',
     initialValidation: 'always',
   }
@@ -354,44 +351,41 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
 
 const validationErrors = computed(() => {
   if (!schema.value || !schemaValidate) return
-      const valid = this.schemaValidate(this.editConfig)
-      if (!valid) {
-        ajvLocalize[this.$i18n.locale as 'en' | 'fr'](this.schemaValidate.errors)
-        return this.schemaValidate.errors
-      }
-      return null
+  const valid = schemaValidate(editConfig.value)
+  if (!valid) {
+    ajvLocalize[locale.value as Locale](schemaValidate.errors)
+    return schemaValidate.errors
+  }
+  return null
 })
 
 const iframeExtraParams = computed(() => {
-  return extraParams.value
+  return (extraParams.value ?? [])
     .filter(p => p.name && p.value)
     .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: 'true' } as Record<string, string>)
 })
 
-const fetchConfig = useFetch('http://localhost:5888/config')
+const fetchConfig = useFetch('/config')
 const editConfig = ref<any>()
-watch(fetchConfig.data, (v) => editConfig.value = v)
+watch(fetchConfig.data, (v) => { editConfig.value = v })
 
 const socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
 socketDevServer.onopen = () => {
   socketDevServer.onmessage = (event) => {
     const data = JSON.parse(event.data)
     if (data.type === 'app-error') {
-      this.error = data.data.message
+      error.value = data.data.message
     }
   }
 }
 
-    window.addEventListener('message', async msg => {
-      console.log('received message from iframe', msg.data)
-      if (msg.data.type === 'set-config') {
-        this.loading = true
-        this.editConfig = setProperty({ ...this.editConfig }, msg.data.content.field, msg.data.content.value)
-        await this.validate()
-        this.loading = false
-      }
-    })
-
+window.addEventListener('message', async msg => {
+  console.log('received message from iframe', msg.data)
+  if (msg.data.type === 'set-config') {
+    editConfig.value = setProperty({ ...editConfig.value }, msg.data.content.field, msg.data.content.value)
+    await validate()
+  }
+})
 
 const empty = async () => {
   editConfig.value = null
@@ -400,83 +394,84 @@ const empty = async () => {
 }
 
 const form = useTemplateRef('form')
-const valid = ref(false)
-const validate = async async () => {
+const validate = async () => {
   await form.value?.validate()
-  if (valid.value) {
+  if (formValid.value) {
     error.value = undefined
     await save(editConfig.value)
   }
 }
 
 const save = async (config: any) => {
-  await fetch('http://localhost:5888/config', {body: config, method: 'put'})
+  await ofetch('/config', { body: config, method: 'put' })
   await reloadIframe()
 }
 
 const fetchInfo = useAsyncAction(async () => {
+  // read meta from index.html
+  const htmlText = await ofetch<string>('/app/index.html')
+  const document = parse5.parse(htmlText)
+  const html = document.childNodes.filter(isElementNode).find(c => c.tagName === 'html')
+  if (!html) throw new Error('broken HTML')
+  const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || 'fr'
+  const head = html.childNodes.filter(isElementNode).find(c => c.tagName === 'head')
+  if (!head) throw new Error('broken HTML, missing head tag')
 
-      // read meta from index.html
-      const htmlText = await fetch('http://localhost:5888/app/index.html')
-      const document = parse5.parse(htmlText)
-      const html = document.childNodes.find(c => c.tagName === 'html')
-      if (!html) throw new Error('broken HTML')
-      const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || this.$i18n.defaultLocale
-      const head = html.childNodes.find(c => c.tagName === 'head')
-      if (!head) throw new Error('broken HTML, missing head tag')
+  const parsedMeta: any = {}
+  for (const node of head.childNodes.filter(isElementNode).filter(c => c.tagName === 'title')) {
+    parsedMeta.title = parsedMeta.title ?? {}
+    parsedMeta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes.filter(isTextNode)[0].value
+  }
 
-      const meta = { title: {} }
-      for (const node of head.childNodes.filter(c => c.tagName === 'title')) {
-        meta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes?.[0].value
+  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts']
+  const localizedMetaTags = ['description', 'keywords']
+  const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
+
+  const metaNodes = head.childNodes
+    .filter(isElementNode)
+    .filter(c => c.tagName === 'meta')
+    .map(c => ({
+      name: c.attrs.find(a => a.name === 'name')?.value,
+      locale: c.attrs.find(a => a.name === 'lang')?.value || defaultLocale,
+      content: c.attrs.find(a => a.name === 'content')?.value
+    }))
+    .filter(m => m.name && metaTags.includes(m.name))
+
+  for (const metaNode of metaNodes) {
+    if (!metaNode.name || !metaNode.content) continue
+    if (localizedMetaTags.includes(metaNode.name)) {
+      parsedMeta[metaNode.name] = parsedMeta[metaNode.name] || {}
+      if (multiValuedMetaTags.includes(metaNode.name)) {
+        parsedMeta[metaNode.name][metaNode.locale] = parsedMeta[metaNode.name][metaNode.locale] || []
+        if (metaNode.content) parsedMeta[metaNode.name][metaNode.locale].push(metaNode.content)
+      } else {
+        parsedMeta[metaNode.name][metaNode.locale] = metaNode.content
       }
-
-      const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts']
-      const localizedMetaTags = ['description', 'keywords']
-      const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
-
-      const metaNodes = head.childNodes
-        .filter(c => c.tagName === 'meta')
-        .map(c => ({
-          name: c.attrs.find(a => a.name === 'name')?.value,
-          locale: c.attrs.find(a => a.name === 'lang')?.value || defaultLocale,
-          content: c.attrs.find(a => a.name === 'content')?.value
-        }))
-        .filter(m => metaTags.includes(m.name))
-
-      for (const metaNode of metaNodes) {
-        if (localizedMetaTags.includes(metaNode.name)) {
-          meta[metaNode.name] = meta[metaNode.name] || {}
-          if (multiValuedMetaTags.includes(metaNode.name)) {
-            meta[metaNode.name][metaNode.locale] = meta[metaNode.name][metaNode.locale] || []
-            if (metaNode.content) meta[metaNode.name][metaNode.locale].push(metaNode.content)
-          } else {
-            meta[metaNode.name][metaNode.locale] = metaNode.content
-          }
-        } else {
-          if (multiValuedMetaTags.includes(metaNode.name)) {
-            meta[metaNode.name] = meta[metaNode.name] || []
-            if (metaNode.content) meta[metaNode.name].push(metaNode.content)
-          } else {
-            meta[metaNode.name] = metaNode.content
-          }
-        }
+    } else {
+      if (multiValuedMetaTags.includes(metaNode.name)) {
+        parsedMeta[metaNode.name] = parsedMeta[metaNode.name] || []
+        if (metaNode.content) parsedMeta[metaNode.name].push(metaNode.content)
+      } else {
+        parsedMeta[metaNode.name] = metaNode.content
       }
+    }
+  }
 
-      this.meta = meta
+  meta.value = parsedMeta
 
-      // fetch config schema
-      this.schema = null
-      const schema = await fetch('http://localhost:5888/app/config-schema.json')
-      schema['x-display'] = 'tabs'
-
-      this.schema = jsonRefs.resolve(schema, { '~$locale~': this.$i18n.locale === this.$i18n.defaultLocale ? this.$i18n.locale : [this.$i18n.locale, this.$i18n.defaultLocale] })
-      try {
-        this.schemaValidate = ajv.compile(this.schema)
-        this.compileError = null
-      } catch (err) {
-        console.error(err)
-        this.compileError = err.message
-      }
+  // fetch config schema
+  schema.value = undefined
+  const newSchema = await ofetch('/app/config-schema.json')
+  newSchema['x-display'] = 'tabs'
+  resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')
+  schema.value = newSchema
+  try {
+    schemaValidate = ajv.compile(schema.value)
+    compileError.value = undefined
+  } catch (err: any) {
+    console.error(err)
+    compileError.value = err.message
+  }
 })
 
 const reloadIframe = async () => {

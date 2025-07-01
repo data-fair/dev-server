@@ -132,8 +132,10 @@ app.use('/app', createProxyMiddleware({
             if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
 
             // add a script to simulate instrumentation by capture service
-            console.log('QUERY', req.query)
-            if (req.query.thumbnail === 'true') {
+            // @ts-ignore
+            const query: Record<string, string> = req.query
+            console.log('QUERY', query)
+            if (query.thumbnail === 'true') {
               const script = createElement('script', { type: 'text/javascript' })
               script.childNodes.push(createTextNode(`
               console.log('[capture] Simulate a screenshot capture context')
