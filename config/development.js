@@ -1,3 +1,1 @@
-export default {
-  serveUi: false
-}
+export default {}

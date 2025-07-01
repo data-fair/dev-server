@@ -3,3 +3,4 @@ node_modules
 *.tsbuildinfo
 src/*.js
 src/*.d.ts
+config/local-*
