@@ -1,27 +1,51 @@
 {
   "type": "object",
-  "required": ["datasets"],
+  "required": [
+    "datasets"
+  ],
   "properties": {
     "datasets": {
       "type": "array",
-      "items": [{
-        "title": {"$ref": "#/i18n/~$locale~/dataset"},
-        "type": "object",
-        "x-fromUrl": "api/v1/datasets?status=finalized&q={q}&{context.datasetFilter}",
-        "x-itemsProp": "results",
-        "x-itemTitle": "title",
-        "x-itemKey": "href",
-        "properties": {
-          "id": {"type": "string"},
-          "href": {"type": "string"},
-          "title": {"type": "string"},
-          "page": {"type": "string"}
+      "items": [
+        {
+          "title": {
+            "$ref": "#/i18n/~$locale~/dataset"
+          },
+          "type": "object",
+          "layout": {
+            "getItems": {
+              "url": {
+                "type": "js-tpl",
+                "expr": "api/v1/datasets?status=finalized&q={q}&${context.datasetFilter}",
+                "pure": true
+              },
+              "itemKey": "data[\"href\"]",
+              "itemTitle": "data[\"title\"]",
+              "itemsResults": "data[\"results\"]"
+            }
+          },
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "href": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "page": {
+              "type": "string"
+            }
+          }
         }
-      }]
+      ]
     },
     "field1": {
       "type": "string",
-      "title": {"$ref": "#/i18n/~$locale~/field1"},
+      "title": {
+        "$ref": "#/i18n/~$locale~/field1"
+      },
       "readOnly": true
     }
   },

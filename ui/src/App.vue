@@ -17,6 +17,33 @@
         </v-alert>
         <v-row class="mb-2">
           <v-spacer />
+          <v-dialog
+            v-model="showSchema"
+            scrollable
+            max-width="1100px"
+          >
+            <template #activator="{props}">
+              <v-btn
+                class="mx-2"
+                size="small"
+                color="primary"
+                variant="text"
+                :icon="mdiTextBox"
+                :loading="fetchInfo.loading.value"
+                title="show schema"
+                v-bind="props"
+                @click="showSchema = true"
+              />
+            </template>
+            <v-card variant="flat">
+              <v-card-title primary-title>
+                Config schema
+              </v-card-title>
+              <v-card-text>
+                <pre>{{ schema }}</pre>
+              </v-card-text>
+            </v-card>
+          </v-dialog>
           <v-btn
             class="mx-2"
             size="small"
@@ -24,6 +51,7 @@
             variant="text"
             :icon="mdiRefresh"
             :loading="fetchInfo.loading.value"
+            title="refresh app info"
             @click="fetchInfo.execute()"
           />
         </v-row>
@@ -195,6 +223,10 @@
             >
               {{ t('missingDFFilterConcepts', {locale: locale}) }}
             </v-alert>
+
+            <p v-if="meta['df:vjsf']">
+              <b>df:vjsf:</b> {{ meta['df:vjsf'] }}
+            </p>
           </v-col>
         </v-row>
       </v-col>
@@ -271,7 +303,7 @@ import { useI18n } from 'vue-i18n'
 import '@data-fair/frame/lib/d-frame.js'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { mdiOpenInNew, mdiRefresh } from '@mdi/js'
+import { mdiOpenInNew, mdiRefresh, mdiTextBox } from '@mdi/js'
 import { ofetch } from 'ofetch'
 import { isElementNode, isTextNode } from '@parse5/tools'
 import { resolveLocaleRefs } from '@json-layout/core/compile'
@@ -294,7 +326,8 @@ type Meta = {
   thumbnail?: string,
   'df:overflow'?: string,
   'df:sync-state'?: string,
-  'df:filter-concepts'?: string
+  'df:filter-concepts'?: string,
+  'df:vjsf'?: string
 }
 
 const { t, locale } = useI18n()
@@ -306,6 +339,8 @@ const compileError = ref<string>()
 const formValid = ref(false)
 const meta = ref<Meta>()
 const extraParams = ref<{ name: string, value: string }[]>()
+const showSchema = ref(false)
+
 let schemaValidate: ValidateFunction
 
 const extraParamsSchema = {
@@ -428,7 +463,7 @@ const fetchInfo = useAsyncAction(async () => {
     parsedMeta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes.filter(isTextNode)[0].value
   }
 
-  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts']
+  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf']
   const localizedMetaTags = ['description', 'keywords']
   const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
 
@@ -470,7 +505,7 @@ const fetchInfo = useAsyncAction(async () => {
   newSchema['x-display'] = 'tabs'
   newSchema.$id = newSchema.$id ?? 'config-schema'
   resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')
-  schema.value = v2compat(newSchema)
+  schema.value = meta.value?.['df:vjsf'] === '3' ? newSchema : v2compat(newSchema)
   try {
     ajv.removeSchema(newSchema.$id)
     schemaValidate = ajv.compile(schema.value)
