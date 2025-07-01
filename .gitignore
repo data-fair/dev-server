@@ -2,3 +2,4 @@ node_modules
 .type
 *.tsbuildinfo
 src/*.js
+src/*.d.ts

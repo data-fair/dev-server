@@ -4,8 +4,7 @@
     "module": "nodenext",
     "moduleResolution": "NodeNext",
     "strict": true,
-    "allowJs": true,
-    "checkJs": true,
+    "declaration": true,
     "skipLibCheck": true
   },
   "exclude": ["node_modules", "public", "data", "ui", "test-apps", "config", "*.mjs"]

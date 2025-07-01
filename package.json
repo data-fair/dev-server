@@ -66,8 +66,10 @@
     "ws": "^8.18.3"
   },
   "files": [
-    "./config/dist/**/*",
+    "./config/**/*.js",
+    "./config/**/*.d.ts",
     "./ui/dist/**/*",
-    "./src/**/*"
+    "./src/**/*.js",
+    "./src/**/*.d.ts"
   ]
 }
