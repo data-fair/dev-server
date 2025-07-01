@@ -116,7 +116,6 @@ app.use('/app', createProxyMiddleware({
             // add a script to simulate instrumentation by capture service
             // @ts-ignore
             const query: Record<string, string> = req.query
-            console.log('QUERY', query)
             if (query.thumbnail === 'true') {
               const script = createElement('script', { type: 'text/javascript' })
               script.childNodes.push(createTextNode(`
@@ -159,8 +158,7 @@ app.use('/app', createProxyMiddleware({
               if (node.tagName === 'meta') {
                 const name = node.attrs.find(a => a.name === 'name')?.value
                 const content = node.attrs.find(a => a.name === 'content')?.value
-                if (!name || !content) console.warn('failed to extract meta', node)
-                else meta[name] = content
+                if (name !== undefined && content !== undefined) meta[name] = content
               }
             }
             if (meta['df:sync-state'] === 'true' || meta['df:overflow'] === 'true') {

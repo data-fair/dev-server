@@ -7,22 +7,36 @@
   }
 
   var application = window.APPLICATION
+
   if (!application) {
     log('Failed to read APPLICATION. You probably did not access this application through a data-fair configuration.', 'error');
     return
   }
   log('Read APPLICATION: ' + JSON.stringify(application));
-  if (!application.configuration || !application.configuration.datasets || !application.configuration.datasets[0]) {
-    log('The configuration it not sufficient to display some data.', 'error');
-    return
-  }
 
   log('Read localization cookie ' + document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('i18n_lang')))
 
-  $.ajax({url: application.configuration.datasets[0].href + '/lines?size=0', json: true})
-    .then(function(data) {
-      log('Consumed the API of the configured dataset: ' + JSON.stringify(data))
-    })
+  window.addEventListener('message', async msg => {
+    if (msg.data.type === 'set-config') {
+      log('Received new configuration from parent', msg.data)
+      application.configuration = msg.data.content
+      applyConfiguration()
+    }
+  })
+  applyConfiguration()
+
+  function applyConfiguration () {
+    if (!application.configuration || !application.configuration.datasets || !application.configuration.datasets[0]) {
+      log('The configuration it not sufficient to display some data.', 'error');
+      return
+    }
+  
+    $.ajax({url: application.configuration.datasets[0].href + '/lines?size=0', json: true})
+      .then(function(data) {
+        log('Consumed the API of the configured dataset: ' + JSON.stringify(data))
+      })
+  }
+  
 
   $('#error-trigger').on('click', function() {
     log('Send an error to be stored on the application state')

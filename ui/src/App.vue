@@ -227,6 +227,24 @@
             <p v-if="meta['df:vjsf']">
               <b>df:vjsf:</b> {{ meta['df:vjsf'] }}
             </p>
+            <v-alert
+              v-else
+              type="info"
+              density="compact"
+            >
+              {{ t('missingDFVsf') }}
+            </v-alert>
+
+            <p v-if="meta['df:sync-config']">
+              <b>df:sync-config:</b> {{ meta['df:sync-config'] }}
+            </p>
+            <v-alert
+              v-else
+              type="info"
+              density="compact"
+            >
+              {{ t('missingDFSyncConfig') }}
+            </v-alert>
           </v-col>
         </v-row>
       </v-col>
@@ -262,6 +280,7 @@
         <v-card>
           <d-frame
             v-if="showPreview && meta"
+            ref="frame"
             :src="iframeUrl"
             :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
             :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
@@ -285,6 +304,8 @@ en:
   missingDFOverflow: "Metadata \"df:overflow\" is missing. Set it to \"true\" to signify that the application might overflow its initial boundaries and require either resizing of these boundaries or scroll bars."
   missingDFSyncState: "Metadata \"df:sync-state\" is missing. Set it to \"true\" to signify that the application can have some state synchronized in its url (path and query params) that might be used by portals to create more useful links and screenshots."
   missingDFFilterConcepts: "Metadata \"df:filter-concepts\" is missing. Set it to \"true\" to signify that the application supports filtering its datasets based on concepts values."
+  missingDFVsf: "Metadata \"df:vjsf\" is missing. Set it to \"3\" to use the mode modern v3 application configuration edition. You will need to upgrade the schema with the newest annotations (layout instead of x-display, etc)."
+  missingDFSyncConfig: "Metadata \"df:sync-config\" is missing. Set it to \"true\" if your application supports dynamic configuration reloading through postMessage."
   config: Configuration form created from config-schema.json
 </i18n>
 
@@ -328,6 +349,7 @@ type Meta = {
   'df:sync-state'?: string,
   'df:filter-concepts'?: string,
   'df:vjsf'?: string
+  'df:sync-config'?: string
 }
 
 const { t, locale } = useI18n()
@@ -442,9 +464,15 @@ const validate = async () => {
   }
 }
 
+const frame = useTemplateRef('frame')
 const save = async (config: any) => {
   await ofetch('/config', { body: config, method: 'put' })
-  await reloadIframe()
+  if (meta.value?.['df:sync-config'] === 'true') {
+    // @ts-ignore
+    frame.value?.postMessageToChild({ type: 'set-config', content: toRaw(config) })
+  } else {
+    await reloadIframe()
+  }
 }
 
 const fetchInfo = useAsyncAction(async () => {
@@ -463,7 +491,7 @@ const fetchInfo = useAsyncAction(async () => {
     parsedMeta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes.filter(isTextNode)[0].value
   }
 
-  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf']
+  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf', 'df:sync-config']
   const localizedMetaTags = ['description', 'keywords']
   const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
 

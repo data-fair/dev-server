@@ -1,8 +1,6 @@
 {
   "datasets": [
     {
-      "id": "etablissements-finess-france",
-      "title": "Liste des établissements du domaine sanitaire et social",
       "owner": {
         "type": "organization",
         "id": "5a5dc47163ebd4a6f438589b",
@@ -10,819 +8,417 @@
         "department": "data",
         "departmentName": "Données de référence"
       },
-      "originalFile": {
-        "name": "etablissements_geolocalises.csv",
-        "size": 44662752,
-        "mimetype": "text/csv",
-        "md5": "341e221e7c2b92afb93456fb3bfc6ec3",
-        "encoding": "UTF-8"
-      },
-      "createdBy": {
+      "updatedAt": "2024-07-03T13:38:00.122Z",
+      "createdAt": "2019-01-11T13:10:59.131Z",
+      "updatedBy": {
         "id": "rJytCgDTf",
         "name": "Balam Saldana"
       },
-      "createdAt": "2018-09-11T09:20:32.534Z",
-      "updatedBy": {
+      "createdBy": {
         "id": "H1unz-fdl",
         "name": "Nicolas Bonnel"
       },
-      "updatedAt": "2025-06-20T08:51:07.453Z",
-      "status": "finalized",
-      "file": {
-        "name": "etablissements_geolocalises.csv",
-        "size": 44662752,
-        "mimetype": "text/csv",
-        "md5": "341e221e7c2b92afb93456fb3bfc6ec3",
-        "encoding": "UTF-8",
-        "schema": [
-          {
-            "key": "NumET",
-            "x-originalName": "NumET",
-            "type": "integer"
-          },
-          {
-            "key": "src",
-            "x-originalName": "src",
-            "type": "string"
-          },
-          {
-            "key": "dmaj",
-            "x-originalName": "dmaj",
-            "type": "string",
-            "format": "date"
-          },
-          {
-            "key": "NumEJ",
-            "x-originalName": "NumEJ",
-            "type": "integer"
-          },
-          {
-            "key": "Rs",
-            "x-originalName": "Rs",
-            "type": "string"
-          },
-          {
-            "key": "Rsl",
-            "x-originalName": "Rsl",
-            "type": "string"
-          },
-          {
-            "key": "crs",
-            "x-originalName": "crs",
-            "type": "string"
-          },
-          {
-            "key": "cd",
-            "x-originalName": "cd",
-            "type": "string"
-          },
-          {
-            "key": "nvoie",
-            "x-originalName": "nvoie",
-            "type": "integer"
-          },
-          {
-            "key": "tvoie",
-            "x-originalName": "tvoie",
-            "type": "string"
-          },
-          {
-            "key": "lvoie",
-            "x-originalName": "lvoie",
-            "type": "string"
-          },
-          {
-            "key": "cvoie",
-            "x-originalName": "cvoie",
-            "type": "string"
-          },
-          {
-            "key": "ld",
-            "x-originalName": "ld",
-            "type": "string"
-          },
-          {
-            "key": "dep",
-            "x-originalName": "dep",
-            "type": "string"
-          },
-          {
-            "key": "lddep",
-            "x-originalName": "lddep",
-            "type": "string"
-          },
-          {
-            "key": "lach",
-            "x-originalName": "lach",
-            "type": "string"
-          },
-          {
-            "key": "tel",
-            "x-originalName": "tel",
-            "type": "integer"
-          },
-          {
-            "key": "telc",
-            "x-originalName": "telc",
-            "type": "integer"
-          },
-          {
-            "key": "catet",
-            "x-originalName": "catet",
-            "type": "integer"
-          },
-          {
-            "key": "lcatet",
-            "x-originalName": "lcatet",
-            "type": "string"
-          },
-          {
-            "key": "catag",
-            "x-originalName": "catag",
-            "type": "integer"
-          },
-          {
-            "key": "lcatag",
-            "x-originalName": "lcatag",
-            "type": "string"
-          },
-          {
-            "key": "nsiret",
-            "x-originalName": "nsiret",
-            "type": "integer"
-          },
-          {
-            "key": "ape",
-            "x-originalName": "ape",
-            "type": "string"
-          },
-          {
-            "key": "mft",
-            "x-originalName": "mft",
-            "type": "integer"
-          },
-          {
-            "key": "lmft",
-            "x-originalName": "lmft",
-            "type": "string"
-          },
-          {
-            "key": "sph",
-            "x-originalName": "sph",
-            "type": "integer"
-          },
-          {
-            "key": "lsph",
-            "x-originalName": "lsph",
-            "type": "string"
-          },
-          {
-            "key": "douverture",
-            "x-originalName": "douverture",
-            "type": "string",
-            "format": "date"
-          },
-          {
-            "key": "dautorisation",
-            "x-originalName": "dautorisation",
-            "type": "string",
-            "format": "date"
-          },
-          {
-            "key": "dms",
-            "x-originalName": "dms",
-            "type": "string",
-            "format": "date"
-          },
-          {
-            "key": "uai",
-            "x-originalName": "uai",
-            "type": "string"
-          },
-          {
-            "key": "lat",
-            "x-originalName": "lat",
-            "type": "number"
-          },
-          {
-            "key": "lon",
-            "x-originalName": "lon",
-            "type": "number"
-          },
-          {
-            "key": "codeCom",
-            "x-originalName": "codeCom",
-            "type": "integer"
-          }
-        ],
-        "props": {
-          "linesDelimiter": "\n",
-          "fieldsDelimiter": ",",
-          "escapeChar": "\"",
-          "quote": "\""
-        }
-      },
       "schema": [
         {
-          "key": "NumET",
-          "x-originalName": "NumET",
-          "type": "integer",
-          "label": "Numéro FINESS ET",
-          "title": "Numéro FINESS ET",
-          "description": "Un numéro d'identification unique et définitif, appelé numéro FINESS, est attribué à chaque personne morale et ses établissements inscrits au fichier FINESS.",
-          "x-cardinality": 102383
-        },
-        {
-          "key": "NumEJ",
-          "x-originalName": "NumEJ",
-          "type": "integer",
-          "label": "Numéro FINESS EJ",
-          "title": "Numéro FINESS EJ",
-          "description": "Le numéro FINESS juridique, qui porte l'immatriculation des entités juridiques (EJ) régissant les établissements sanitaires, sociaux, médico-sociaux, correspond à la notion de personnalité morale et est associé au SIREN de l'entreprise au moment de son enrengistrement.",
-          "x-cardinality": 48791
-        },
-        {
-          "key": "Rs",
-          "x-originalName": "Rs",
+          "key": "uai",
           "type": "string",
+          "x-originalName": "uai",
+          "x-cardinality": 6763,
           "x-capabilities": {
-            "textAgg": false
+            "textAgg": true
           },
-          "label": "Raison sociale",
-          "title": "Raison sociale",
-          "description": "La raison sociale correspond au nom donné à une société",
+          "description": ""
+        },
+        {
+          "key": "nom_établissement",
+          "type": "string",
+          "x-originalName": "nom établissement",
+          "x-cardinality": 9625,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
           "x-refersTo": "http://www.w3.org/2000/01/rdf-schema#label",
           "x-concept": {
             "id": "label",
             "title": "Libellé",
             "primary": true
-          },
-          "x-cardinality": 91237
+          }
         },
         {
-          "key": "Rsl",
-          "x-originalName": "Rsl",
+          "key": "code_departement",
           "type": "string",
+          "x-originalName": "code_departement",
+          "x-cardinality": 101,
           "x-capabilities": {
-            "textAgg": false
+            "textAgg": true
           },
-          "label": "Raison sociale longue",
-          "title": "Raison sociale longue",
-          "description": "La raison sociale non abrégée",
-          "x-cardinality": 72712
-        },
-        {
-          "key": "crs",
-          "x-originalName": "crs",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Complément de raison sociale",
-          "title": "Complément de raison sociale",
-          "description": "le complément de raison sociale est un élément qui vient compléter la dénomination sociale d'une société ",
-          "x-cardinality": 6727
-        },
-        {
-          "key": "cd",
-          "x-originalName": "cd",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Complément de distribution",
-          "title": "Complément de distribution",
-          "description": "adresse complémentaire qui peut être associée à un établissement de santé ou médico-social.",
-          "x-cardinality": 8864
-        },
-        {
-          "key": "nvoie",
-          "x-originalName": "nvoie",
-          "type": "integer",
-          "label": "Numéro de voie",
-          "title": "Numéro de voie",
-          "description": "Numéro de voie",
-          "x-cardinality": 1475
-        },
-        {
-          "key": "tvoie",
-          "x-originalName": "tvoie",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Type de voie",
-          "title": "Type de voie",
-          "description": "Type de voie",
-          "x-cardinality": 111
-        },
-        {
-          "key": "lvoie",
-          "x-originalName": "lvoie",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Libellé de voie",
-          "title": "Libellé de voie",
-          "description": "Libellé de voie",
-          "x-cardinality": 37309
-        },
-        {
-          "key": "cvoie",
-          "x-originalName": "cvoie",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Complement de voie",
-          "title": "Complement de voie",
-          "description": "Complement de voie",
-          "x-cardinality": 4
-        },
-        {
-          "key": "ld",
-          "x-originalName": "ld",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Lieu-dit / BP",
-          "title": "Lieu-dit / BP",
-          "description": "",
-          "x-cardinality": 6078
-        },
-        {
-          "key": "codeCom",
-          "x-originalName": "codeCom",
-          "type": "string",
-          "label": "Code commune",
-          "title": "Code commune",
-          "description": "",
-          "x-refersTo": "http://rdf.insee.fr/def/geo#codeCommune",
-          "x-concept": {
-            "id": "codeCommune",
-            "title": "Code commune",
-            "primary": true
-          },
-          "x-cardinality": 10885
-        },
-        {
-          "key": "dep",
-          "x-originalName": "dep",
-          "type": "string",
-          "label": "Département",
-          "title": "Département",
           "description": "",
           "x-refersTo": "http://rdf.insee.fr/def/geo#codeDepartement",
           "x-concept": {
             "id": "codeDepartement",
             "title": "Code département",
             "primary": true
-          },
-          "x-cardinality": 103
+          }
         },
         {
-          "key": "lddep",
-          "x-originalName": "lddep",
+          "key": "libelle_departement",
           "type": "string",
+          "x-originalName": "libelle_departement",
+          "x-cardinality": 101,
           "x-capabilities": {
-            "textAgg": false
+            "textAgg": true
           },
-          "label": "Libellé département",
-          "title": "Libellé département",
-          "description": "",
-          "x-cardinality": 103
+          "description": ""
         },
         {
-          "key": "lach",
-          "x-originalName": "lach",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Ligne d'acheminement (Code postal + Lib Commune)",
-          "title": "Ligne d'acheminement (Code postal + Lib Commune)",
-          "description": "",
-          "x-cardinality": 13680
-        },
-        {
-          "key": "tel",
-          "x-originalName": "tel",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Téléphone",
-          "title": "Téléphone",
-          "description": "",
-          "x-refersTo": "https://www.w3.org/2006/vcard/ns#tel",
-          "x-concept": {
-            "id": "tel",
-            "title": "N° de téléphone",
-            "primary": true
-          },
-          "x-cardinality": 74188
-        },
-        {
-          "key": "telc",
-          "x-originalName": "telc",
+          "key": "code_academie",
           "type": "integer",
-          "label": "Télécopie",
-          "title": "Télécopie",
+          "x-originalName": "code_academie",
+          "x-cardinality": 31,
           "description": "",
-          "ignoreDetection": true,
-          "x-cardinality": 41248
-        },
-        {
-          "key": "catet",
-          "x-originalName": "catet",
-          "type": "integer",
-          "label": "Catégorie d'établissement",
-          "title": "Catégorie d'établissement",
-          "description": "",
-          "x-cardinality": 174
-        },
-        {
-          "key": "lcatet",
-          "x-originalName": "lcatet",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Libellé catégorie d'établissement",
-          "title": "Libellé catégorie d'établissement",
-          "description": "",
-          "x-cardinality": 175
-        },
-        {
-          "key": "catag",
-          "x-originalName": "catag",
-          "type": "integer",
-          "label": "Catégorie d'agrégat d'établissement",
-          "title": "Catégorie d'agrégat d'établissement",
-          "description": "",
-          "x-cardinality": 60
-        },
-        {
-          "key": "lcatag",
-          "x-originalName": "lcatag",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Libellé catégorie d'agégat d'établissement",
-          "title": "Libellé catégorie d'agrégat d'établissement",
-          "description": "",
-          "x-cardinality": 63
-        },
-        {
-          "key": "nsiret",
-          "x-originalName": "nsiret",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Numéro de SIRET",
-          "title": "Numéro de SIRET",
-          "description": "",
-          "x-refersTo": "http://www.datatourisme.fr/ontology/core/1.0/#siret",
-          "x-concept": {
-            "id": "siret",
-            "title": "SIRET",
-            "primary": true
-          },
-          "x-cardinality": 80971
-        },
-        {
-          "key": "ape",
-          "x-originalName": "ape",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Code APE",
-          "title": "Code APE",
-          "description": "",
-          "x-cardinality": 154
-        },
-        {
-          "key": "mft",
-          "x-originalName": "mft",
-          "type": "integer",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Code MFT",
-          "title": "Code MFT",
-          "description": "",
-          "x-cardinality": 46,
           "enum": [
-            1,
-            8,
-            99,
-            3,
-            36,
-            34,
-            45,
-            57,
-            5,
-            7,
-            30,
-            54,
-            9,
-            10,
-            40,
-            41,
-            35,
-            4,
-            47,
-            2,
-            43,
-            22,
-            52,
-            58,
-            32,
-            17,
-            33,
-            15,
-            38,
-            21,
-            14,
-            53,
-            44,
             25,
-            42,
+            24,
+            9,
+            17,
+            14,
+            8,
+            10,
+            4,
+            2,
+            16,
             11,
-            48,
+            18,
+            12,
+            1,
+            20,
+            21,
             23,
-            51,
-            56,
-            55,
-            31,
+            15,
+            13,
+            7,
+            5,
+            19,
             6,
-            49,
-            50,
-            46
+            3,
+            28,
+            22,
+            32,
+            31,
+            33,
+            27,
+            43
           ]
         },
         {
-          "key": "lmft",
-          "x-originalName": "lmft",
+          "key": "académie",
           "type": "string",
+          "x-originalName": "académie",
+          "x-cardinality": 31,
           "x-capabilities": {
-            "textAgg": false
+            "textAgg": true
           },
-          "label": "Libellé MFT",
-          "title": "Libellé MFT",
           "description": "",
-          "x-cardinality": 48,
           "enum": [
-            "Etablissement Tarif Libre",
-            "Président du Conseil Départemental",
-            "Indéterminé",
-            "ARS établissements Publics de santé dotation globale",
-            "Tarifs conventionnels assurance maladie",
-            "ARS / DG dotation globale",
-            "ARS/PCD, Tarif partiel, habilité aide sociale sans PUI",
-            "ARS /ARS PCD   Dotation forfait ou prix de journée globalisé",
-            "ARS établissements médico-soc. non financés dotation globale",
-            "ARS établissements de santé non financés dotation globale",
-            "Préfet de région établissements et services sociaux",
-            "Tarif AM - Services de Soins Infirmiers A Domicile",
-            "ARS PCD mixte (2 arrêtés), habilité aide sociale",
-            "Autorité Conjointe Préfet ou ARS et PCD (1 arrêté)",
-            "ARS/PCD, Tarif global, habilité aide sociale, recours PUI",
-            "ARS/PCD, Tarif global, habilité aide sociale sans PUI",
-            "Préfet de département Subvention",
-            "ARS établissements PSPH dotation globale",
-            "ARS/PCD, Tarif partiel, non habilité aide sociale sans PUI",
-            "Autorité Ministérielle",
-            "ARS/PCD, Tarif global, non habilité aide sociale sans PUI",
-            "Autorité mixte ARS PCD  ESLD tripartite DG global",
-            "ARS/PCD, LF, forfait soins, habilité aide sociale",
-            "ARS dotation forfait ou prix de journée globalisé hors CPOM",
-            "Echelle tarifaire publique",
-            "Autorité mixte ARS PCD  dotation globale",
-            "Echelle tarifaire privée",
-            "ARS privé hors PSPH sous dotation globale",
-            "Régime spécial de prévoyance",
-            "ARS PCD mixte, Accueil de jour PA, HAS",
-            "Organismes Nationaux de Sécurité Sociale",
-            "ARS/PCD, LF, forfait soins, non habilité aide sociale",
-            "ARS/PCD, Tarif partiel, habilité aide sociale, recours PUI",
-            "ARS PCD mixte, Accueil de jour PA, nHAS, hébergement libre",
-            "ARS/PCD, Tarif global, non hab.aide sociale, recours PUI",
-            "Tarifs ARS, PCD, hébergt libre",
-            "ARS/PCD, EHPA, dot globale de soins, habilité aide sociale",
-            "Autorité mixte ARS PCD  ESLD tripartite DG partielle",
-            "ARS/PCD, PUV, forfait soins, non habilité aide sociale",
-            "ARS/PCD, PUV, convention SSIAD, habilité à l'aide sociale",
-            "ARS/PCD, PUV, convention SSIAD, non habilité à l'aide social",
-            "Pdt Conseil Départemental/Subvention",
-            "Tarif d'Autorité",
-            "ARS/PCD, EHPA, dot globale soins, non habilité aide sociale",
-            "ARS/PCD, PUV, forfait soins, habilité aide sociale",
-            "ARS/PCD, Tarif partiel, non hab.aide sociale, recours PUI",
-            "ARS établissements de sant�� non financés dotation globale",
-            "Préfet de r��gion établissements et services sociaux"
+            "VERSAILLES",
+            "CRETEIL",
+            "LILLE",
+            "NANTES",
+            "RENNES",
+            "GRENOBLE",
+            "LYON",
+            "BORDEAUX",
+            "AIX-MARSEILLE",
+            "TOULOUSE",
+            "MONTPELLIER",
+            "ORLEANS-TOURS",
+            "NANCY-METZ",
+            "PARIS",
+            "AMIENS",
+            "ROUEN",
+            "NICE",
+            "STRASBOURG",
+            "POITIERS",
+            "DIJON",
+            "CAEN",
+            "REIMS",
+            "CLERMONT-FERRAND",
+            "BESANCON",
+            "LA REUNION",
+            "LIMOGES",
+            "GUADELOUPE",
+            "MARTINIQUE",
+            "GUYANE",
+            "CORSE",
+            "MAYOTTE"
           ]
         },
         {
-          "key": "sph",
-          "x-originalName": "sph",
-          "type": "integer",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Code SPH",
-          "title": "Code SPH",
-          "description": "",
-          "x-cardinality": 7
-        },
-        {
-          "key": "lsph",
-          "x-originalName": "lsph",
+          "key": "code_region",
           "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Libellé SPH",
-          "title": "Libellé SPH",
+          "x-originalName": "code_region",
+          "x-cardinality": 18,
           "description": "",
-          "x-cardinality": 7
-        },
-        {
-          "key": "douverture",
-          "x-originalName": "douverture",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Date d'ouverture",
-          "title": "Date d'ouverture",
-          "format": "date",
-          "description": "",
-          "x-cardinality": 15082
-        },
-        {
-          "key": "dautorisation",
-          "x-originalName": "dautorisation",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Date d'autorisation",
-          "title": "Date d'autorisation",
-          "format": "date",
-          "description": "",
-          "x-cardinality": 16332
-        },
-        {
-          "key": "dms",
-          "x-originalName": "dms",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Date de mise à jour sur la structre",
-          "title": "Date de mise à jour sur la structre",
-          "format": "date",
-          "description": "",
-          "x-cardinality": 4027
-        },
-        {
-          "key": "uai",
-          "x-originalName": "uai",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
-          },
-          "label": "Code UAI (RNE)",
-          "title": "Code UAI (RNE)",
-          "description": "",
-          "x-cardinality": 3348
-        },
-        {
-          "key": "lat",
-          "x-originalName": "lat",
-          "type": "number",
-          "label": "Latitude",
-          "title": "Latitude",
-          "description": "",
-          "x-refersTo": "http://schema.org/latitude",
+          "x-refersTo": "http://rdf.insee.fr/def/geo#codeRegion",
           "x-concept": {
-            "id": "latitude",
-            "title": "Latitude",
+            "id": "codeRegion",
+            "title": "Code région",
             "primary": true
-          }
-        },
-        {
-          "key": "lon",
-          "x-originalName": "lon",
-          "type": "number",
-          "label": "Longitude",
-          "title": "Longitude",
-          "description": "",
-          "x-refersTo": "http://schema.org/longitude",
-          "x-concept": {
-            "id": "longitude",
-            "title": "Longitude",
-            "primary": true
-          }
-        },
-        {
-          "key": "src",
-          "x-originalName": "src",
-          "type": "string",
-          "x-capabilities": {
-            "textAgg": false
           },
-          "label": "Source des coordonnées",
-          "title": "Source des coordonnées",
-          "description": "",
-          "x-cardinality": 401
+          "enum": [
+            "11",
+            "84",
+            "32",
+            "44",
+            "75",
+            "76",
+            "93",
+            "52",
+            "28",
+            "53",
+            "27",
+            "24",
+            "04",
+            "01",
+            "02",
+            "03",
+            "94",
+            "06"
+          ]
         },
         {
-          "key": "dmaj",
-          "x-originalName": "dmaj",
+          "key": "libelle_region",
           "type": "string",
-          "format": "date",
-          "label": "Date de mise à jour des coordonnées",
-          "title": "Date de mise à jour des coordonnées",
+          "x-originalName": "libelle_region",
+          "x-cardinality": 18,
+          "x-capabilities": {
+            "textAgg": true
+          },
           "description": "",
+          "enum": [
+            "ILE-DE-FRANCE",
+            "AUVERGNE-RHONE-ALPES",
+            "HAUTS-DE-FRANCE",
+            "GRAND EST",
+            "NOUVELLE-AQUITAINE",
+            "OCCITANIE",
+            "PROVENCE-ALPES-COTE D'AZUR",
+            "PAYS DE LA LOIRE",
+            "NORMANDIE",
+            "BRETAGNE",
+            "BOURGOGNE-FRANCHE-COMTE",
+            "CENTRE-VAL DE LOIRE",
+            "LA REUNION",
+            "GUADELOUPE",
+            "MARTINIQUE",
+            "GUYANE",
+            "CORSE",
+            "MAYOTTE"
+          ]
+        },
+        {
+          "key": "secteur_public/privé",
+          "type": "string",
+          "x-originalName": "secteur public/privé",
           "x-cardinality": 3,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
           "enum": [
-            "2025-05-07T00:00:00.000Z",
-            "2025-05-16T00:00:00.000Z",
-            "2025-05-15T00:00:00.000Z"
+            "PUBLIC",
+            "PRIVE",
+            "SO"
           ]
         },
         {
-          "key": "_infos_commune.code_epci",
-          "x-originalName": "_infos_commune.code_epci",
-          "x-extension": "dataset:communes-de-france/masterData_bulkSearch_infos-commune",
-          "title": "Code EPCI",
-          "description": "Code de l'établissement public de coopération intercommunale",
+          "key": "année",
+          "type": "integer",
+          "x-originalName": "année",
+          "x-cardinality": 8,
+          "description": "",
+          "enum": [
+            2018,
+            2017,
+            2016,
+            2015,
+            2014,
+            2012,
+            2013,
+            2011
+          ]
+        },
+        {
+          "key": "âge",
           "type": "string",
-          "x-refersTo": "http://rdf.insee.fr/def/geo#EtablissementPublicDeCooperationIntercommunale",
+          "x-originalName": "âge",
+          "x-cardinality": 3,
           "x-capabilities": {
-            "textStandard": false,
-            "insensitive": false,
-            "text": false
+            "textAgg": true
           },
-          "x-concept": {
-            "id": "codeEPCI",
-            "title": "Code EPCI",
-            "primary": true
+          "description": "",
+          "enum": [
+            "18 ans",
+            "19 ans ou plus",
+            "17 ans ou moins"
+          ]
+        },
+        {
+          "key": "voie",
+          "type": "string",
+          "x-originalName": "voie",
+          "x-cardinality": 3,
+          "x-capabilities": {
+            "textAgg": true
           },
-          "x-cardinality": 1255
+          "description": "",
+          "enum": [
+            "BAC GENERAL",
+            "BAC PROFESSIONNEL",
+            "BAC TECHNOLOGIQUE"
+          ]
         },
         {
-          "key": "_infos_commune._error",
+          "key": "catégorie",
           "type": "string",
-          "x-originalName": "_error",
-          "x-extension": "dataset:communes-de-france/masterData_bulkSearch_infos-commune",
-          "title": "Erreur de récupération de données de référence",
-          "description": "Une erreur lors de la récupération des informations depuis un service distant",
-          "x-calculated": true
-        },
-        {
-          "key": "_infos_commune.nom_commune",
-          "x-originalName": "_infos_commune.nom_commune",
-          "x-extension": "dataset:communes-de-france/masterData_bulkSearch_infos-commune",
-          "title": "Nom commune",
-          "description": "Nom de la commune",
-          "type": "string",
-          "x-refersTo": "http://schema.org/City",
-          "x-concept": {
-            "id": "city",
-            "title": "Commune",
-            "primary": true
+          "x-originalName": "catégorie",
+          "x-cardinality": 6,
+          "x-capabilities": {
+            "textAgg": true
           },
-          "x-cardinality": 10765
+          "description": "",
+          "enum": [
+            "SPECIALITES DES SERVICES",
+            "BAC S",
+            "SPECIALITES DE LA PRODUCTION",
+            "BAC ES",
+            "BAC L",
+            "SPECIALITES DISCIPLINAIRES"
+          ]
         },
         {
-          "key": "_infos_commune.nom_epci",
-          "x-originalName": "_infos_commune.nom_epci",
-          "x-extension": "dataset:communes-de-france/masterData_bulkSearch_infos-commune",
-          "title": "Nom EPCI",
-          "description": "Nom de l'établissement public de coopération intercommunale",
+          "key": "domaine",
           "type": "string",
-          "x-cardinality": 1252
+          "x-originalName": "domaine",
+          "x-cardinality": 15,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
+          "enum": [
+            "BAC S",
+            "ECHANGES ET GESTION",
+            "BAC ES",
+            "BAC L",
+            "SERVICES AUX PERSONNES",
+            "MECANIQUE, ELECTRICITE, ELECTRONIQUE",
+            "SPEC.PLURI-TECHNO DE LA PRODUCTION",
+            "AGRICULTURE, PECHE, FORET",
+            "SPEC.PLURIVALENTES DES SERVICES",
+            "TRANSFORMATIONS",
+            "COMMUNICATION ET INFORMATION",
+            "GENIE CIVIL, CONSTRUCTION, BOIS",
+            "MATERIAUX SOUPLES",
+            "LETTRES ET ARTS",
+            "SERVICES A LA COLLECTIVITE"
+          ]
         },
         {
-          "x-calculated": true,
-          "key": "_geopoint",
+          "key": "série",
           "type": "string",
-          "title": "Coordonnée géographique",
-          "description": "Centroïde au format \"lat,lon\"",
-          "x-refersTo": "http://www.w3.org/2003/01/geo/wgs84_pos#lat_long",
-          "x-concept": {
-            "id": "latLon",
-            "title": "Latitude / Longitude",
-            "primary": true
+          "x-originalName": "série",
+          "x-cardinality": 14,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
+          "enum": [
+            "BAC S",
+            "BAC ES",
+            "BAC L",
+            "BAC STMG",
+            "BAC STG",
+            "BAC ST2S",
+            "BAC STI2D",
+            "BAC STL",
+            "BAC STAV",
+            "BAC STI",
+            "BAC HOT",
+            "BAC STD2A",
+            "BAC STHR",
+            "BAC F11 - TMD"
+          ]
+        },
+        {
+          "key": "admis",
+          "type": "string",
+          "x-originalName": "admis",
+          "x-cardinality": 2,
+          "description": "",
+          "enum": [
+            "true",
+            "false"
+          ],
+          "x-labels": {
+            "true": "oui",
+            "false": "non"
           }
+        },
+        {
+          "key": "sexe",
+          "type": "string",
+          "x-originalName": "sexe",
+          "x-cardinality": 2,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
+          "enum": [
+            "M",
+            "F"
+          ]
+        },
+        {
+          "key": "présent",
+          "type": "string",
+          "x-originalName": "présent",
+          "x-cardinality": 2,
+          "description": "",
+          "enum": [
+            "true",
+            "false"
+          ],
+          "x-labels": {
+            "true": "oui",
+            "false": "non"
+          }
+        },
+        {
+          "key": "mention",
+          "type": "string",
+          "x-originalName": "mention",
+          "x-cardinality": 7,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": "",
+          "enum": [
+            "10-12 sans mention",
+            "0-08 ajourné",
+            "08-10 rattrapage",
+            "12-14 assez bien",
+            "14-16 bien",
+            "0 absent",
+            "16-20 très bien"
+          ]
+        },
+        {
+          "key": "nb_élèves",
+          "type": "integer",
+          "x-originalName": "nb élèves",
+          "x-cardinality": 101,
+          "description": ""
         },
         {
           "x-calculated": true,
@@ -847,101 +443,234 @@
           "description": "Un nombre aléatoire associé à la ligne qui permet d'obtenir un tri aléatoire par exemple"
         }
       ],
-      "count": 101516,
-      "description": "Liste des établissements du domaine sanitaire et social. Ces données sont publiées régulièrement sur [data.gouv.fr](https://www.data.gouv.fr/fr/datasets/finess-extraction-du-fichier-des-etablissements/).\n\nCependant, le format est peu exploitable (mix de 2 fichiers CSV, sans leurs entêtes, avec des colonnes différentes). De plus, les données dans le fichier original ne sont pas projetées dans le même référentiel de coordonnées.\n\nNous avons retraité les données pour faciliter leur exploitation. Notre fichier CSV est correctement formaté et toutes les coordonnées ont été projetées en WGS84. Le code du traitement est publié en open source sur [ce dépot](https://github.com/koumoul-dev/finess).",
+      "id": "resultats-baccalaureat-etablissement",
+      "title": "Résultats au baccalauréat par établissement",
+      "originalFile": {
+        "name": "resultats-au-baccalaureat-par-etablissement.csv",
+        "size": 240234301,
+        "mimetype": "text/csv",
+        "encoding": "UTF-8"
+      },
+      "status": "finalized",
+      "file": {
+        "name": "resultats-au-baccalaureat-par-etablissement.csv",
+        "size": 240234301,
+        "mimetype": "text/csv",
+        "encoding": "UTF-8",
+        "props": {
+          "linesDelimiter": "\n",
+          "fieldsDelimiter": ",",
+          "escapeChar": "\"",
+          "numLines": 993759
+        },
+        "schema": [
+          {
+            "key": "uai",
+            "type": "string",
+            "x-originalName": "uai"
+          },
+          {
+            "key": "nom_établissement",
+            "type": "string",
+            "x-originalName": "nom établissement"
+          },
+          {
+            "key": "code_departement",
+            "type": "integer",
+            "x-originalName": "code_departement"
+          },
+          {
+            "key": "libelle_departement",
+            "type": "string",
+            "x-originalName": "libelle_departement"
+          },
+          {
+            "key": "code_academie",
+            "type": "integer",
+            "x-originalName": "code_academie"
+          },
+          {
+            "key": "académie",
+            "type": "string",
+            "x-originalName": "académie"
+          },
+          {
+            "key": "code_region",
+            "type": "integer",
+            "x-originalName": "code_region"
+          },
+          {
+            "key": "libelle_region",
+            "type": "string",
+            "x-originalName": "libelle_region"
+          },
+          {
+            "key": "secteur_public/privé",
+            "type": "string",
+            "x-originalName": "secteur public/privé"
+          },
+          {
+            "key": "voie",
+            "type": "string",
+            "x-originalName": "voie"
+          },
+          {
+            "key": "catégorie",
+            "type": "string",
+            "x-originalName": "catégorie"
+          },
+          {
+            "key": "domaine",
+            "type": "string",
+            "x-originalName": "domaine"
+          },
+          {
+            "key": "série",
+            "type": "string",
+            "x-originalName": "série"
+          },
+          {
+            "key": "année",
+            "type": "integer",
+            "x-originalName": "année"
+          },
+          {
+            "key": "âge",
+            "type": "string",
+            "x-originalName": "âge"
+          },
+          {
+            "key": "sexe",
+            "type": "string",
+            "x-originalName": "sexe"
+          },
+          {
+            "key": "présent",
+            "type": "string",
+            "x-originalName": "présent"
+          },
+          {
+            "key": "admis",
+            "type": "string",
+            "x-originalName": "admis"
+          },
+          {
+            "key": "mention",
+            "type": "string",
+            "x-originalName": "mention"
+          },
+          {
+            "key": "nb_élèves",
+            "type": "integer",
+            "x-originalName": "nb élèves"
+          }
+        ]
+      },
+      "count": 993758,
+      "finalizedAt": "2023-11-14T10:48:13.929Z",
+      "origin": "https://www.data.gouv.fr/fr/datasets/resultats-au-baccalaureat-par-etablissement/",
       "license": {
         "title": "Licence Ouverte / Open Licence",
         "href": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "bbox": [
-        -63.09517929330468,
-        -85.52611568011343,
-        55.82683383487165,
-        63.569665336981416
-      ],
-      "finalizedAt": "2025-06-20T08:55:39.340Z",
-      "publications": [],
-      "extensions": [
-        {
-          "active": true,
-          "type": "remoteService",
-          "remoteService": "dataset:communes-de-france",
-          "action": "masterData_bulkSearch_infos-commune",
-          "select": [
-            "code_epci",
-            "nom_commune",
-            "nom_epci"
-          ],
-          "propertyPrefix": "_infos_commune",
-          "error": "",
-          "progress": 0
-        }
-      ],
       "extras": {
         "reuses": [
-          "etablissements-du-domaine-sanitaire-et-social-en-france-metropolitaine",
-          "etablissements-du-domaine-sanitaire-et-social",
-          "categories-des-etablissements-par-departements"
+          "repartition-des-bacheliers-en-2018",
+          "evolution-de-la-repartition-des-mentions-au-bac",
+          "repartition-hf-pour-le-bac-(general-et-technologique)-2018",
+          "evolution-de-l'obtention-du-bac-en-fonction-de-l'age",
+          "evolution-de-la-repartition-public-prive-pour-le-bac"
         ],
         "applications": [
           {
-            "id": "etablissements-du-domaine-sanitaire-et-social-en-france-metropolitaine",
-            "updatedAt": "2024-07-04T14:44:19.672Z",
+            "updatedAt": "2023-10-17T09:13:14.930Z",
+            "id": "repartition-des-bacheliers-en-2018",
             "publicationSites": [
               "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84",
               "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
             ],
-            "slug": "etablissements-du-domaine-sanitaire-et-social-en-france-metropolitaine"
+            "slug": "repartition-des-bacheliers-en-2018"
           },
           {
-            "updatedAt": "2025-01-28T16:30:24.947Z",
-            "id": "etablissements-du-domaine-sanitaire-et-social",
+            "updatedAt": "2024-06-11T13:24:13.801Z",
+            "id": "evolution-de-la-repartition-des-mentions-au-bac",
+            "publicationSites": [
+              "data-fair-portals:5IbdDs7l4",
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ],
+            "slug": "evolution-de-la-repartition-des-mentions-au-bac"
+          },
+          {
+            "updatedAt": "2023-10-17T09:11:56.835Z",
+            "id": "repartition-hf-pour-le-bac-(general-et-technologique)-2018",
+            "publicationSites": [
+              "data-fair-portals:5IbdDs7l4",
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ],
+            "slug": "repartition-hf-pour-le-bac-(general-et-technologique)-2018"
+          },
+          {
+            "updatedAt": "2024-06-03T15:02:41.463Z",
+            "id": "evolution-de-l'obtention-du-bac-en-fonction-de-l'age",
+            "publicationSites": [
+              "data-fair-portals:5IbdDs7l4",
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ],
+            "slug": "evolution-de-l'obtention-du-bac-en-fonction-de-l'age"
+          },
+          {
+            "updatedAt": "2024-05-29T13:59:14.611Z",
+            "id": "evolution-de-la-repartition-public-prive-pour-le-bac",
+            "publicationSites": [
+              "data-fair-portals:5IbdDs7l4",
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ],
+            "slug": "evolution-de-la-repartition-public-prive-pour-le-bac"
+          },
+          {
+            "updatedAt": "2024-07-03T13:38:18.494Z",
+            "id": "proportions-des-resultats-du-baccalaureat",
+            "publicationSites": [
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ],
+            "slug": "proportions-des-resultats-du-baccalaureat"
+          },
+          {
+            "updatedAt": "2023-12-19T11:29:49.424Z",
+            "id": "repartition-des-resultats-au-baccalaureat-par-etablissement",
+            "slug": "repartition-des-resultats-au-baccalaureat-par-etablissement",
+            "publicationSites": [
+              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+            ]
+          },
+          {
+            "updatedAt": "2024-06-05T09:33:46.288Z",
+            "id": "repartition-des-bacheliers-en-2017",
             "publicationSites": [
               "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84",
               "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
             ],
-            "slug": "etablissements-du-domaine-sanitaire-et-social"
-          },
-          {
-            "updatedAt": "2024-07-04T14:44:33.308Z",
-            "id": "categories-des-etablissements-par-departements",
-            "publicationSites": [
-              "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84"
-            ],
-            "slug": "categories-des-etablissements-par-departements"
-          },
-          {
-            "updatedAt": "2023-06-15T13:49:33.640Z",
-            "id": "metriques-test",
-            "slug": "metriques-test"
+            "slug": "repartition-des-bacheliers-en-2017"
           }
         ]
       },
+      "description": "Ce jeu de données contient les résultats au baccalauréat de 2011 à 2018. Les données ont été retravaillées à partir du jeu de données original pour être plus adaptées à l'utilisation d'agrégations. Il contient moins de colonnes que le jeu original mais plus de lignes et le fichier résultant est un peu plus volumineux. Il n'y a plus qu'une seule colonne indiquant le nombre d'élèves, et des attributs ont été rajoutés :\n * **sexe** : qui peut prendre la valeur M ou F ;\n * **présent** : booléen qui indique la présence ou non à l'examen ;\n *  **admis** : booléen qui indique l'admission ou non à l'examen. Est à *false* si **présent** est à *false* ;\n *  **mention** : indique la mention obtenue, ou si il y a eu rattrapage. Dans le cas ou **présent** est à *false*, la mention est à *absent*. Dans le cas ou **admis** est à *false*, la mention est à *ajourné*. L'intervalle de note correspondant à la mention a été ajouté en préfixe, ce qui permet de les trier ;\n * **nb élève** : est la seule colonne avec une valeur numérique.\n\nCe jeu de données est utilisé dans notre cours sur la création d'une visualisation [treemap](https://docs.koumoul.com/pages/treemap).",
       "storage": {
-        "size": 93219025,
+        "size": 240535338,
         "dataFiles": [
           {
-            "name": "etablissements_geolocalises.csv",
+            "name": "resultats-au-baccalaureat-par-etablissement.csv",
             "key": "original",
             "title": "Fichier d'origine",
             "mimetype": "text/csv",
-            "size": 44662752,
-            "updatedAt": "2025-06-05T19:00:52.641Z"
-          },
-          {
-            "name": "etablissements_geolocalises-full.csv",
-            "key": "full",
-            "title": "Fichier enrichi CSV",
-            "mimetype": "text/csv",
-            "size": 48556273,
-            "updatedAt": "2025-06-20T08:52:11.060Z"
+            "size": 240234301,
+            "updatedAt": "2019-01-14T22:27:26.000Z"
           }
         ],
         "indexed": {
-          "size": 48556273,
+          "size": 240234301,
           "parts": [
-            "full-file"
+            "original-file"
           ]
         },
         "attachments": {
@@ -949,51 +678,59 @@
           "count": 0
         },
         "metadataAttachments": {
-          "size": 0,
-          "count": 0
+          "size": 301037,
+          "count": 1
         },
         "masterData": {
           "size": 0,
           "count": 0
         }
       },
-      "origin": "https://www.data.gouv.fr/fr/datasets/finess-extraction-du-fichier-des-etablissements/",
       "topics": [
         {
-          "title": "Santé",
-          "color": "#FFA000FF",
-          "id": "piSXTiyzd",
+          "title": "Education",
+          "color": "#673AB7FF",
+          "id": "VdtQaIG130",
           "icon": {
-            "name": "hospital-box"
+            "name": "school"
           }
         }
       ],
       "publicationSites": [
         "data-fair-portals:5IbdDs7l4",
-        "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84",
         "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
       ],
-      "dataUpdatedAt": "2025-06-05T19:00:57.345Z",
+      "attachments": [
+        {
+          "mimetype": "image/jpeg",
+          "name": "3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg",
+          "size": 301037,
+          "updatedAt": "2021-06-18T09:40:47.594Z",
+          "type": "file",
+          "title": "3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg",
+          "description": "",
+          "url": "http://localhost:5888/data-fair/api/v1/datasets/resultats-baccalaureat-etablissement/metadata-attachments/3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg"
+        }
+      ],
+      "dataUpdatedAt": "2019-05-29T23:53:26.644Z",
       "dataUpdatedBy": {
-        "id": "apiKey:QsU6yCHgyXq4fj-SOIvK-",
-        "name": "Processings"
+        "id": "Ad6jfM1p0",
+        "name": "Mathis Querioux"
       },
-      "primaryKey": [],
       "analysis": {
         "escapeKeyAlgorithm": "legacy"
       },
       "requestedPublicationSites": [],
-      "slug": "etablissements-finess-france",
+      "slug": "resultats-baccalaureat-etablissement",
       "masterData": {
-        "standardSchema": {
-          "active": false
-        },
+        "standardSchema": {},
         "virtualDatasets": {
           "active": true
         },
         "bulkSearchs": [],
         "singleSearchs": []
       },
+      "esWarning": null,
       "userPermissions": [
         "list",
         "readDescription",
@@ -1029,21 +766,11 @@
         {
           "id": "table",
           "title": "Tableau",
-          "href": "http://localhost:5888/data-fair/embed/dataset/etablissements-finess-france/table"
-        },
-        {
-          "id": "map",
-          "title": "Carte",
-          "href": "http://localhost:5888/data-fair/embed/dataset/etablissements-finess-france/map"
-        },
-        {
-          "id": "map-bounds",
-          "title": "Enveloppe géographique",
-          "href": "http://localhost:5888/data-fair/embed/dataset/etablissements-finess-france/map-bounds"
+          "href": "http://localhost:5888/data-fair/embed/dataset/resultats-baccalaureat-etablissement/table"
         }
       ],
-      "href": "http://localhost:5888/data-fair/api/v1/datasets/etablissements-finess-france",
-      "page": "http://localhost:5888/data-fair/dataset/etablissements-finess-france"
+      "href": "http://localhost:5888/data-fair/api/v1/datasets/resultats-baccalaureat-etablissement",
+      "page": "http://localhost:5888/data-fair/dataset/resultats-baccalaureat-etablissement"
     }
   ],
   "field1": "Field 1, value 1"
