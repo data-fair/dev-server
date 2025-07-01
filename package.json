@@ -12,7 +12,7 @@
     "dev-test-app-minimal": "http-server test-apps/minimal --port=3000 --cors --silent",
     "dev-test-app-vue3": "cd test-apps/vue3 && npm run dev",
     "dev-zellij": "zellij --layout .zellij.kdl",
-    "prepublishOnly": "npm run lint && npm run check-types && npm run build",
+    "prepublishOnly": "npm run lint && npm run check-types && npm -w ui run build",
     "lint": "eslint . && npm -w ui run lint",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "check-types": "tsc && npm -w ui run check-types",
@@ -63,5 +63,10 @@
     "parse5": "^7.3.0",
     "prom-client": "^15.1.3",
     "ws": "^8.18.3"
-  }
+  },
+  "files": [
+    "./config/dist/**/*",
+    "./ui/dist/**/*",
+    "./src/**/*"
+  ]
 }

@@ -1,6 +1,0 @@
-test-apps
-public
-.nuxt
-.dev-config.json
-config/local-*
-dist-config
