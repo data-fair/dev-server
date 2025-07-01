@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "build-watch": "tsc --watch",
     "dev": "NODE_ENV=development node --watch src/index.js",
     "dev-test-app-minimal": "http-server test-apps/minimal --port=3000 --cors --silent",
     "dev-test-app-vue3": "cd test-apps/vue3 && npm run dev",

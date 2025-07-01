@@ -9,6 +9,10 @@ layout {
         command "bash"
         args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-test-app-minimal"
       }
+      pane name="build" {
+        command "bash"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run build-watch"
+      }
     }
     pane {
       split_direction "vertical"

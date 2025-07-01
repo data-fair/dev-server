@@ -253,7 +253,7 @@ app.use('/simple-directory', createProxyMiddleware({
 }))
 
 if (config.serveUi) {
-  app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../ui/dist'), uiConfig))
+  app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../ui/dist'), uiConfig, { ignoreSitePath: true }))
 } else {
   app.use('/', createProxyMiddleware({
     target: 'http://localhost:6220',
