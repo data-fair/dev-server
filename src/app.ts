@@ -1,7 +1,7 @@
 // Express app for TaxMan own API and UI
 
-import config from './config.ts'
-import uiConfig from './ui-config.ts'
+import config from './config.js'
+import uiConfig from './ui-config.js'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'

@@ -3,12 +3,10 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
     "strict": true,
     "allowJs": true,
     "checkJs": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "public", "data", "ui", "test-apps"]
+  "exclude": ["node_modules", "public", "data", "ui", "test-apps", "config", "*.mjs"]
 }
