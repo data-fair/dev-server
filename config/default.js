@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   port: 5888,
   dataFair: {
     url: 'https://koumoul.com/data-fair',
@@ -11,8 +11,7 @@ module.exports = {
   },
   app: {
     url: 'http://localhost:3000',
-    proxyPaths: ['/_nuxt/'],
-    script: 'dev-src'
+    proxyPaths: ['/_nuxt/']
   },
-  iframeLog: false
+  serveUi: true
 }

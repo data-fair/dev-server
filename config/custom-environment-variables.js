@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   dataFair: {
     url: 'DATAFAIR_URL',
     owner: {
@@ -14,10 +14,5 @@ module.exports = {
       __name: 'APP_PROXY_PATHS',
       __format: 'json'
     },
-    script: 'APP_SCRIPT'
-  },
-  iframeLog: {
-    __name: 'IFRAME_LOG',
-    __format: 'json'
   }
 }
