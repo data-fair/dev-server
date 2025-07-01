@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   port: 5888,
   dataFair: {
     url: 'https://koumoul.com/data-fair',

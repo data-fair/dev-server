@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   dataFair: {
     url: 'DATAFAIR_URL',
     owner: {

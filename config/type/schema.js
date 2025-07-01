@@ -1,34 +1,34 @@
 export default {
-  "$id": "https://github.com/data-fair/dev-server/config",
-  "x-exports": [
-    "types",
-    "validate"
+  $id: 'https://github.com/data-fair/dev-server/config',
+  'x-exports': [
+    'types',
+    'validate'
   ],
-  "x-ajv": {
-    "coerceTypes": "array"
+  'x-ajv': {
+    coerceTypes: 'array'
   },
-  "x-jstt": {
-    "additionalProperties": false
+  'x-jstt': {
+    additionalProperties: false
   },
-  "type": "object",
-  "title": "Dev server config",
-  "required": [
-    "port",
-    "dataFair",
-    "app"
+  type: 'object',
+  title: 'Dev server config',
+  required: [
+    'port',
+    'dataFair',
+    'app'
   ],
-  "properties": {
-    "port": {
-      "type": "number"
+  properties: {
+    port: {
+      type: 'number'
     },
-    "dataFair": {
-      "type": "object",
-      "required": ["url", "owner"],
-      "properties": {
-        "url": {
-          "type": "string"
+    dataFair: {
+      type: 'object',
+      required: ['url', 'owner'],
+      properties: {
+        url: {
+          type: 'string'
         },
-        "owner": {
+        owner: {
           type: 'object',
           required: ['type', 'id'],
           properties: {

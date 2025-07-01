@@ -8,19 +8,18 @@ import { createUiNotif } from '@data-fair/lib-vue/ui-notif.js'
 import { createI18n } from 'vue-i18n'
 import App from './App.vue'
 
+const reactiveSearchParams = createReactiveSearchParams()
+const uiNotif = createUiNotif()
+const vuetify = createVuetify({
+  ...defaultOptions({}),
+  icons: { defaultSet: 'mdi', aliases, sets: { mdi, } }
+})
+const i18n = createI18n({ locale: 'en' })
 
-  const reactiveSearchParams = createReactiveSearchParams()
-  const uiNotif = createUiNotif()
-  const vuetify = createVuetify({
-    ...defaultOptions({}),
-    icons: { defaultSet: 'mdi', aliases, sets: { mdi, } }
-  })
-  const i18n = createI18n({ locale: 'en' });
-  
-  const app = createApp(App)
-    .use(reactiveSearchParams)
-    .use(uiNotif)
-    .use(vuetify)
-    .use(i18n)
-  
-  app.mount('#app')
+const app = createApp(App)
+  .use(reactiveSearchParams)
+  .use(uiNotif)
+  .use(vuetify)
+  .use(i18n)
+
+app.mount('#app')

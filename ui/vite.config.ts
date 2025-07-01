@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
 // import webfontDownload from 'vite-plugin-webfont-dl'
 import Vuetify from 'vite-plugin-vuetify'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
@@ -21,12 +22,25 @@ export default defineConfig({
       '~': path.resolve(__dirname, 'src/')
     },
   },
-  html: {
-    cspNonce: '{CSP_NONCE}'
-  },
   plugins: [
     Vue({ template: { compilerOptions: { isCustomElement: (tag) => ['d-frame'].includes(tag) } } }),
     Vuetify({ styles: { configFile: settingsPath } }),
+    AutoImport({
+      dts: './dts/auto-imports.d.ts',
+      vueTemplate: true,
+      imports: [
+        ...(autoImports as any),
+        {
+          from: '@sd/api/types',
+          imports: ['Organization', 'User', 'Member', 'Partner', 'Invitation', 'Site', 'Limits'],
+          type: true,
+        }
+      ],
+      dirs: [
+        'src/utils',
+        'src/composables'
+      ]
+    }),
     {
       name: 'inject-config',
       async transformIndexHtml (html) {

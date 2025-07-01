@@ -1,5 +1,4 @@
-import type { DevServerConfig } from '../config/type/index.ts'
-import { assertValid } from '../config/type/index.ts'
+import { assertValid, type DevServerConfig } from '../config/type/index.js'
 import config from 'config'
 
 export type { DevServerConfig } from '../config/type/index.ts'

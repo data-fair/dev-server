@@ -4,7 +4,7 @@ import 'dotenv/config'
 import path from 'node:path'
 
 process.env.NODE_CONFIG_DIR = path.join(import.meta.dirname, '../config')
-const app = await import('./app.js')
+const app = await import('./app.ts')
 
 app.run().then(app => {
   // nothing to do

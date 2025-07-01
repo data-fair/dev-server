@@ -51,7 +51,7 @@
             Formulaire valide pourtant le modèle ne respecte pas le schéma:
             <p>{{ validationErrors }}</p>
           </v-alert>
-          <v-jsf
+          <vjsf
             v-if="schema && editConfig && !loading"
             v-model="editConfig"
             :schema="schema"
@@ -270,11 +270,10 @@ en:
 
 <script lang="ts" type="setup">
 
-import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
-import {ref, computed} from 'vue'
+import {ref, computed, watch} from 'vue'
 import reconnectingWebSocketModule from 'reconnecting-websocket'
 import jsonRefs from '@koumoul/vjsf/lib/utils/json-refs.js'
-import dotProp from 'dot-prop'
+import {setProperty} from 'dot-prop'
 
 // import ScreenshotSimulation from '~/components/screenshot-simulation.vue'
 import * as parse5 from 'parse5'
@@ -286,6 +285,9 @@ import { useI18n } from 'vue-i18n'
 import {fetch} from 'ofetch'
 import {useFetch} from '@data-fair/lib-vue/fetch.js'
 import {useAsyncAction} from '@data-fair/lib-vue/async-action.js'
+import '@data-fair/frame/lib/d-frame.js'
+import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const ReconnectingWebSocket = reconnectingWebSocketModule as unknown as typeof reconnectingWebSocketModule.default
 
@@ -366,7 +368,9 @@ const iframeExtraParams = computed(() => {
     .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: 'true' } as Record<string, string>)
 })
 
-const editConfig = useFetch('http://localhost:5888/config')
+const fetchConfig = useFetch('http://localhost:5888/config')
+const editConfig = ref<any>()
+watch(fetchConfig.data, (v) => editConfig.value = v)
 
 const socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
 socketDevServer.onopen = () => {
@@ -382,48 +386,35 @@ socketDevServer.onopen = () => {
       console.log('received message from iframe', msg.data)
       if (msg.data.type === 'set-config') {
         this.loading = true
-        this.editConfig = dotProp.set({ ...this.editConfig }, msg.data.content.field, msg.data.content.value)
+        this.editConfig = setProperty({ ...this.editConfig }, msg.data.content.field, msg.data.content.value)
         await this.validate()
         this.loading = false
       }
     })
 
 
-export default {
-  computed: {
-    
-    iframeExtraParams () {
-      
-    }
-  },
-  async created () {
-    this.fetchInfo()
-  },
-  mounted () {
-    console.log('connect to to ws://localhost:5888')
-    
-  },
-  destroyed () {
-    if (this.socketDevServer) this.socketDevServer.close()
-  },
-  methods: {
-    async empty () {
-      this.editConfig = null
-      await this.save({})
-      this.editConfig = {}
-    },
-    async validate () {
-      if (this.$refs.form.validate()) {
-        this.error = null
-        await this.save(this.editConfig)
-      }
-    },
-    async save (config) {
-      await fetch('http://localhost:5888/config', {body: config, method: 'put'})
-      await this.reloadIframe()
-    },
-    async fetchInfo () {
-      this.loading = true
+const empty = async () => {
+  editConfig.value = null
+  await save({})
+  editConfig.value = {}
+}
+
+const form = useTemplateRef('form')
+const valid = ref(false)
+const validate = async async () => {
+  await form.value?.validate()
+  if (valid.value) {
+    error.value = undefined
+    await save(editConfig.value)
+  }
+}
+
+const save = async (config: any) => {
+  await fetch('http://localhost:5888/config', {body: config, method: 'put'})
+  await reloadIframe()
+}
+
+const fetchInfo = useAsyncAction(async () => {
 
       // read meta from index.html
       const htmlText = await fetch('http://localhost:5888/app/index.html')
@@ -486,15 +477,14 @@ export default {
         console.error(err)
         this.compileError = err.message
       }
-      this.loading = false
-    },
-    async reloadIframe () {
-      this.showPreview = false
-      await new Promise(resolve => setTimeout(resolve, 10))
-      this.showPreview = true
-    }
-  }
+})
+
+const reloadIframe = async () => {
+  showPreview.value = false
+  await new Promise(resolve => setTimeout(resolve, 1))
+  showPreview.value = true
 }
+
 </script>
 
 <style lang="css" scoped>

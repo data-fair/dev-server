@@ -5,7 +5,7 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
 import cors from 'cors'
-import {existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import debugModule from 'debug'
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import * as parse5 from 'parse5'
@@ -16,7 +16,7 @@ import eventPromise from '@data-fair/lib-utils/event-promise.js'
 
 const debug = debugModule('df-dev-server')
 
-/*const util = require('util')
+/* const util = require('util')
 const path = require('path')
 const { spawn } = require('child_process')
 const express = require('express')
@@ -102,40 +102,40 @@ app.use('/app', createProxyMiddleware({
   changeOrigin: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
   on: {
-  proxyReq (proxyReq, req, res) {
-    proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
-  },
-  proxyRes (proxyRes, req, res) {
-    const configuration = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
-    // console.log('inject config', configuration)
-    const dataBuffers: Buffer[] = []
-    proxyRes.on('data', (data) => { dataBuffers.push(data) })
-    proxyRes.on('end', async () => {
-      try {
-        let output = Buffer.concat(dataBuffers).toString()
-        if (output.includes('%APPLICATION%')) {
-          const filledBody = output.replace(/%APPLICATION%/g, JSON.stringify({
-            id: 'dev-application',
-            title: 'Dev application',
-            configuration,
-            exposedUrl: `http://localhost:${config.port}/app`,
-            href: 'http://localhost:5888/config',
-            apiUrl: 'http://localhost:5888/data-fair/api/v1',
-            wsUrl: 'ws://localhost:5888/data-fair',
-            owner: config.dataFair && config.dataFair.owner
-          }))
-          const document = parse5.parse(filledBody)
-          const html = document.childNodes.filter(isElementNode).find(c => c.tagName === 'html')
-          if (!html) throw new Error('HTML structure is broken, expect html, head and body elements')
-          const headNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'head')
-          const bodyNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'body')
-          if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
+    proxyReq (proxyReq, req, res) {
+      proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
+    },
+    proxyRes (proxyRes, req, res) {
+      const configuration = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+      // console.log('inject config', configuration)
+      const dataBuffers: Buffer[] = []
+      proxyRes.on('data', (data) => { dataBuffers.push(data) })
+      proxyRes.on('end', async () => {
+        try {
+          let output = Buffer.concat(dataBuffers).toString()
+          if (output.includes('%APPLICATION%')) {
+            const filledBody = output.replace(/%APPLICATION%/g, JSON.stringify({
+              id: 'dev-application',
+              title: 'Dev application',
+              configuration,
+              exposedUrl: `http://localhost:${config.port}/app`,
+              href: 'http://localhost:5888/config',
+              apiUrl: 'http://localhost:5888/data-fair/api/v1',
+              wsUrl: 'ws://localhost:5888/data-fair',
+              owner: config.dataFair && config.dataFair.owner
+            }))
+            const document = parse5.parse(filledBody)
+            const html = document.childNodes.filter(isElementNode).find(c => c.tagName === 'html')
+            if (!html) throw new Error('HTML structure is broken, expect html, head and body elements')
+            const headNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'head')
+            const bodyNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'body')
+            if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
 
-          // add a script to simulate instrumentation by capture service
-          console.log('QUERY', req.query)
-          if (req.query.thumbnail === 'true') {
-            const script = createElement('script', { type: 'text/javascript' })
-            script.childNodes.push(createTextNode(`
+            // add a script to simulate instrumentation by capture service
+            console.log('QUERY', req.query)
+            if (req.query.thumbnail === 'true') {
+              const script = createElement('script', { type: 'text/javascript' })
+              script.childNodes.push(createTextNode(`
               console.log('[capture] Simulate a screenshot capture context')
               var triggerCalled = false
               window.triggerCapture = function (animationSupported) {
@@ -167,44 +167,44 @@ app.use('/app', createProxyMiddleware({
                 }
               }, 5000)
                               `))
-            headNode.childNodes.push(script)
-          }
-
-          const meta: Record<string, string> = {}
-          for (const node of headNode.childNodes.filter(isElementNode)) {
-            if (node.tagName === 'meta') {
-              const name = node.attrs.find(a => a.name === 'name')?.value
-              const content = node.attrs.find(a => a.name === 'content')?.value
-              if (!name || !content) console.warn('failed to extract meta', node)
-              else meta[name] = content
+              headNode.childNodes.push(script)
             }
-          }
-          if (meta['df:sync-state'] === 'true' || meta['df:overflow'] === 'true') {
-            bodyNode.childNodes.push(createElement('script', {
-              type: 'text/javascript',
-              src: `https://cdn.jsdelivr.net/npm/@data-fair/frame@0.7/dist/v-iframe-compat/d-frame-content.min.js`
-            }))
-          }
 
-          output = parse5.serialize(document)
+            const meta: Record<string, string> = {}
+            for (const node of headNode.childNodes.filter(isElementNode)) {
+              if (node.tagName === 'meta') {
+                const name = node.attrs.find(a => a.name === 'name')?.value
+                const content = node.attrs.find(a => a.name === 'content')?.value
+                if (!name || !content) console.warn('failed to extract meta', node)
+                else meta[name] = content
+              }
+            }
+            if (meta['df:sync-state'] === 'true' || meta['df:overflow'] === 'true') {
+              bodyNode.childNodes.push(createElement('script', {
+                type: 'text/javascript',
+                src: 'https://cdn.jsdelivr.net/npm/@data-fair/frame@0.7/dist/v-iframe-compat/d-frame-content.min.js'
+              }))
+            }
 
-          // proxyRes.headers['content-length'] = output.length
-          delete proxyRes.headers['content-length']
-          delete proxyRes.headers['last-modified']
-          delete proxyRes.headers['max-age']
-          delete proxyRes.headers.etag
-          proxyRes.headers['cache-control'] = 'no-cache'
+            output = parse5.serialize(document)
+
+            // proxyRes.headers['content-length'] = output.length
+            delete proxyRes.headers['content-length']
+            delete proxyRes.headers['last-modified']
+            delete proxyRes.headers['max-age']
+            delete proxyRes.headers.etag
+            proxyRes.headers['cache-control'] = 'no-cache'
+          }
+          res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
+          res.end(output)
+        } catch (err: any) {
+          console.error(err)
+          res.writeHead(500)
+          res.end(err.message)
         }
-        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
-        res.end(output)
-      } catch (err: any) {
-        console.error(err)
-        res.writeHead(500)
-        res.end(err.message)
-      }
-    })
+      })
+    }
   }
-}
 }))
 
 for (const proxyPath of config.app.proxyPaths) {
@@ -224,7 +224,7 @@ app.use('/data-fair', createProxyMiddleware({
   secure: false,
   changeOrigin: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
-  on: { 
+  on: {
     proxyReq (proxyReq, req, res) {
       // no gzip so that we can process the content
       proxyReq.setHeader('accept-encoding', 'identity')
@@ -266,14 +266,14 @@ if (dfUrl.pathname === '/data-fair') {
 }
 
 // Run app and return it in a promise
-exports.run = async () => {
+export const run = async () => {
   server.listen(config.port)
   await eventPromise(server, 'listening')
   console.log(chalk.bold.blue('\nDataFair dev server available on ') + chalk.underline.bold.blue(`http://localhost:${config.port}`))
   return server
 }
 
-exports.stop = async () => {
+export const stop = async () => {
   if (devServerWS) devServerWS.terminate()
   if (dataFairWS) dataFairWS.terminate()
   server.close()
