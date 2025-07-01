@@ -1,6 +1,7 @@
 // Express app for TaxMan own API and UI
 
 import config from './config.ts'
+import uiConfig from './ui-config.ts'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
@@ -13,30 +14,10 @@ import chalk from 'chalk'
 import { isElementNode, createTextNode, createElement } from '@parse5/tools'
 import escapeStringRegexp from 'escape-string-regexp'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
+import { createSpaMiddleware } from '@data-fair/lib-express/serve-spa.js'
+import { resolve } from 'node:path'
 
 const debug = debugModule('df-dev-server')
-
-/* const util = require('util')
-const path = require('path')
-const { spawn } = require('child_process')
-const express = require('express')
-const eventToPromise = require('event-to-promise')
-const http = require('http')
-const fs = require('fs-extra')
-const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware')
-const cors = require('cors')
-const kill = require('tree-kill')
-
-const parse5 = require('parse5')
-const  = require('ws')
-const debug = require('debug')('df-dev-server')
-const chalk = require('chalk')
-const Extractor = require('html-extractor')
-const htmlExtractor = new Extractor()
-htmlExtractor.extract = util.promisify(htmlExtractor.extract)
-const vIframeVersion = require('@koumoul/v-iframe/package.json').version
-const iframeResizerVersion = require('iframe-resizer/package.json').version
-*/
 
 const app = express()
 const server = createServer(app)
@@ -95,14 +76,15 @@ app.post('/config/error', (req, res) => {
 
 // re-expose the application performing similar modifications to the body as data-fair
 const appUrl = new URL(config.app.url)
+const appPrefix = appUrl.pathname === '/' ? '' : appUrl.pathname
 app.use('/app', createProxyMiddleware({
   target: appUrl.origin,
-  pathRewrite: { '^/app': appUrl.pathname === '/' ? '' : appUrl.pathname },
   secure: false,
   changeOrigin: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
   on: {
     proxyReq (proxyReq, req, res) {
+      proxyReq.path = appPrefix + proxyReq.path
       proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
     },
     proxyRes (proxyRes, req, res) {
@@ -119,9 +101,9 @@ app.use('/app', createProxyMiddleware({
               title: 'Dev application',
               configuration,
               exposedUrl: `http://localhost:${config.port}/app`,
-              href: 'http://localhost:5888/config',
-              apiUrl: 'http://localhost:5888/data-fair/api/v1',
-              wsUrl: 'ws://localhost:5888/data-fair',
+              href: `http://localhost:${config.port}/config`,
+              apiUrl: `http://localhost:${config.port}/data-fair/api/v1`,
+              wsUrl: `ws://localhost:${config.port}/data-fair`,
               owner: config.dataFair && config.dataFair.owner
             }))
             const document = parse5.parse(filledBody)
@@ -184,7 +166,7 @@ app.use('/app', createProxyMiddleware({
             if (meta['df:sync-state'] === 'true' || meta['df:overflow'] === 'true') {
               bodyNode.childNodes.push(createElement('script', {
                 type: 'text/javascript',
-                src: 'https://cdn.jsdelivr.net/npm/@data-fair/frame@0.7/dist/v-iframe-compat/d-frame-content.min.js'
+                src: 'https://cdn.jsdelivr.net/npm/@data-fair/frame@0.12/dist/v-iframe-compat/d-frame-content.min.js'
               }))
             }
 
@@ -222,12 +204,13 @@ for (const proxyPath of config.app.proxyPaths) {
 const dfUrl = new URL(config.dataFair.url)
 app.use('/data-fair', createProxyMiddleware({
   target: dfUrl.origin,
-  pathRewrite: { '^/data-fair': dfUrl.pathname },
   secure: false,
   changeOrigin: true,
   selfHandleResponse: true, // so that the onProxyRes takes care of sending the response
   on: {
     proxyReq (proxyReq, req, res) {
+      proxyReq.path = '/data-fair' + proxyReq.path
+
       // no gzip so that we can process the content
       proxyReq.setHeader('accept-encoding', 'identity')
 
@@ -239,6 +222,7 @@ app.use('/data-fair', createProxyMiddleware({
       fixRequestBody(proxyReq, req)
     },
     proxyRes (proxyRes, req, res) {
+      // console.log('DF RES', proxyRes)
       if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].startsWith('application/json')) {
         let body = ''
         proxyRes.on('data', (data) => { body += data.toString() })
@@ -259,11 +243,23 @@ app.use('/data-fair', createProxyMiddleware({
 }))
 
 // also re-expose the simple-directory instance matching data-fair
-if (dfUrl.pathname === '/data-fair') {
-  app.use('/simple-directory', createProxyMiddleware({
-    target: dfUrl.origin,
-    secure: false,
-    changeOrigin: true
+app.use('/simple-directory', createProxyMiddleware({
+  target: dfUrl.origin,
+  secure: false,
+  changeOrigin: true,
+  on: {
+    proxyReq (proxyReq, req, res) {
+      proxyReq.path = '/simple-directory' + proxyReq.path
+    }
+  }
+}))
+
+if (config.serveUi) {
+  app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../ui/dist'), uiConfig))
+} else {
+  app.use('/', createProxyMiddleware({
+    target: 'http://localhost:6220',
+    secure: false
   }))
 }
 

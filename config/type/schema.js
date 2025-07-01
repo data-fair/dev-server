@@ -62,6 +62,9 @@ export default {
           }
         }
       }
-    }
+    },
+    serveUi: {
+      type: 'boolean'
+    },
   }
 }

@@ -7,12 +7,13 @@
     <template #activator="{props}">
       <v-btn
         color="primary"
+        variant="text"
         v-bind="props"
       >
         Simulate screenshot
       </v-btn>
     </template>
-    <v-card>
+    <v-card variant="flat">
       <v-card-title primary-title>
         Screenshot simulation
       </v-card-title>
@@ -27,7 +28,7 @@
           style="border: 1px solid grey;width: 1050px;"
           :aspect-ratio="21/9"
           resize="false"
-          src="http://localhost:5888/app?thumbnail=true"
+          src="/app?thumbnail=true"
         />
       </v-card-text>
     </v-card>
@@ -39,4 +40,7 @@ const dialog = ref(false)
 </script>
 
 <style lang="css" scoped>
+p {
+  margin-bottom: 8px;
+}
 </style>

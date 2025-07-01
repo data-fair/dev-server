@@ -34,14 +34,6 @@
     <!-- jQuery and other small libraries for code clarity -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
-    <!-- iframe resizer can be used, if not the application should attempt to always
-      fit inside its initial box (no inside scrollbar) -->
-    <script>
-      window.iFrameResizer = {
-        heightCalculationMethod: 'taggedElement'
-      }
-    </script>
-
     <script>
       window.APPLICATION = %APPLICATION%;
       // %APPLICATION% will be replaced by data-fair's reverse proxy with an object
@@ -51,7 +43,7 @@
 
     <script src="http://localhost:3000/index.js"></script>
 
-    <!-- used by iframe resizer to identify the bottom of the page -->
+    <!-- used by d-frame to identify the bottom of the page -->
     <div data-iframe-height />
   </body>
 </html>

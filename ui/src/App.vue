@@ -21,9 +21,10 @@
             class="mx-2"
             size="small"
             color="primary"
+            variant="text"
             :icon="mdiRefresh"
-            :loading="loading"
-            @click="fetchInfo"
+            :loading="fetchInfo.loading.value"
+            @click="fetchInfo.execute()"
           />
         </v-row>
         <h2 class="text-h6 mt-2">
@@ -34,24 +35,24 @@
           v-model="formValid"
         >
           <v-alert
-            :value="!!compileError"
+            v-if="!!compileError"
             type="error"
           >
             {{ compileError }}
           </v-alert>
           <v-alert
-            :value="!!validationErrors && formValid"
+            v-if="!!validationErrors && formValid"
             type="error"
           >
             Formulaire valide pourtant le modèle ne respecte pas le schéma:
             <p>{{ validationErrors }}</p>
           </v-alert>
           <vjsf
-            v-if="schema && editConfig && !loading"
+            v-if="schema && editConfig"
             v-model="editConfig"
             :schema="schema"
             :options="vjsfOptions"
-            @change="validate"
+            @update:model-value="validate"
           />
         </v-form>
         <v-row class="ma-2">
@@ -65,11 +66,13 @@
         </v-row>
 
         <v-row class="ma-2">
-          <v-jsf
-            v-model="extraParams"
-            :schema="extraParamsSchema"
-            :options="{ editMode: 'inline' }"
-          />
+          <v-form>
+            <vjsf
+              v-model="extraParams"
+              :schema="extraParamsSchema"
+              :options="{ editMode: 'inline' }"
+            />
+          </v-form>
         </v-row>
 
         <v-row
@@ -209,6 +212,7 @@
             color="primary"
             title="reload iframe content"
             :icon="mdiRefresh"
+            variant="text"
             @click="reloadIframe"
           />
           <v-btn
@@ -218,18 +222,17 @@
             href="/app"
             title="open in full page"
             target="blank"
+            variant="text"
             :icon="mdiOpenInNew"
           />
           <lang-switcher />
         </v-row>
         <v-card>
-          <v-iframe
+          <d-frame
             v-if="showPreview && meta"
-            src="/app"
-            :log="iframeLog"
-            :iframe-resizer="meta['df:overflow'] === 'true'"
-            :sync-state="meta['df:sync-state'] === 'true'"
-            :query-params-extra="iframeExtraParams"
+            :src="iframeUrl"
+            :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
+            :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
           />
         </v-card>
       </v-col>
@@ -239,7 +242,7 @@
 
 <i18n lang="yaml">
 en:
-  metadata: Metadata read from index.html
+  metadata: "Metadata read from index.html"
   missingApplicationName: "Metadata \"application-name\" is missing. Add a tag <meta name=\"application-name\" content=\"my-application\">"
   missingThumbnail: "Metadata \"thumbnail\" is missing. Add a tag <meta name=\"thumbnail\" content=\"http://my/thumbnail.png\">"
   missingTitle: "Add a tag <title lang=\"{locale}\">My title</title>"
@@ -267,13 +270,14 @@ import { $uiConfig } from './context'
 import { useI18n } from 'vue-i18n'
 import '@data-fair/frame/lib/d-frame.js'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
-// import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { mdiOpenInNew, mdiRefresh } from '@mdi/js'
 import { ofetch } from 'ofetch'
 import { isElementNode, isTextNode } from '@parse5/tools'
 import { resolveLocaleRefs } from '@json-layout/core/compile'
 import langSwitcher from './components/lang-switcher.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
+import { withQuery } from 'ufo'
 
 const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
@@ -300,8 +304,6 @@ const schema = ref<any>()
 const showPreview = ref(true)
 const compileError = ref<string>()
 const formValid = ref(false)
-const iframeLog = ref(false)
-const loading = ref(false)
 const meta = ref<Meta>()
 const extraParams = ref<{ name: string, value: string }[]>()
 let schemaValidate: ValidateFunction
@@ -363,6 +365,9 @@ const iframeExtraParams = computed(() => {
   return (extraParams.value ?? [])
     .filter(p => p.name && p.value)
     .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: 'true' } as Record<string, string>)
+})
+const iframeUrl = computed(() => {
+  return withQuery('/app', iframeExtraParams.value)
 })
 
 const fetchConfig = useFetch('/config')
@@ -463,9 +468,11 @@ const fetchInfo = useAsyncAction(async () => {
   schema.value = undefined
   const newSchema = await ofetch('/app/config-schema.json')
   newSchema['x-display'] = 'tabs'
+  newSchema.$id = newSchema.$id ?? 'config-schema'
   resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')
-  schema.value = newSchema
+  schema.value = v2compat(newSchema)
   try {
+    ajv.removeSchema(newSchema.$id)
     schemaValidate = ajv.compile(schema.value)
     compileError.value = undefined
   } catch (err: any) {
@@ -473,6 +480,7 @@ const fetchInfo = useAsyncAction(async () => {
     compileError.value = err.message
   }
 })
+fetchInfo.execute()
 
 const reloadIframe = async () => {
   showPreview.value = false
@@ -484,6 +492,9 @@ const reloadIframe = async () => {
 
 <style lang="css" scoped>
 .app-meta p {
+  margin-bottom: 4px;
+}
+.v-alert {
   margin-bottom: 4px;
 }
 </style>

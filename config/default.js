@@ -12,5 +12,6 @@ export default {
   app: {
     url: 'http://localhost:3000',
     proxyPaths: ['/_nuxt/']
-  }
+  },
+  serveUi: true
 }

@@ -1,0 +1,28 @@
+layout {
+    pane {
+      split_direction "vertical"
+      pane name="@data-fair/dev-server" borderless=true {
+        command "bash"
+        args "-ic" "nvm use > /dev/null 2>&1 && bash"
+      }
+      pane name="test app" {
+        command "bash"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-test-app-minimal"
+      }
+    }
+    pane {
+      split_direction "vertical"
+      pane name="ui" {
+        command "bash"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm -w ui run dev"
+      }
+      pane name="api" {
+        command "bash"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev"
+      }
+    }
+    pane size=1 borderless=true {
+        command "bash"
+        args "-ic" "echo -n -e \"Dev server available at \\e[1;96mhttp://localhost:5888\\033[0m\""
+    }
+}
