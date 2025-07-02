@@ -284,6 +284,7 @@
             :src="iframeUrl"
             :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
             :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
+            :height="(height - 70) + 'px'"
           />
         </v-card>
       </v-col>
@@ -331,6 +332,7 @@ import { resolveLocaleRefs } from '@json-layout/core/compile'
 import langSwitcher from './components/lang-switcher.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
 import { withQuery } from 'ufo'
+import { useWindowSize } from '@vueuse/core'
 
 const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
@@ -353,6 +355,7 @@ type Meta = {
 }
 
 const { t, locale } = useI18n()
+const { height } = useWindowSize()
 
 const error = ref<string>()
 const schema = ref<any>()
