@@ -533,7 +533,12 @@ const fetchInfo = useAsyncAction(async () => {
   // fetch config schema
   schema.value = undefined
   const newSchema = await ofetch('/app/config-schema.json')
-  newSchema['x-display'] = 'tabs'
+  if (meta.value?.['df:vjsf'] === '3') {
+    if (!newSchema.layout) newSchema.layout = 'tabs'
+  } else {
+    newSchema['x-display'] = 'tabs'
+  }
+
   newSchema.$id = newSchema.$id ?? 'config-schema'
   resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')
   schema.value = meta.value?.['df:vjsf'] === '3' ? newSchema : v2compat(newSchema)
