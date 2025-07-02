@@ -76,7 +76,7 @@ app.post('/config/error', (req, res) => {
 
 // re-expose the application performing similar modifications to the body as data-fair
 const appUrl = new URL(config.app.url)
-const appPrefix = appUrl.pathname === '/' ? '' : appUrl.pathname
+const appPrefix = appUrl.pathname.endsWith('/') ? appUrl.pathname.substring(0, appUrl.pathname.length - 1) : appUrl.pathname
 app.use('/app', createProxyMiddleware({
   target: appUrl.origin,
   secure: false,
