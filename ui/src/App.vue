@@ -446,8 +446,9 @@ socketDevServer.onopen = () => {
 
 window.addEventListener('message', async msg => {
   console.log('received message from iframe', msg.data)
-  if (msg.data.type === 'set-config') {
-    editConfig.value = setProperty({ ...editConfig.value }, msg.data.content.field, msg.data.content.value)
+  // @ts-ignore
+  if (frame.value?.iframeElement?.contentWindow === msg.source && msg.data.type === 'set-config') {
+    editConfig.value = setProperty(JSON.parse(JSON.stringify(toRaw(editConfig.value))), msg.data.content.field, msg.data.content.value)
     await validate()
   }
 })

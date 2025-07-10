@@ -5,11 +5,11 @@
         "type": "organization",
         "id": "5a5dc47163ebd4a6f438589b",
         "name": "Koumoul",
-        "department": "data",
-        "departmentName": "Données de référence"
+        "department": "marketing",
+        "departmentName": "Présentation de la plateforme"
       },
-      "updatedAt": "2024-07-03T13:38:00.122Z",
-      "createdAt": "2019-01-11T13:10:59.131Z",
+      "updatedAt": "2023-10-10T12:01:07.948Z",
+      "createdAt": "2018-12-18T18:24:43.155Z",
       "updatedBy": {
         "id": "rJytCgDTf",
         "name": "Balam Saldana"
@@ -20,404 +20,118 @@
       },
       "schema": [
         {
-          "key": "uai",
+          "key": "Type_de_mission",
           "type": "string",
-          "x-originalName": "uai",
-          "x-cardinality": 6763,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": ""
-        },
-        {
-          "key": "nom_établissement",
-          "type": "string",
-          "x-originalName": "nom établissement",
-          "x-cardinality": 9625,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "x-refersTo": "http://www.w3.org/2000/01/rdf-schema#label",
-          "x-concept": {
-            "id": "label",
-            "title": "Libellé",
-            "primary": true
-          }
-        },
-        {
-          "key": "code_departement",
-          "type": "string",
-          "x-originalName": "code_departement",
-          "x-cardinality": 101,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "x-refersTo": "http://rdf.insee.fr/def/geo#codeDepartement",
-          "x-concept": {
-            "id": "codeDepartement",
-            "title": "Code département",
-            "primary": true
-          }
-        },
-        {
-          "key": "libelle_departement",
-          "type": "string",
-          "x-originalName": "libelle_departement",
-          "x-cardinality": 101,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": ""
-        },
-        {
-          "key": "code_academie",
-          "type": "integer",
-          "x-originalName": "code_academie",
-          "x-cardinality": 31,
-          "description": "",
+          "x-originalName": "Type de mission",
+          "x-cardinality": 4,
           "enum": [
-            25,
-            24,
-            9,
-            17,
-            14,
-            8,
-            10,
-            4,
-            2,
-            16,
-            11,
-            18,
-            12,
+            "Budget général",
+            "Comptes d'affectation spéciale",
+            "Comptes de concours financiers",
+            "Budgets annexes"
+          ],
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": ""
+        },
+        {
+          "key": "Code_type_de_mission",
+          "type": "integer",
+          "x-originalName": "Code type de mission",
+          "x-cardinality": 4,
+          "enum": [
             1,
-            20,
-            21,
-            23,
-            15,
-            13,
-            7,
-            5,
-            19,
-            6,
             3,
-            28,
-            22,
-            32,
-            31,
-            33,
-            27,
-            43
-          ]
-        },
-        {
-          "key": "académie",
-          "type": "string",
-          "x-originalName": "académie",
-          "x-cardinality": 31,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "VERSAILLES",
-            "CRETEIL",
-            "LILLE",
-            "NANTES",
-            "RENNES",
-            "GRENOBLE",
-            "LYON",
-            "BORDEAUX",
-            "AIX-MARSEILLE",
-            "TOULOUSE",
-            "MONTPELLIER",
-            "ORLEANS-TOURS",
-            "NANCY-METZ",
-            "PARIS",
-            "AMIENS",
-            "ROUEN",
-            "NICE",
-            "STRASBOURG",
-            "POITIERS",
-            "DIJON",
-            "CAEN",
-            "REIMS",
-            "CLERMONT-FERRAND",
-            "BESANCON",
-            "LA REUNION",
-            "LIMOGES",
-            "GUADELOUPE",
-            "MARTINIQUE",
-            "GUYANE",
-            "CORSE",
-            "MAYOTTE"
-          ]
-        },
-        {
-          "key": "code_region",
-          "type": "string",
-          "x-originalName": "code_region",
-          "x-cardinality": 18,
-          "description": "",
-          "x-refersTo": "http://rdf.insee.fr/def/geo#codeRegion",
-          "x-concept": {
-            "id": "codeRegion",
-            "title": "Code région",
-            "primary": true
-          },
-          "enum": [
-            "11",
-            "84",
-            "32",
-            "44",
-            "75",
-            "76",
-            "93",
-            "52",
-            "28",
-            "53",
-            "27",
-            "24",
-            "04",
-            "01",
-            "02",
-            "03",
-            "94",
-            "06"
-          ]
-        },
-        {
-          "key": "libelle_region",
-          "type": "string",
-          "x-originalName": "libelle_region",
-          "x-cardinality": 18,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "ILE-DE-FRANCE",
-            "AUVERGNE-RHONE-ALPES",
-            "HAUTS-DE-FRANCE",
-            "GRAND EST",
-            "NOUVELLE-AQUITAINE",
-            "OCCITANIE",
-            "PROVENCE-ALPES-COTE D'AZUR",
-            "PAYS DE LA LOIRE",
-            "NORMANDIE",
-            "BRETAGNE",
-            "BOURGOGNE-FRANCHE-COMTE",
-            "CENTRE-VAL DE LOIRE",
-            "LA REUNION",
-            "GUADELOUPE",
-            "MARTINIQUE",
-            "GUYANE",
-            "CORSE",
-            "MAYOTTE"
-          ]
-        },
-        {
-          "key": "secteur_public/privé",
-          "type": "string",
-          "x-originalName": "secteur public/privé",
-          "x-cardinality": 3,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "PUBLIC",
-            "PRIVE",
-            "SO"
-          ]
-        },
-        {
-          "key": "année",
-          "type": "integer",
-          "x-originalName": "année",
-          "x-cardinality": 8,
-          "description": "",
-          "enum": [
-            2018,
-            2017,
-            2016,
-            2015,
-            2014,
-            2012,
-            2013,
-            2011
-          ]
-        },
-        {
-          "key": "âge",
-          "type": "string",
-          "x-originalName": "âge",
-          "x-cardinality": 3,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "18 ans",
-            "19 ans ou plus",
-            "17 ans ou moins"
-          ]
-        },
-        {
-          "key": "voie",
-          "type": "string",
-          "x-originalName": "voie",
-          "x-cardinality": 3,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "BAC GENERAL",
-            "BAC PROFESSIONNEL",
-            "BAC TECHNOLOGIQUE"
-          ]
-        },
-        {
-          "key": "catégorie",
-          "type": "string",
-          "x-originalName": "catégorie",
-          "x-cardinality": 6,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "SPECIALITES DES SERVICES",
-            "BAC S",
-            "SPECIALITES DE LA PRODUCTION",
-            "BAC ES",
-            "BAC L",
-            "SPECIALITES DISCIPLINAIRES"
-          ]
-        },
-        {
-          "key": "domaine",
-          "type": "string",
-          "x-originalName": "domaine",
-          "x-cardinality": 15,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "BAC S",
-            "ECHANGES ET GESTION",
-            "BAC ES",
-            "BAC L",
-            "SERVICES AUX PERSONNES",
-            "MECANIQUE, ELECTRICITE, ELECTRONIQUE",
-            "SPEC.PLURI-TECHNO DE LA PRODUCTION",
-            "AGRICULTURE, PECHE, FORET",
-            "SPEC.PLURIVALENTES DES SERVICES",
-            "TRANSFORMATIONS",
-            "COMMUNICATION ET INFORMATION",
-            "GENIE CIVIL, CONSTRUCTION, BOIS",
-            "MATERIAUX SOUPLES",
-            "LETTRES ET ARTS",
-            "SERVICES A LA COLLECTIVITE"
-          ]
-        },
-        {
-          "key": "série",
-          "type": "string",
-          "x-originalName": "série",
-          "x-cardinality": 14,
-          "x-capabilities": {
-            "textAgg": true
-          },
-          "description": "",
-          "enum": [
-            "BAC S",
-            "BAC ES",
-            "BAC L",
-            "BAC STMG",
-            "BAC STG",
-            "BAC ST2S",
-            "BAC STI2D",
-            "BAC STL",
-            "BAC STAV",
-            "BAC STI",
-            "BAC HOT",
-            "BAC STD2A",
-            "BAC STHR",
-            "BAC F11 - TMD"
-          ]
-        },
-        {
-          "key": "admis",
-          "type": "string",
-          "x-originalName": "admis",
-          "x-cardinality": 2,
-          "description": "",
-          "enum": [
-            "true",
-            "false"
+            4,
+            2
           ],
-          "x-labels": {
-            "true": "oui",
-            "false": "non"
-          }
+          "description": ""
         },
         {
-          "key": "sexe",
+          "key": "Mission",
           "type": "string",
-          "x-originalName": "sexe",
-          "x-cardinality": 2,
+          "x-originalName": "Mission",
+          "x-cardinality": 51,
           "x-capabilities": {
             "textAgg": true
           },
-          "description": "",
-          "enum": [
-            "M",
-            "F"
-          ]
+          "description": ""
         },
         {
-          "key": "présent",
+          "key": "Code_mission",
           "type": "string",
-          "x-originalName": "présent",
-          "x-cardinality": 2,
-          "description": "",
-          "enum": [
-            "true",
-            "false"
-          ],
-          "x-labels": {
-            "true": "oui",
-            "false": "non"
-          }
-        },
-        {
-          "key": "mention",
-          "type": "string",
-          "x-originalName": "mention",
-          "x-cardinality": 7,
+          "x-originalName": "Code mission",
+          "format": "uri-reference",
+          "x-cardinality": 51,
           "x-capabilities": {
             "textAgg": true
           },
-          "description": "",
-          "enum": [
-            "10-12 sans mention",
-            "0-08 ajourné",
-            "08-10 rattrapage",
-            "12-14 assez bien",
-            "14-16 bien",
-            "0 absent",
-            "16-20 très bien"
-          ]
+          "description": ""
         },
         {
-          "key": "nb_élèves",
+          "key": "Programme",
+          "type": "string",
+          "x-originalName": "Programme",
+          "x-cardinality": 177,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": ""
+        },
+        {
+          "key": "Code_programme",
           "type": "integer",
-          "x-originalName": "nb élèves",
-          "x-cardinality": 101,
+          "x-originalName": "Code programme",
+          "x-cardinality": 177,
+          "description": ""
+        },
+        {
+          "key": "Action",
+          "type": "string",
+          "x-originalName": "Action",
+          "x-cardinality": 680,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": ""
+        },
+        {
+          "key": "Code_action",
+          "type": "integer",
+          "x-originalName": "Code action",
+          "x-cardinality": 52,
+          "description": ""
+        },
+        {
+          "key": "Sous-action",
+          "type": "string",
+          "x-originalName": "Sous-action",
+          "x-cardinality": 218,
+          "x-capabilities": {
+            "textAgg": true
+          },
+          "description": ""
+        },
+        {
+          "key": "Code_sous-action",
+          "type": "integer",
+          "x-originalName": "Code sous-action",
+          "x-cardinality": 68,
+          "description": ""
+        },
+        {
+          "key": "Autorisations_d'engagement",
+          "type": "integer",
+          "x-originalName": "Autorisations d'engagement",
+          "x-cardinality": 755,
+          "description": ""
+        },
+        {
+          "key": "Crédits_de_paiement",
+          "type": "integer",
+          "x-originalName": "Crédits de paiement",
+          "x-cardinality": 797,
           "description": ""
         },
         {
@@ -443,232 +157,124 @@
           "description": "Un nombre aléatoire associé à la ligne qui permet d'obtenir un tri aléatoire par exemple"
         }
       ],
-      "id": "resultats-baccalaureat-etablissement",
-      "title": "Résultats au baccalauréat par établissement",
+      "id": "plf-2019",
+      "title": "Projet de loi de finances 2019 (PLF 2019)",
       "originalFile": {
-        "name": "resultats-au-baccalaureat-par-etablissement.csv",
-        "size": 240234301,
+        "name": "plf_2019.csv",
+        "size": 172195,
         "mimetype": "text/csv",
         "encoding": "UTF-8"
       },
       "status": "finalized",
       "file": {
-        "name": "resultats-au-baccalaureat-par-etablissement.csv",
-        "size": 240234301,
+        "name": "plf_2019.csv",
+        "size": 172195,
         "mimetype": "text/csv",
         "encoding": "UTF-8",
         "props": {
           "linesDelimiter": "\n",
-          "fieldsDelimiter": ",",
+          "fieldsDelimiter": ";",
           "escapeChar": "\"",
-          "numLines": 993759
+          "numLines": 889
         },
         "schema": [
           {
-            "key": "uai",
+            "key": "Type_de_mission",
             "type": "string",
-            "x-originalName": "uai"
+            "x-originalName": "Type de mission"
           },
           {
-            "key": "nom_établissement",
-            "type": "string",
-            "x-originalName": "nom établissement"
-          },
-          {
-            "key": "code_departement",
+            "key": "Code_type_de_mission",
             "type": "integer",
-            "x-originalName": "code_departement"
+            "x-originalName": "Code type de mission"
           },
           {
-            "key": "libelle_departement",
+            "key": "Mission",
             "type": "string",
-            "x-originalName": "libelle_departement"
+            "x-originalName": "Mission"
           },
           {
-            "key": "code_academie",
+            "key": "Code_mission",
+            "type": "string",
+            "x-originalName": "Code mission"
+          },
+          {
+            "key": "Programme",
+            "type": "string",
+            "x-originalName": "Programme"
+          },
+          {
+            "key": "Code_programme",
             "type": "integer",
-            "x-originalName": "code_academie"
+            "x-originalName": "Code programme"
           },
           {
-            "key": "académie",
+            "key": "Action",
             "type": "string",
-            "x-originalName": "académie"
+            "x-originalName": "Action"
           },
           {
-            "key": "code_region",
+            "key": "Code_action",
             "type": "integer",
-            "x-originalName": "code_region"
+            "x-originalName": "Code action"
           },
           {
-            "key": "libelle_region",
+            "key": "Sous-action",
             "type": "string",
-            "x-originalName": "libelle_region"
+            "x-originalName": "Sous-action"
           },
           {
-            "key": "secteur_public/privé",
-            "type": "string",
-            "x-originalName": "secteur public/privé"
-          },
-          {
-            "key": "voie",
-            "type": "string",
-            "x-originalName": "voie"
-          },
-          {
-            "key": "catégorie",
-            "type": "string",
-            "x-originalName": "catégorie"
-          },
-          {
-            "key": "domaine",
-            "type": "string",
-            "x-originalName": "domaine"
-          },
-          {
-            "key": "série",
-            "type": "string",
-            "x-originalName": "série"
-          },
-          {
-            "key": "année",
+            "key": "Code_sous-action",
             "type": "integer",
-            "x-originalName": "année"
+            "x-originalName": "Code sous-action"
           },
           {
-            "key": "âge",
-            "type": "string",
-            "x-originalName": "âge"
-          },
-          {
-            "key": "sexe",
-            "type": "string",
-            "x-originalName": "sexe"
-          },
-          {
-            "key": "présent",
-            "type": "string",
-            "x-originalName": "présent"
-          },
-          {
-            "key": "admis",
-            "type": "string",
-            "x-originalName": "admis"
-          },
-          {
-            "key": "mention",
-            "type": "string",
-            "x-originalName": "mention"
-          },
-          {
-            "key": "nb_élèves",
+            "key": "Autorisations_d'engagement",
             "type": "integer",
-            "x-originalName": "nb élèves"
+            "x-originalName": "Autorisations d'engagement"
+          },
+          {
+            "key": "Crédits_de_paiement",
+            "type": "integer",
+            "x-originalName": "Crédits de paiement"
           }
         ]
       },
-      "count": 993758,
-      "finalizedAt": "2023-11-14T10:48:13.929Z",
-      "origin": "https://www.data.gouv.fr/fr/datasets/resultats-au-baccalaureat-par-etablissement/",
-      "license": {
-        "title": "Licence Ouverte / Open Licence",
-        "href": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
-      },
+      "count": 888,
+      "bbox": null,
+      "finalizedAt": "2019-05-30T00:07:45.611Z",
       "extras": {
         "reuses": [
-          "repartition-des-bacheliers-en-2018",
-          "evolution-de-la-repartition-des-mentions-au-bac",
-          "repartition-hf-pour-le-bac-(general-et-technologique)-2018",
-          "evolution-de-l'obtention-du-bac-en-fonction-de-l'age",
-          "evolution-de-la-repartition-public-prive-pour-le-bac"
+          "budget-de-l'etat-2019"
         ],
         "applications": [
           {
-            "updatedAt": "2023-10-17T09:13:14.930Z",
-            "id": "repartition-des-bacheliers-en-2018",
+            "updatedAt": "2023-10-10T12:01:30.529Z",
+            "id": "budget-de-l'etat-2019",
             "publicationSites": [
               "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+              "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84"
             ],
-            "slug": "repartition-des-bacheliers-en-2018"
-          },
-          {
-            "updatedAt": "2024-06-11T13:24:13.801Z",
-            "id": "evolution-de-la-repartition-des-mentions-au-bac",
-            "publicationSites": [
-              "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "evolution-de-la-repartition-des-mentions-au-bac"
-          },
-          {
-            "updatedAt": "2023-10-17T09:11:56.835Z",
-            "id": "repartition-hf-pour-le-bac-(general-et-technologique)-2018",
-            "publicationSites": [
-              "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "repartition-hf-pour-le-bac-(general-et-technologique)-2018"
-          },
-          {
-            "updatedAt": "2024-06-03T15:02:41.463Z",
-            "id": "evolution-de-l'obtention-du-bac-en-fonction-de-l'age",
-            "publicationSites": [
-              "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "evolution-de-l'obtention-du-bac-en-fonction-de-l'age"
-          },
-          {
-            "updatedAt": "2024-05-29T13:59:14.611Z",
-            "id": "evolution-de-la-repartition-public-prive-pour-le-bac",
-            "publicationSites": [
-              "data-fair-portals:5IbdDs7l4",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "evolution-de-la-repartition-public-prive-pour-le-bac"
-          },
-          {
-            "updatedAt": "2024-07-03T13:38:18.494Z",
-            "id": "proportions-des-resultats-du-baccalaureat",
-            "publicationSites": [
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "proportions-des-resultats-du-baccalaureat"
-          },
-          {
-            "updatedAt": "2023-12-19T11:29:49.424Z",
-            "id": "repartition-des-resultats-au-baccalaureat-par-etablissement",
-            "slug": "repartition-des-resultats-au-baccalaureat-par-etablissement",
-            "publicationSites": [
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ]
-          },
-          {
-            "updatedAt": "2024-06-05T09:33:46.288Z",
-            "id": "repartition-des-bacheliers-en-2017",
-            "publicationSites": [
-              "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84",
-              "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
-            ],
-            "slug": "repartition-des-bacheliers-en-2017"
+            "slug": "budget-de-l'etat-2019"
           }
         ]
       },
-      "description": "Ce jeu de données contient les résultats au baccalauréat de 2011 à 2018. Les données ont été retravaillées à partir du jeu de données original pour être plus adaptées à l'utilisation d'agrégations. Il contient moins de colonnes que le jeu original mais plus de lignes et le fichier résultant est un peu plus volumineux. Il n'y a plus qu'une seule colonne indiquant le nombre d'élèves, et des attributs ont été rajoutés :\n * **sexe** : qui peut prendre la valeur M ou F ;\n * **présent** : booléen qui indique la présence ou non à l'examen ;\n *  **admis** : booléen qui indique l'admission ou non à l'examen. Est à *false* si **présent** est à *false* ;\n *  **mention** : indique la mention obtenue, ou si il y a eu rattrapage. Dans le cas ou **présent** est à *false*, la mention est à *absent*. Dans le cas ou **admis** est à *false*, la mention est à *ajourné*. L'intervalle de note correspondant à la mention a été ajouté en préfixe, ce qui permet de les trier ;\n * **nb élève** : est la seule colonne avec une valeur numérique.\n\nCe jeu de données est utilisé dans notre cours sur la création d'une visualisation [treemap](https://docs.koumoul.com/pages/treemap).",
+      "origin": "https://github.com/rainbowViz/rainbowClient",
+      "description": "Données issues du projet de loi de finances (PLF) pour 2019 et de ses annexes, à savoir :\n\n- Nomenclature par destination : Mission/Programme /Action (MPA)\n- Recettes fiscales nettes de l’État\n- Budget général (BG) par mission sur l’axe destination\n- Budgets annexes (BA) par mission sur l’axe destination\n- Comptes d'affectation spéciale (CAS) par mission sur l’axe destination\n- Comptes de concours financiers (CCF) par mission sur l’axe destination\n- Budget général (BG) par mission sur l’axe nature\n- Comptes d'affectation spéciale (CAS) par mission sur l’axe nature\n- Comptes de concours financiers (CCF) par mission sur l’axe nature\n- Budget de l’État - décompte des emplois équivalent temps plein (ETP) par ministère\n- Budget de l’État suivant titre 2 et hors titre 2 (T2 / HT2)",
       "storage": {
-        "size": 240535338,
+        "size": 172195,
         "dataFiles": [
           {
-            "name": "resultats-au-baccalaureat-par-etablissement.csv",
+            "name": "plf_2019.csv",
             "key": "original",
-            "title": "Fichier d'origine",
+            "title": "Fichier original",
             "mimetype": "text/csv",
-            "size": 240234301,
-            "updatedAt": "2019-01-14T22:27:26.000Z"
+            "size": 172195,
+            "updatedAt": "2018-12-18T18:24:43.000Z"
           }
         ],
         "indexed": {
-          "size": 240234301,
+          "size": 172195,
           "parts": [
             "original-file"
           ]
@@ -678,58 +284,34 @@
           "count": 0
         },
         "metadataAttachments": {
-          "size": 301037,
-          "count": 1
-        },
-        "masterData": {
           "size": 0,
           "count": 0
         }
       },
       "topics": [
         {
-          "title": "Education",
-          "color": "#673AB7FF",
-          "id": "VdtQaIG130",
+          "title": "Société",
+          "color": "#E91E63FF",
+          "id": "m3CnrYBSi",
           "icon": {
-            "name": "school"
+            "name": "home-group"
           }
         }
       ],
       "publicationSites": [
         "data-fair-portals:5IbdDs7l4",
-        "data-fair-portals:e7bdea8e-38a0-4bac-b2f5-4dc8fe8495b0"
+        "data-fair-portals:8286a7e5-a6f9-490b-996c-94e81a0e8e84"
       ],
-      "attachments": [
-        {
-          "mimetype": "image/jpeg",
-          "name": "3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg",
-          "size": 301037,
-          "updatedAt": "2021-06-18T09:40:47.594Z",
-          "type": "file",
-          "title": "3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg",
-          "description": "",
-          "url": "http://localhost:5888/data-fair/api/v1/datasets/resultats-baccalaureat-etablissement/metadata-attachments/3E2DB8F3-965D-4F39-B150-0AC60CAAFEED_1_201_a.jpeg"
-        }
-      ],
-      "dataUpdatedAt": "2019-05-29T23:53:26.644Z",
+      "dataUpdatedAt": "2019-05-30T00:07:45.611Z",
       "dataUpdatedBy": {
-        "id": "Ad6jfM1p0",
-        "name": "Mathis Querioux"
+        "id": "rJytCgDTf",
+        "name": "Balam Saldana"
       },
       "analysis": {
         "escapeKeyAlgorithm": "legacy"
       },
       "requestedPublicationSites": [],
-      "slug": "resultats-baccalaureat-etablissement",
-      "masterData": {
-        "standardSchema": {},
-        "virtualDatasets": {
-          "active": true
-        },
-        "bulkSearchs": [],
-        "singleSearchs": []
-      },
+      "slug": "plf-2019",
       "esWarning": null,
       "userPermissions": [
         "list",
@@ -766,12 +348,12 @@
         {
           "id": "table",
           "title": "Tableau",
-          "href": "http://localhost:5888/data-fair/embed/dataset/resultats-baccalaureat-etablissement/table"
+          "href": "http://localhost:5888/data-fair/embed/dataset/plf-2019/table"
         }
       ],
-      "href": "http://localhost:5888/data-fair/api/v1/datasets/resultats-baccalaureat-etablissement",
-      "page": "http://localhost:5888/data-fair/dataset/resultats-baccalaureat-etablissement"
+      "href": "http://localhost:5888/data-fair/api/v1/datasets/plf-2019",
+      "page": "http://localhost:5888/data-fair/dataset/plf-2019"
     }
   ],
-  "field1": "Field 1, value 1"
+  "field1": "Field 1, value 5"
 }
