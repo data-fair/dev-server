@@ -9,12 +9,6 @@
         md="6"
         lg="4"
       >
-        <v-alert
-          v-if="error"
-          color="error"
-        >
-          {{ error }}
-        </v-alert>
         <v-row class="mb-2">
           <v-spacer />
           <v-dialog
@@ -277,16 +271,23 @@
           />
           <lang-switcher />
         </v-row>
-        <v-card>
-          <d-frame
-            v-if="showPreview && meta"
-            ref="frame"
-            :src="iframeUrl"
-            :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
-            :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
-            :height="(height - 70) + 'px'"
-          />
-        </v-card>
+        <v-alert
+          v-if="error"
+          type="error"
+          border="start"
+          variant="outlined"
+          class="ma-4"
+        >
+          {{ error }}
+        </v-alert>
+        <d-frame
+          v-else-if="showPreview && meta"
+          ref="frame"
+          :src="iframeUrl"
+          :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
+          :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
+          :height="(height - 70) + 'px'"
+        />
       </v-col>
     </v-row>
   </v-container>
