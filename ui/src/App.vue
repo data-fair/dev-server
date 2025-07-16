@@ -417,9 +417,9 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
 
 const validationErrors = computed(() => {
   if (!schema.value || !schemaValidate) return
-  debugEditConfigBinding('validate editConfig', editConfig.value)
+  debugEditConfigBinding('validate editConfig')
   const valid = schemaValidate(editConfig.value)
-  debugEditConfigBinding('valid ?', editConfig.value)
+  debugEditConfigBinding('valid ?', valid)
   if (!valid) {
     ajvLocalize[locale.value as Locale](schemaValidate.errors)
     return schemaValidate.errors
@@ -439,14 +439,12 @@ const iframeUrl = computed(() => {
 const fetchConfig = useFetch('/config')
 const editConfig = ref<any>()
 watch(fetchConfig.data, (v) => {
-  debugEditConfigBinding('update editConfig from fetchConfig', v)
+  debugEditConfigBinding('update editConfig from fetchConfig')
   editConfig.value = v
 })
 if (debugEditConfigBinding.enabled) {
-  watch(editConfig, () => {}, {
-    onTrigger: (event) => {
-      debugEditConfigBinding('trigger editConfig watcher', event, editConfig.value)
-    }
+  watch(editConfig, () => {
+    debugEditConfigBinding('editConfig watcher', JSON.parse(JSON.stringify(editConfig.value)))
   })
 }
 
@@ -491,7 +489,7 @@ const save = async (config: any) => {
   debugEditConfigBinding('save config', config)
   await ofetch('/config', { body: config, method: 'put' })
   if (meta.value?.['df:sync-config'] === 'true') {
-    debugEditConfigBinding('send new config to iframe', config)
+    debugEditConfigBinding('send new config to iframe')
     // @ts-ignore
     frame.value?.postMessageToChild({ type: 'set-config', content: toRaw(config) })
   } else {
