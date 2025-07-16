@@ -334,6 +334,9 @@ import langSwitcher from './components/lang-switcher.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
 import { withQuery } from 'ufo'
 import { useWindowSize } from '@vueuse/core'
+import debugModule from 'debug'
+
+const debugEditConfigBinding = debugModule('dev-server:edit-config-binding')
 
 const ajv = new Ajv({ strict: false, allErrors: true, messages: false })
 ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
@@ -414,7 +417,9 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
 
 const validationErrors = computed(() => {
   if (!schema.value || !schemaValidate) return
+  debugEditConfigBinding('validate editConfig', editConfig.value)
   const valid = schemaValidate(editConfig.value)
+  debugEditConfigBinding('valid ?', editConfig.value)
   if (!valid) {
     ajvLocalize[locale.value as Locale](schemaValidate.errors)
     return schemaValidate.errors
@@ -433,7 +438,17 @@ const iframeUrl = computed(() => {
 
 const fetchConfig = useFetch('/config')
 const editConfig = ref<any>()
-watch(fetchConfig.data, (v) => { editConfig.value = v })
+watch(fetchConfig.data, (v) => {
+  debugEditConfigBinding('update editConfig from fetchConfig', v)
+  editConfig.value = v
+})
+if (debugEditConfigBinding.enabled) {
+  watch(editConfig, () => {}, {
+    onTrigger: (event) => {
+      debugEditConfigBinding('trigger editConfig watcher', event, editConfig.value)
+    }
+  })
+}
 
 const socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
 socketDevServer.onopen = () => {
@@ -449,12 +464,14 @@ window.addEventListener('message', async msg => {
   console.log('received message from iframe', msg.data)
   // @ts-ignore
   if (frame.value?.iframeElement?.contentWindow === msg.source && msg.data.type === 'set-config') {
+    debugEditConfigBinding('set property from iframe', msg.data.content.field, msg.data.content.value)
     editConfig.value = setProperty(JSON.parse(JSON.stringify(toRaw(editConfig.value))), msg.data.content.field, msg.data.content.value)
     await validate()
   }
 })
 
 const empty = async () => {
+  debugEditConfigBinding('empty editConfig')
   editConfig.value = null
   await save({})
   editConfig.value = {}
@@ -471,8 +488,10 @@ const validate = async () => {
 
 const frame = useTemplateRef('frame')
 const save = async (config: any) => {
+  debugEditConfigBinding('save config', config)
   await ofetch('/config', { body: config, method: 'put' })
   if (meta.value?.['df:sync-config'] === 'true') {
+    debugEditConfigBinding('send new config to iframe', config)
     // @ts-ignore
     frame.value?.postMessageToChild({ type: 'set-config', content: toRaw(config) })
   } else {
