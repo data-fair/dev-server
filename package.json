@@ -14,7 +14,7 @@
     "dev-test-app-minimal": "http-server test-apps/minimal --port=3000 --cors --silent",
     "dev-test-app-vue3": "cd test-apps/vue3 && npm run dev",
     "dev-zellij": "zellij --layout .zellij.kdl",
-    "prepublishOnly": "npm run lint && npm run build &&npm -w ui run build",
+    "prepublishOnly": "npm run lint && npm run build && npm -w ui run build",
     "lint": "eslint . && npm -w ui run lint",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "build-types": "df-build-types ."
