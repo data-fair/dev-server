@@ -257,7 +257,7 @@
             title="reload iframe content"
             :icon="mdiRefresh"
             variant="text"
-            @click="reloadIframe"
+            @click="draftPreviewInc++"
           />
           <v-btn
             class="mx-2"
@@ -287,6 +287,7 @@
           :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
           :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
           :height="(height - 70) + 'px'"
+          :reload="draftPreviewInc"
         />
       </v-col>
     </v-row>
@@ -493,7 +494,7 @@ const save = async (config: any) => {
     // @ts-ignore
     frame.value?.postMessageToChild({ type: 'set-config', content: toRaw(config) })
   } else {
-    await reloadIframe()
+    draftPreviewInc.value++
   }
 }
 
@@ -572,11 +573,7 @@ const fetchInfo = useAsyncAction(async () => {
 })
 fetchInfo.execute()
 
-const reloadIframe = async () => {
-  showPreview.value = false
-  await new Promise(resolve => setTimeout(resolve, 1))
-  showPreview.value = true
-}
+const draftPreviewInc = ref(0)
 
 </script>
 
