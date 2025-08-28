@@ -25,6 +25,7 @@
   })
   applyConfiguration()
 
+  var socket
   function applyConfiguration () {
     if (!application.configuration || !application.configuration.datasets || !application.configuration.datasets[0]) {
       log('The configuration it not sufficient to display some data.', 'error');
@@ -35,6 +36,22 @@
       .then(function(data) {
         log('Consumed the API of the configured dataset: ' + JSON.stringify(data))
       })
+
+    if (socket) socket.close()
+    socket = new WebSocket('ws://localhost:5888/data-fair/')
+    socket.addEventListener('open', function (event) {
+      log('WebSocket opened, send subscribe message')
+      socket.send(JSON.stringify({'type': 'subscribe', 'channel': `datasets/${application.configuration.datasets[0].id}/journal`}));
+    })
+    socket.addEventListener('error', function (event) {
+      log('WebSocket is in error', event)
+    })
+    socket.addEventListener('close', function (event) {
+      log('WebSocket is closed')
+    })
+    socket.addEventListener('message', function (event) {
+      log('WebSocket received message from data-fair: ' + event.data)
+    })
   }
   
 

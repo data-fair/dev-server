@@ -29,13 +29,13 @@ let devServerWS: WebSocket
 let dataFairWS: WebSocket
 server.on('upgrade', function upgrade (req, socket, head) {
   wss.handleUpgrade(req, socket, head, (ws) => {
-    if (req.url === '/data-fair') {
+    if (req.url === '/data-fair' || req.url === '/data-fair/') {
       if (dataFairWS) dataFairWS.terminate()
       dataFairWS = ws
       ws.on('message', (data: string) => {
         if (dataFairOutputWS) {
           const message = JSON.parse(data)
-          if (message.type === 'subscribe') message.apiKey = config.dataFair.apiKey
+          if (message.type === 'subscribe' && config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
           dataFairOutputWS.send(JSON.stringify(message))
         }
       })
