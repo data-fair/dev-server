@@ -25,33 +25,60 @@ const server = createServer(app)
 // web socket server, used both by dev-server UI (opened on / path)
 // and by application (opened on /data-fair), in this case we transmit all messages to and from data-fair
 const wss = new WebSocketServer({ noServer: true })
-let devServerWS: WebSocket
-let dataFairWS: WebSocket
-server.on('upgrade', function upgrade (req, socket, head) {
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    if (req.url === '/data-fair' || req.url === '/data-fair/') {
-      if (dataFairWS) dataFairWS.terminate()
-      dataFairWS = ws
-      ws.on('message', (data: string) => {
-        if (dataFairOutputWS) {
-          const message = JSON.parse(data)
-          if (message.type === 'subscribe' && config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
-          dataFairOutputWS.send(JSON.stringify(message))
-        }
-      })
-    } else {
-      if (devServerWS) devServerWS.terminate()
-      devServerWS = ws
-    }
-    wss.emit('connection', ws, req)
-  })
-})
+let devServerWS: WebSocket[] = []
+let dataFairWS: WebSocket[] = []
+const dataFairWSChannels = new Map<WebSocket, string[]>()
 
 const dfWsUrl = config.dataFair.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/'
 const dataFairOutputWS = new WebSocket(dfWsUrl)
-dataFairOutputWS.on('open', () => dataFairOutputWS.send('connect to external websocket server ' + dfWsUrl))
-dataFairOutputWS.on('message', (data) => { if (dataFairWS) dataFairWS.send(data.toString()) })
+dataFairOutputWS.on('open', () => {
+  debug('connect to external websocket server ' + dfWsUrl)
+})
+dataFairOutputWS.on('message', (data) => {
+  const dataStr = data.toString()
+  const message = JSON.parse(dataStr)
+  debug('incoming message from data-fair socket', message)
+  for (const ws of dataFairWS) {
+    if (dataFairWSChannels.get(ws)?.includes(message.channel)) {
+      ws.send(dataStr)
+    }
+  }
+})
 dataFairOutputWS.on('error', (err) => console.error('failed to connect to external websocket server', dfWsUrl, err))
+dataFairOutputWS.on('close', () => console.error('external websocket was closed', dfWsUrl))
+
+server.on('upgrade', function upgrade (req, socket, head) {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    debug('Opening websocket ' + req.url)
+    if (req.url === '/data-fair' || req.url === '/data-fair/') {
+      dataFairWS.push(ws)
+      ws.on('close', () => { dataFairWS = dataFairWS.filter(_ws => _ws !== ws) })
+      ws.on('message', (data: string) => {
+        if (dataFairOutputWS) {
+          const message = JSON.parse(data)
+          debug('outgoing message to data-fair socket', message)
+          if (message.type === 'subscribe') {
+            dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).concat([message.channel]))
+            if (config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
+          }
+          if (message.type === 'unsubscribe') {
+            dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).filter(c => c !== message.channel))
+          }
+          dataFairOutputWS.send(JSON.stringify(message))
+        }
+      })
+    } else if (req.url === '/') {
+      debug('connect main dev-server WS')
+      devServerWS.push(ws)
+      ws.on('close', () => { devServerWS = devServerWS.filter(_ws => _ws !== ws) })
+    } else {
+      console.warn('ignore WebSocket to path not managed by dev-server', req.url)
+    }
+    wss.emit('connection', ws, req)
+
+    ws.on('error', () => ws.terminate())
+  })
+})
 
 app.use(cors())
 app.use(express.json())
@@ -69,8 +96,9 @@ app.put('/config', (req, res, next) => {
 })
 app.post('/config/error', (req, res) => {
   console.log('Application sent an error', req.body)
-  if (devServerWS) devServerWS.send(JSON.stringify({ type: 'app-error', data: req.body }))
-  else console.error('no dev-server websocket open to send error to')
+  for (const ws of devServerWS) {
+    ws.send(JSON.stringify({ type: 'app-error', data: req.body }))
+  }
   res.send()
 })
 
@@ -270,9 +298,8 @@ export const run = async () => {
 }
 
 export const stop = async () => {
-  if (devServerWS) devServerWS.terminate()
-  if (dataFairWS) dataFairWS.terminate()
+  for (const ws of dataFairWS) ws.terminate()
+  for (const ws of devServerWS) ws.terminate()
   server.close()
   await eventPromise(server, 'close')
-  await app.get('client').close()
 }
