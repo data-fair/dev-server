@@ -480,8 +480,8 @@ const form = useTemplateRef('form')
 const validate = async () => {
   await form.value?.validate()
   if (formValid.value) {
-    error.value = undefined
     await save(editConfig.value)
+    error.value = undefined
   }
 }
 
