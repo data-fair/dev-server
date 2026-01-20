@@ -284,7 +284,7 @@
           v-else-if="showPreview && meta"
           ref="frame"
           :src="iframeUrl"
-          :resize="meta['df:overflow'] === 'true' ? 'yes' : 'no'"
+          :resize="meta['df:overflow'] === 'true' ? 'auto' : 'no'"
           :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
           :height="(height - 70) + 'px'"
           :reload="draftPreviewInc"
