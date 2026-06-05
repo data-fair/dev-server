@@ -63,6 +63,30 @@ export default {
         }
       }
     },
+    site: {
+      type: 'object',
+      properties: {
+        primaryColor: {
+          type: 'string'
+        }
+      }
+    },
+    theme: {
+      type: 'object',
+      properties: {
+        default: {
+          type: 'string'
+        }
+      }
+    },
+    lang: {
+      type: 'object',
+      properties: {
+        default: {
+          type: 'string'
+        }
+      }
+    },
     serveUi: {
       type: 'boolean'
     },
