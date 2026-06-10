@@ -4,3 +4,4 @@ node_modules
 src/*.js
 src/*.d.ts
 config/local-*
+.dev-config.json

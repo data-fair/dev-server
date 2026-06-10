@@ -189,12 +189,13 @@ app.use('/app', createProxyMiddleware({
                 if (name !== undefined && content !== undefined) meta[name] = content
               }
             }
-            if (meta['df:sync-state'] === 'true' || meta['df:overflow'] === 'true') {
-              bodyNode.childNodes.push(createElement('script', {
-                type: 'text/javascript',
-                src: 'https://cdn.jsdelivr.net/npm/@data-fair/frame@0.12/dist/v-iframe-compat/d-frame-content.min.js'
-              }))
-            }
+            // companion script that lets the embedded app report its height / sync params
+            // to the parent <d-frame> ; injected for every mode so the UI mode toggle works
+            // without requiring a df:overflow meta (same variant & version as data-fair prod)
+            bodyNode.childNodes.push(createElement('script', {
+              type: 'text/javascript',
+              src: 'https://cdn.jsdelivr.net/npm/@data-fair/frame@0.18/dist/v-iframe-compat/d-frame-content.min.js'
+            }))
 
             output = parse5.serialize(document)
 

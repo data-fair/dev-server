@@ -1,338 +1,273 @@
 <template>
-  <v-container
-    fluid
-    class="pt-4"
-  >
-    <v-row>
-      <v-col
-        class="xs"
-        md="6"
-        lg="4"
+  <v-app>
+    <v-app-bar>
+      <!-- Show Configuration Schema -->
+      <v-dialog scrollable>
+        <template #activator="{props}">
+          <v-btn
+            v-bind="props"
+            :title="t('showSchema')"
+            :loading="fetchInfo.loading.value"
+            :icon="mdiTextBox"
+            class="mx-2"
+            size="small"
+            color="primary"
+            variant="text"
+          />
+        </template>
+        <v-card
+          :title="t('configSchema')"
+          variant="flat"
+        >
+          <v-card-text>
+            <pre>{{ schema }}</pre>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
+      <v-btn
+        class="mx-2"
+        size="small"
+        color="primary"
+        variant="text"
+        :icon="mdiRefresh"
+        :loading="fetchInfo.loading.value"
+        :title="t('refreshAppInfo')"
+        @click="fetchInfo.execute()"
+      />
+
+      <v-spacer />
+
+      <screenshot-simulation />
+      <v-btn
+        :title="t('reloadIframe')"
+        :icon="mdiRefresh"
+        class="mx-2"
+        size="small"
+        color="primary"
+        variant="text"
+        @click="draftPreviewInc++"
+      />
+      <v-btn
+        :title="t('openFullPage')"
+        :icon="mdiOpenInNew"
+        class="mx-2"
+        size="small"
+        color="primary"
+        href="/app"
+        target="blank"
+        variant="text"
+      />
+      <v-select
+        v-model="frameMode"
+        :items="frameModes"
+        :prepend-inner-icon="mdiMonitorScreenshot"
+        density="compact"
+        variant="outlined"
+        class="mx-2"
+        max-width="300"
+        hide-details
+        @update:model-value="draftPreviewInc++"
       >
-        <v-row class="mb-2">
-          <v-spacer />
-          <v-dialog
-            v-model="showSchema"
-            scrollable
-            max-width="1100px"
-          >
-            <template #activator="{props}">
-              <v-btn
-                class="mx-2"
-                size="small"
-                color="primary"
-                variant="text"
-                :icon="mdiTextBox"
-                :loading="fetchInfo.loading.value"
-                title="show schema"
-                v-bind="props"
-                @click="showSchema = true"
+        <template #selection="{ item }">
+          {{ t(item.raw.labelKey) }}
+        </template>
+        <template #item="{ item, props: itemProps }">
+          <v-tooltip :text="t(item.raw.tooltipKey)">
+            <template #activator="{ props: tipProps }">
+              <v-list-item
+                v-bind="mergeProps(itemProps, tipProps)"
+                :title="t(item.raw.labelKey)"
+                :subtitle="item.raw.config"
               />
             </template>
-            <v-card variant="flat">
-              <v-card-title primary-title>
-                Config schema
-              </v-card-title>
-              <v-card-text>
-                <pre>{{ schema }}</pre>
-              </v-card-text>
-            </v-card>
-          </v-dialog>
-          <v-btn
-            class="mx-2"
-            size="small"
-            color="primary"
-            variant="text"
-            :icon="mdiRefresh"
-            :loading="fetchInfo.loading.value"
-            title="refresh app info"
-            @click="fetchInfo.execute()"
-          />
-        </v-row>
-        <h2 class="text-h6 mt-2">
-          {{ t('config') }}
-        </h2>
-        <v-form
-          ref="form"
-          v-model="formValid"
-        >
-          <v-alert
-            v-if="!!compileError"
-            type="error"
-          >
-            {{ compileError }}
-          </v-alert>
-          <v-alert
-            v-if="!!validationErrors && formValid"
-            type="error"
-          >
-            Formulaire valide pourtant le modèle ne respecte pas le schéma:
-            <p>{{ validationErrors }}</p>
-          </v-alert>
-          <vjsf
-            v-if="schema && editConfig"
-            v-model="editConfig"
-            :schema="schema"
-            :options="vjsfOptions"
-            @update:model-value="validate"
-          />
-        </v-form>
-        <v-row class="ma-2">
-          <v-spacer />
-          <v-btn
-            color="warning"
-            @click="empty"
-          >
-            Empty
-          </v-btn>
-        </v-row>
+          </v-tooltip>
+        </template>
+      </v-select>
 
-        <v-row class="ma-2">
-          <v-form>
-            <vjsf
-              v-model="extraParams"
-              :schema="extraParamsSchema"
-              :options="{ editMode: 'inline' }"
-            />
-          </v-form>
-        </v-row>
+      <theme-switcher @change="draftPreviewInc++" />
 
-        <v-row
-          v-if="meta"
-          class="mt-4"
-        >
-          <v-col class="app-meta">
-            <h2 class="text-h6">
-              {{ t('metadata') }}
+      <lang-switcher />
+    </v-app-bar>
+
+    <v-main>
+      <v-container fluid>
+        <v-row>
+          <v-col
+            md="6"
+            lg="4"
+            :style="configColStyle"
+          >
+            <h2 class="text-h6 mt-2">
+              {{ t('config') }}
             </h2>
-
-            <p v-if="meta['application-name']">
-              <b>application-name:</b> {{ meta['application-name'] }}
-            </p>
-            <v-alert
-              v-else
-              type="error"
-              density="compact"
+            <v-form
+              ref="form"
+              v-model="formValid"
             >
-              {{ t('missingApplicationName') }}
-            </v-alert>
+              <v-alert
+                v-if="!!compileError"
+                type="error"
+                :text="compileError"
+              />
 
-            <p v-if="meta.thumbnail">
-              <b>thumbnail:</b> <img
-                width="25"
-                :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : '/app/' + meta.thumbnail"
+              <v-alert
+                v-if="!!validationErrors && formValid"
+                type="error"
               >
-            </p>
+                Formulaire valide pourtant le modèle ne respecte pas le schéma:
+                <p>{{ validationErrors }}</p>
+              </v-alert>
+
+              <vjsf
+                v-if="schema && editConfig"
+                v-model="editConfig"
+                :schema="schema"
+                :options="vjsfOptions"
+                @update:model-value="validate"
+              />
+            </v-form>
+
+            <v-row class="ma-2">
+              <v-spacer />
+              <v-btn
+                color="warning"
+                @click="empty"
+              >
+                {{ t('empty') }}
+              </v-btn>
+            </v-row>
+
+            <v-row class="ma-2">
+              <v-form>
+                <vjsf
+                  v-model="extraParams"
+                  :schema="extraParamsSchema"
+                  :options="{ editMode: 'inline' }"
+                />
+              </v-form>
+            </v-row>
+
+            <v-row
+              v-if="meta"
+              class="mt-4"
+            >
+              <v-col class="app-meta">
+                <h2 class="text-h6">
+                  {{ t('metadata') }}
+                </h2>
+
+                <meta-item
+                  v-for="field in metaFields"
+                  :key="field.key"
+                  :label="field.key"
+                  :present="metaIsPresent(field)"
+                  :severity="field.severity"
+                  :missing-key="field.missingKey"
+                >
+                  <img
+                    v-if="field.key === 'thumbnail' && meta?.thumbnail"
+                    width="25"
+                    :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : '/app/' + meta.thumbnail"
+                  >
+                  <template v-else>
+                    {{ metaDisplayValue(field) }}
+                  </template>
+                </meta-item>
+              </v-col>
+            </v-row>
+          </v-col>
+
+          <v-col
+            md="6"
+            lg="8"
+          >
             <v-alert
-              v-else
+              v-if="error"
+              :text="error"
               type="error"
-              density="compact"
-            >
-              {{ t('missingThumbnail') }}
-            </v-alert>
+              border="start"
+              variant="outlined"
+              class="ma-4"
+            />
 
-            <p v-if="meta.title && meta.title[locale]">
-              <b>title:</b> {{ meta.title[locale] }}
-            </p>
-            <v-alert
-              v-else
-              type="error"
-              density="compact"
-            >
-              {{ t('missingTitle', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta.description && meta.description[locale]">
-              <b>description:</b> {{ meta.description[locale] }}
-            </p>
-            <v-alert
-              v-else
-              type="error"
-              density="compact"
-            >
-              {{ t('missingDesc', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta.keywords && meta.keywords[locale]">
-              <b>keywords:</b> {{ meta.keywords[locale] }}
-            </p>
-            <v-alert
-              v-else
-              type="error"
-              density="compact"
-            >
-              {{ t('missingKeywords', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta['vocabulary-accept']">
-              <b>vocabulary-accept:</b> {{ meta['vocabulary-accept'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingVocabAccept', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta['vocabulary-require']">
-              <b>vocabulary-require:</b> {{ meta['vocabulary-require'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingVocabRequire', {locale: locale}) }}
-            </v-alert>
-            <p v-if="meta['df:overflow']">
-              <b>df:overflow:</b> {{ meta['df:overflow'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingDFOverflow', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta['df:sync-state']">
-              <b>df:sync-state:</b> {{ meta['df:sync-state'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingDFSyncState', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta['df:filter-concepts']">
-              <b>df:filter-concepts:</b> {{ meta['df:filter-concepts'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingDFFilterConcepts', {locale: locale}) }}
-            </v-alert>
-
-            <p v-if="meta['df:vjsf']">
-              <b>df:vjsf:</b> {{ meta['df:vjsf'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingDFVsf') }}
-            </v-alert>
-
-            <p v-if="meta['df:sync-config']">
-              <b>df:sync-config:</b> {{ meta['df:sync-config'] }}
-            </p>
-            <v-alert
-              v-else
-              type="info"
-              density="compact"
-            >
-              {{ t('missingDFSyncConfig') }}
-            </v-alert>
+            <d-frame
+              v-else-if="showPreview && meta"
+              ref="frame"
+              :key="frameMode"
+              class="border"
+              :src="iframeUrl"
+              :resize="frameResize"
+              :aspect-ratio="(frameMode === 'aspect-ratio' || frameMode === 'aspect-ratio-fixed') ? '' : undefined"
+              :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
+              :reload="draftPreviewInc"
+              :style="{ height: frameHeight }"
+            />
           </v-col>
         </v-row>
-      </v-col>
-      <v-col
-        class="xs"
-        md="6"
-        lg="8"
-      >
-        <v-row class="mb-2">
-          <v-spacer />
-          <screenshot-simulation />
-          <v-btn
-            class="mx-2"
-            size="small"
-            color="primary"
-            title="reload iframe content"
-            :icon="mdiRefresh"
-            variant="text"
-            @click="draftPreviewInc++"
-          />
-          <v-btn
-            class="mx-2"
-            size="small"
-            color="primary"
-            href="/app"
-            title="open in full page"
-            target="blank"
-            variant="text"
-            :icon="mdiOpenInNew"
-          />
-          <lang-switcher />
-        </v-row>
-        <v-alert
-          v-if="error"
-          type="error"
-          border="start"
-          variant="outlined"
-          class="ma-4"
-        >
-          {{ error }}
-        </v-alert>
-        <d-frame
-          v-else-if="showPreview && meta"
-          ref="frame"
-          :src="iframeUrl"
-          :resize="meta['df:overflow'] === 'true' ? 'auto' : 'no'"
-          :sync-params="meta['df:sync-state'] === 'true' ? '*' : ''"
-          :height="(height - 70) + 'px'"
-          :reload="draftPreviewInc"
-        />
-      </v-col>
-    </v-row>
-  </v-container>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <i18n lang="yaml">
 en:
   metadata: "Metadata read from index.html"
-  missingApplicationName: "Metadata \"application-name\" is missing. Add a tag <meta name=\"application-name\" content=\"my-application\">"
-  missingThumbnail: "Metadata \"thumbnail\" is missing. Add a tag <meta name=\"thumbnail\" content=\"http://my/thumbnail.png\">"
-  missingTitle: "Add a tag <title lang=\"{locale}\">My title</title>"
-  missingDesc: "Metadata \"description\" is missing. Add a tag <meta name=\"description\" lang=\"{locale}\" content=\"My description\">"
-  missingKeywords: "Metadata \"keywords\" is missing. Add a tag <meta name=\"keywords\" lang=\"{locale}\" content=\"My keyword\">"
-  missingVocabAccept: "Metadata \"vocabulary-accept\" is missing. Add a tag <meta name=\"vocabulary-accept\" content=\"http://www.w3.org/2000/01/rdf-schema#label\">"
-  missingVocabRequire: "Metadata \"vocabulary-require\" is missing. Add a tag <meta name=\"vocabulary-require\" content=\"http://www.w3.org/2003/01/geo/wgs84_pos#lat_long\">"
-  missingDFOverflow: "Metadata \"df:overflow\" is missing. Set it to \"true\" to signify that the application might overflow its initial boundaries and require either resizing of these boundaries or scroll bars."
-  missingDFSyncState: "Metadata \"df:sync-state\" is missing. Set it to \"true\" to signify that the application can have some state synchronized in its url (path and query params) that might be used by portals to create more useful links and screenshots."
-  missingDFFilterConcepts: "Metadata \"df:filter-concepts\" is missing. Set it to \"true\" to signify that the application supports filtering its datasets based on concepts values."
-  missingDFVsf: "Metadata \"df:vjsf\" is missing. Set it to \"3\" to use the mode modern v3 application configuration edition. You will need to upgrade the schema with the newest annotations (layout instead of x-display, etc)."
-  missingDFSyncConfig: "Metadata \"df:sync-config\" is missing. Set it to \"true\" if your application supports dynamic configuration reloading through postMessage."
-  config: Configuration form created from config-schema.json
+  config: "Configuration form created from config-schema.json"
+  showSchema: "Show schema"
+  configSchema: "Config schema"
+  empty: "Empty"
+  refreshAppInfo: "Refresh app info"
+  reloadIframe: "Reload preview"
+  openFullPage: "Open in full page"
+  modeFullPage: "Full page"
+  modeAspectFixed: "Fixed aspect ratio"
+  modeAutoResize: "Automatic resizing"
+  modeLegacy: "Legacy"
+  modeFullPageTip: "The app fills the container height."
+  modeAspectFixedTip: "Height fixed by the aspect ratio."
+  modeAutoResizeTip: "Displayed using the aspect ratio by default, and resized when needed. A map application typically won't resize; an application that declared df:overflow will resize."
+  modeLegacyTip: "Previous behaviour: resizing driven by the df:overflow meta."
+fr:
+  metadata: "Métadonnées lues depuis index.html"
+  config: "Formulaire de configuration créé depuis config-schema.json"
+  showSchema: "Voir le schéma"
+  configSchema: "Schéma de configuration"
+  empty: "Vider"
+  refreshAppInfo: "Rafraîchir les infos de l'application"
+  reloadIframe: "Recharger l'aperçu"
+  openFullPage: "Ouvrir en pleine page"
+  modeFullPage: "Pleine page"
+  modeAspectFixed: "Aspect ratio figé"
+  modeAutoResize: "Redimensionnement automatique"
+  modeLegacy: "Légacy"
+  modeFullPageTip: "L'application remplit la hauteur du conteneur."
+  modeAspectFixedTip: "Hauteur figée par le ratio d'aspect."
+  modeAutoResizeTip: "Affichée en aspect-ratio par défaut, et redimensionnée au besoin. Une application carte ne se redimensionne typiquement pas ; une application qui déclarait df:overflow se redimensionne."
+  modeLegacyTip: "Ancien comportement : redimensionnement piloté par la métadonnée df:overflow."
 </i18n>
 
 <script lang="ts" setup>
 
-import { ref, computed, watch } from 'vue'
+import { mergeProps } from 'vue'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 import { setProperty } from 'dot-prop'
-// import ScreenshotSimulation from '~/components/screenshot-simulation.vue'
 import * as parse5 from 'parse5'
 import Ajv, { ValidateFunction } from 'ajv'
 import ajvFormats from 'ajv-formats'
 import ajvLocalize from 'ajv-i18n'
 import { $uiConfig } from './context'
-import { useI18n } from 'vue-i18n'
 import '@data-fair/frame/lib/d-frame.js'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { mdiOpenInNew, mdiRefresh, mdiTextBox } from '@mdi/js'
+import { mdiOpenInNew, mdiRefresh, mdiTextBox, mdiMonitorScreenshot } from '@mdi/js'
 import { ofetch } from 'ofetch'
 import { isElementNode, isTextNode } from '@parse5/tools'
 import { resolveLocaleRefs } from '@json-layout/core/compile'
 import langSwitcher from './components/lang-switcher.vue'
+import metaItem from './components/meta-item.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
+import themeSwitcher from './components/theme-switcher.vue'
 import { withQuery } from 'ufo'
 import { useWindowSize } from '@vueuse/core'
 import debugModule from 'debug'
@@ -369,7 +304,40 @@ const compileError = ref<string>()
 const formValid = ref(false)
 const meta = ref<Meta>()
 const extraParams = ref<{ name: string, value: string }[]>()
-const showSchema = ref(false)
+
+type MetaField = {
+  key: string,
+  severity: 'error' | 'info',
+  missingKey: string,
+  localized?: boolean
+}
+
+const metaFields: MetaField[] = [
+  { key: 'application-name', severity: 'error', missingKey: 'missingApplicationName' },
+  { key: 'thumbnail', severity: 'error', missingKey: 'missingThumbnail' },
+  { key: 'title', severity: 'error', missingKey: 'missingTitle', localized: true },
+  { key: 'description', severity: 'error', missingKey: 'missingDesc', localized: true },
+  { key: 'keywords', severity: 'error', missingKey: 'missingKeywords', localized: true },
+  { key: 'vocabulary-accept', severity: 'info', missingKey: 'missingVocabAccept' },
+  { key: 'vocabulary-require', severity: 'info', missingKey: 'missingVocabRequire' },
+  { key: 'df:overflow', severity: 'info', missingKey: 'missingDFOverflow' },
+  { key: 'df:sync-state', severity: 'info', missingKey: 'missingDFSyncState' },
+  { key: 'df:filter-concepts', severity: 'info', missingKey: 'missingDFFilterConcepts' },
+  { key: 'df:vjsf', severity: 'info', missingKey: 'missingDFVsf' },
+  { key: 'df:sync-config', severity: 'info', missingKey: 'missingDFSyncConfig' }
+]
+
+const metaIsPresent = (field: MetaField) => {
+  const value = (meta.value as any)?.[field.key]
+  if (field.localized) return !!value?.[locale.value]
+  return !!value
+}
+
+const metaDisplayValue = (field: MetaField) => {
+  const value = (meta.value as any)?.[field.key]
+  if (field.localized) return value?.[locale.value] ?? ''
+  return value ?? ''
+}
 
 let schemaValidate: ValidateFunction
 
@@ -429,9 +397,12 @@ const validationErrors = computed(() => {
 })
 
 const iframeExtraParams = computed(() => {
+  const base: Record<string, string> = { draft: 'true' }
+  const primary = $uiConfig.site?.primaryColor
+  if (primary) base.primary = primary
   return (extraParams.value ?? [])
     .filter(p => p.name && p.value)
-    .reduce((a, p) => { a[p.name] = p.value; return a }, { draft: 'true' } as Record<string, string>)
+    .reduce((a, p) => { a[p.name] = p.value; return a }, base)
 })
 const iframeUrl = computed(() => {
   return withQuery('/app', iframeExtraParams.value)
@@ -575,13 +546,33 @@ fetchInfo.execute()
 
 const draftPreviewInc = ref(0)
 
-</script>
+const frameModes = [
+  { value: 'fill-height', labelKey: 'modeFullPage', config: 'fill-height · resize=no', tooltipKey: 'modeFullPageTip' },
+  { value: 'aspect-ratio-fixed', labelKey: 'modeAspectFixed', config: 'aspect-ratio · resize=no', tooltipKey: 'modeAspectFixedTip' },
+  { value: 'aspect-ratio', labelKey: 'modeAutoResize', config: 'aspect-ratio · resize=auto', tooltipKey: 'modeAutoResizeTip' },
+  { value: 'legacy', labelKey: 'modeLegacy', config: 'df:overflow → resize', tooltipKey: 'modeLegacyTip' }
+]
+const frameMode = ref('fill-height')
 
-<style lang="css" scoped>
-.app-meta p {
-  margin-bottom: 4px;
-}
-.v-alert {
-  margin-bottom: 4px;
-}
-</style>
+const frameResize = computed(() => {
+  if (frameMode.value === 'aspect-ratio-fixed' || frameMode.value === 'fill-height') return 'no'
+  if (frameMode.value === 'legacy') return meta.value?.['df:overflow'] === 'true' ? 'auto' : 'no'
+  return undefined
+})
+
+// viewport height minus the app-bar (64) and the container's top+bottom paddings (16+16)
+const availableHeight = computed(() => height.value - 64 - 32)
+
+const frameHeight = computed<string | undefined>(() => {
+  if (frameMode.value === 'legacy' || frameMode.value === 'fill-height') return availableHeight.value + 'px'
+  return undefined // aspect-ratio modes compute their own height
+})
+
+// in fill-height mode the config column must be bounded to the same height and scroll
+// internally, otherwise its natural height makes the whole page scroll
+const configColStyle = computed<Record<string, string> | undefined>(() => {
+  if (frameMode.value !== 'fill-height') return undefined
+  return { height: availableHeight.value + 'px', overflowY: 'auto' }
+})
+
+</script>

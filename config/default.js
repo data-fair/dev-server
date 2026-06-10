@@ -13,5 +13,14 @@ export default {
     url: 'http://localhost:3000',
     proxyPaths: ['/_nuxt/']
   },
+  site: {
+    primaryColor: '#1e88e5'
+  },
+  theme: {
+    default: 'default'
+  },
+  lang: {
+    default: 'fr'
+  },
   serveUi: true
 }

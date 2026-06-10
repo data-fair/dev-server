@@ -7,7 +7,7 @@ layout {
       }
       pane name="test app" {
         command "bash"
-        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-test-app-minimal"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-test-app-modern"
       }
       pane name="build" {
         command "bash"
@@ -22,7 +22,7 @@ layout {
       }
       pane name="api" {
         command "bash"
-        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev"
+        args "-ic" "nvm use > /dev/null 2>&1 && APP_URL=http://localhost:3000/app/ npm run dev"
       }
     }
     pane size=1 borderless=true {

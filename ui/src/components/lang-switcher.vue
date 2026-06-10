@@ -34,6 +34,8 @@ const { locale } = useI18n()
 
 const setLocale = (l: string) => {
   locale.value = l
+  // also drive the embedded app's language (read natively by lib-vue/session.js)
+  document.cookie = `i18n_lang=${l}; path=/`
   window.location.reload()
 }
 </script>

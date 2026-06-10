@@ -14,5 +14,14 @@ export default {
       __name: 'APP_PROXY_PATHS',
       __format: 'json'
     },
+  },
+  site: {
+    primaryColor: 'SITE_PRIMARY_COLOR'
+  },
+  theme: {
+    default: 'THEME_DEFAULT'
+  },
+  lang: {
+    default: 'LANG_DEFAULT'
   }
 }
