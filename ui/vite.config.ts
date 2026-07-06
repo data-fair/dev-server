@@ -14,11 +14,6 @@ export default defineConfig({
   base: '/',
   optimizeDeps: { include: commonjsDeps },
   build: {
-    rollupOptions: {
-      output: {
-        experimentalMinChunkSize: 2000
-      }
-    }
   },
   resolve: {
     alias: {

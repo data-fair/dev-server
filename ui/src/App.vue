@@ -70,15 +70,15 @@
         @update:model-value="draftPreviewInc++"
       >
         <template #selection="{ item }">
-          {{ t(item.raw.labelKey) }}
+          {{ t(item.labelKey) }}
         </template>
         <template #item="{ item, props: itemProps }">
-          <v-tooltip :text="t(item.raw.tooltipKey)">
+          <v-tooltip :text="t(item.tooltipKey)">
             <template #activator="{ props: tipProps }">
               <v-list-item
                 v-bind="mergeProps(itemProps, tipProps)"
-                :title="t(item.raw.labelKey)"
-                :subtitle="item.raw.config"
+                :title="t(item.labelKey)"
+                :subtitle="item.config"
               />
             </template>
           </v-tooltip>

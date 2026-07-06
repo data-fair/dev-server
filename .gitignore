@@ -1,6 +1,7 @@
-node_modules
-.type
+node_modules/
+.type/
 *.tsbuildinfo
+data/
 src/*.js
 src/*.d.ts
 config/local-*
