@@ -269,6 +269,40 @@ app.use('/data-fair', createProxyMiddleware({
   }
 }))
 
+// re-expose a tileserver to serve base map styles, tiles, sprites and fonts.
+// derived from the data-fair origin (each site exposes its tileserver on <origin>/tileserver).
+const tileserverUrl = new URL(config.dataFair.url).origin + '/tileserver'
+app.use('/tileserver', createProxyMiddleware({
+  target: new URL(config.dataFair.url).origin,
+  secure: false,
+  changeOrigin: true,
+  selfHandleResponse: true, // so that the proxyRes handler takes care of sending the response
+  on: {
+    proxyReq (proxyReq, req, res) {
+      proxyReq.path = '/tileserver' + proxyReq.path
+
+      // no gzip so that we can process the content
+      proxyReq.setHeader('accept-encoding', 'identity')
+    },
+    proxyRes (proxyRes, req, res) {
+      if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].startsWith('application/json')) {
+        let body = ''
+        proxyRes.on('data', (data) => { body += data.toString() })
+        proxyRes.on('end', () => {
+          // make all references to the tileserver url point to the local proxy
+          const output = body.replace(new RegExp(escapeStringRegexp(tileserverUrl), 'g'), `http://localhost:${config.port}/tileserver`)
+          delete proxyRes.headers['content-length']
+          res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
+          res.end(output)
+        })
+      } else {
+        res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
+        proxyRes.pipe(res)
+      }
+    }
+  }
+}))
+
 // also re-expose the simple-directory instance matching data-fair
 app.use('/simple-directory', createProxyMiddleware({
   target: dfUrl.origin,
