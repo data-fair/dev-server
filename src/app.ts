@@ -83,6 +83,10 @@ server.on('upgrade', function upgrade (req, socket, head) {
 app.use(cors())
 app.use(express.json())
 
+// URL of the app under development, used by the proxy and by the remote configuration import
+const appUrl = new URL(config.app.url)
+const appPrefix = appUrl.pathname.endsWith('/') ? appUrl.pathname.substring(0, appUrl.pathname.length - 1) : appUrl.pathname
+
 // very basic CRUD of config
 app.get('/config', (req, res, next) => {
   const devConfig = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
@@ -102,9 +106,88 @@ app.post('/config/error', (req, res) => {
   res.send()
 })
 
+// Identification of the app under development: its name is read from the
+// "application-name" meta tag of the local index.html and its version from the
+// package.json of the current directory.
+const localAppInfo = async () => {
+  let name: string | undefined
+  try {
+    const res = await fetch(appUrl.origin + appPrefix + '/index.html')
+    const html = await res.text()
+    const document: any = parse5.parse(html)
+    const htmlNode = document.childNodes?.find((c: any) => c.tagName === 'html')
+    const headNode = htmlNode?.childNodes?.find((c: any) => c.tagName === 'head')
+    const metaNode = (headNode?.childNodes ?? []).find((c: any) => c.tagName === 'meta' && c.attrs?.find((a: any) => a.name === 'name')?.value === 'application-name')
+    name = metaNode?.attrs?.find((a: any) => a.name === 'content')?.value
+  } catch (err) {
+    debug('failed to fetch local app index.html', err)
+  }
+  let version: string | undefined
+  try {
+    version = JSON.parse(readFileSync('package.json', 'utf8')).version
+  } catch (err) {
+    debug('failed to read local package.json', err)
+  }
+  return { name, version }
+}
+
+// Fetch a resource from the remote data-fair api
+const remoteFetch = async (path: string) => {
+  const res = await fetch(config.dataFair.url + '/api/v1' + path, {
+    headers: config.dataFair.apiKey ? { 'x-apiKey': config.dataFair.apiKey } : {}
+  })
+  if (!res.ok) throw new Error(`error ${res.status} on remote data-fair: ${await res.text()}`)
+  return res.json()
+}
+
+// extract the major.minor part of a version, versions on remote base apps look like "1.3"
+const minorVersion = (version: string) => version.split('.').slice(0, 2).join('.')
+
+// list configurations of the app under development that exist on the remote data-fair
+// with the same minor version, useful to test quickly for regressions
+app.get('/configurations', async (req, res) => {
+  const { name, version } = await localAppInfo()
+  const response: any = { appName: name, localVersion: version, remoteUrl: config.dataFair.url }
+  if (!name) {
+    res.status(400).send({ ...response, error: 'The "application-name" meta tag was not found in the local app index.html' })
+    return
+  }
+  if (!version) {
+    res.status(400).send({ ...response, error: 'The version could not be read from the local package.json' })
+    return
+  }
+  response.minorVersion = minorVersion(version)
+  try {
+    const baseApps = await remoteFetch('/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false')
+    const matchingBaseApps = (baseApps.results ?? []).filter((b: any) => typeof b.version === 'string' && minorVersion(b.version) === response.minorVersion)
+    response.results = []
+    for (const baseApp of matchingBaseApps) {
+      const applications = await remoteFetch('/applications?base-application=' + encodeURIComponent(baseApp.url) + '&size=1000&count=false&select=id,title,owner')
+      for (const application of applications.results ?? []) {
+        response.results.push({ id: application.id, title: application.title, owner: application.owner, baseAppVersion: baseApp.version })
+      }
+    }
+    response.results.sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''))
+    res.send(response)
+  } catch (err: any) {
+    res.status(500).send({ ...response, error: err.message })
+  }
+})
+
+// copy a configuration from the remote data-fair, replacing all references to the
+// remote origin by the local one so that data goes through the local proxies
+app.get('/configurations/:id', async (req, res) => {
+  try {
+    const configuration = await remoteFetch('/applications/' + encodeURIComponent(req.params.id) + '/configuration')
+    const remoteOrigin = new URL(config.dataFair.url).origin
+    const localOrigin = `http://localhost:${config.port}`
+    res.send(JSON.parse(JSON.stringify(configuration).replaceAll(remoteOrigin, localOrigin)))
+  } catch (err: any) {
+    res.status(500).send({ error: err.message })
+  }
+})
+
 // re-expose the application performing similar modifications to the body as data-fair
-const appUrl = new URL(config.app.url)
-const appPrefix = appUrl.pathname.endsWith('/') ? appUrl.pathname.substring(0, appUrl.pathname.length - 1) : appUrl.pathname
 app.use('/app', createProxyMiddleware({
   target: appUrl.origin,
   secure: false,

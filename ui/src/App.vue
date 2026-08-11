@@ -36,6 +36,8 @@
         @click="fetchInfo.execute()"
       />
 
+      <config-importer @copied="onConfigCopied" />
+
       <v-spacer />
 
       <screenshot-simulation />
@@ -268,6 +270,7 @@ import langSwitcher from './components/lang-switcher.vue'
 import metaItem from './components/meta-item.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
 import themeSwitcher from './components/theme-switcher.vue'
+import configImporter from './components/config-importer.vue'
 import { withQuery } from 'ufo'
 import { useWindowSize } from '@vueuse/core'
 import debugModule from 'debug'
@@ -467,6 +470,12 @@ const save = async (config: any) => {
   } else {
     draftPreviewInc.value++
   }
+}
+
+const onConfigCopied = async (configuration: any) => {
+  debugEditConfigBinding('set editConfig from copied remote configuration')
+  editConfig.value = configuration
+  await save(configuration)
 }
 
 const fetchInfo = useAsyncAction(async () => {

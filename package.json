@@ -38,6 +38,7 @@
   },
   "homepage": "https://github.com/koumoul-dev/df-dev-server#readme",
   "devDependencies": {
+    "@data-fair/lib-common-types": "^1.21.0",
     "@data-fair/lib-types-builder": "^1.14.0",
     "@types/config": "^4.4.0",
     "@types/cors": "^2.8.19",
