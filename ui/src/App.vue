@@ -460,9 +460,21 @@ const validate = async () => {
 }
 
 const frame = useTemplateRef('frame')
-const save = async (config: any) => {
+const save = async (config: any, resetUrl = false) => {
   debugEditConfigBinding('save config', config)
-  await ofetch('/config', { body: config, method: 'put' })
+  await ofetch('/config' + (resetUrl ? '?resetUrl=true' : ''), { body: config, method: 'put' })
+  if (resetUrl) {
+    // a copied configuration replaces the whole config, so reset the query params of
+    // the dev-server URL (they mirror the state of the previous configuration) and
+    // reload the page: the form is then recreated from the new config (avoiding any
+    // stale state in the form) and the app preview reloads with a clean URL
+    extraParams.value = []
+    const url = new URL(window.location.href)
+    url.search = ''
+    history.replaceState(null, '', url)
+    window.location.reload()
+    return
+  }
   if (meta.value?.['df:sync-config'] === 'true') {
     debugEditConfigBinding('send new config to iframe')
     // @ts-ignore
@@ -473,9 +485,8 @@ const save = async (config: any) => {
 }
 
 const onConfigCopied = async (configuration: any) => {
-  debugEditConfigBinding('set editConfig from copied remote configuration')
-  editConfig.value = configuration
-  await save(configuration)
+  debugEditConfigBinding('copy remote configuration')
+  await save(configuration, true)
 }
 
 const fetchInfo = useAsyncAction(async () => {
