@@ -81,7 +81,7 @@ server.on('upgrade', function upgrade (req, socket, head) {
 })
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
 
 // URL of the app under development, used by the proxy and by the remote configuration import
 const appUrl = new URL(config.app.url)
