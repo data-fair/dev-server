@@ -187,6 +187,16 @@ app.get('/configurations/:id', async (req, res) => {
   }
 })
 
+// the vite dev server of the app under development rewrites the root-relative URLs of
+// index.html under the app base, so the /simple-directory/... links (_theme.css, _public.js)
+// come back as <base>/simple-directory/... and would 404 on the app proxy below ;
+// send them back to the /simple-directory proxy instead
+if (appPrefix) {
+  app.use(appPrefix + '/simple-directory', (req, res) => {
+    res.redirect(307, '/simple-directory' + req.url)
+  })
+}
+
 // re-expose the application performing similar modifications to the body as data-fair
 app.use('/app', createProxyMiddleware({
   target: appUrl.origin,
@@ -337,7 +347,7 @@ app.use('/data-fair', createProxyMiddleware({
         let body = ''
         proxyRes.on('data', (data) => { body += data.toString() })
         proxyRes.on('end', () => {
-          const output = body.replace(new RegExp(escapeStringRegexp(config.dataFair.url), 'g'), 'http://localhost:5888/data-fair')
+          const output = body.replace(new RegExp(escapeStringRegexp(config.dataFair.url), 'g'), `http://localhost:${config.port}/data-fair`)
           // proxyRes.headers['content-length'] = output.length
           delete proxyRes.headers['content-length']
           res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
