@@ -9,7 +9,7 @@
     v-else
     :type="severity"
     :title="t('metaMissingTitle', { name: label })"
-    :text="t(missingKey, { locale })"
+    :text="t(missingKey)"
     density="compact"
     class="mb-2"
   />
@@ -23,19 +23,15 @@ defineProps<{
   missingKey: string
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 </script>
 
 <i18n lang="yaml">
 en:
   metaMissingTitle: 'Metadata "{name}" is missing.'
   missingApplicationName: 'Add a tag <meta name="application-name" content="my-application">'
-  missingThumbnail: 'Add a tag <meta name="thumbnail" content="http://my/thumbnail.png">'
-  missingTitle: 'Add a tag <title lang="{locale}">My title</title>'
-  missingDesc: 'Add a tag <meta name="description" lang="{locale}" content="My description">'
-  missingKeywords: 'Add a tag <meta name="keywords" lang="{locale}" content="My keyword">'
-  missingVocabAccept: 'Add a tag <meta name="vocabulary-accept" content="http://www.w3.org/2000/01/rdf-schema#label">'
-  missingVocabRequire: 'Add a tag <meta name="vocabulary-require" content="http://www.w3.org/2003/01/geo/wgs84_pos#lat_long">'
+  missingTitle: 'Add a single tag <title>My title</title>, without a lang attribute'
+  missingDesc: 'Add a single tag <meta name="description" content="My description">, without a lang attribute'
   missingDFOverflow: 'Set it to "true" to signify that the application might overflow its initial boundaries and require either resizing of these boundaries or scroll bars.'
   missingDFSyncState: 'Set it to "true" to signify that the application can have some state synchronized in its url (path and query params) that might be used by portals to create more useful links and screenshots.'
   missingDFFilterConcepts: 'Set it to "true" to signify that the application supports filtering its datasets based on concepts values.'
@@ -44,12 +40,8 @@ en:
 fr:
   metaMissingTitle: 'La métadonnée "{name}" est manquante.'
   missingApplicationName: 'Ajoutez une balise <meta name="application-name" content="my-application">'
-  missingThumbnail: 'Ajoutez une balise <meta name="thumbnail" content="http://my/thumbnail.png">'
-  missingTitle: 'Ajoutez une balise <title lang="{locale}">Mon titre</title>'
-  missingDesc: 'Ajoutez une balise <meta name="description" lang="{locale}" content="Ma description">'
-  missingKeywords: 'Ajoutez une balise <meta name="keywords" lang="{locale}" content="Mon mot-clé">'
-  missingVocabAccept: 'Ajoutez une balise <meta name="vocabulary-accept" content="http://www.w3.org/2000/01/rdf-schema#label">'
-  missingVocabRequire: 'Ajoutez une balise <meta name="vocabulary-require" content="http://www.w3.org/2003/01/geo/wgs84_pos#lat_long">'
+  missingTitle: 'Ajoutez une unique balise <title>Mon titre</title>, sans attribut lang'
+  missingDesc: 'Ajoutez une unique balise <meta name="description" content="Ma description">, sans attribut lang'
   missingDFOverflow: 'Définissez-la à "true" pour indiquer que l''application peut déborder de ses limites initiales et nécessiter un redimensionnement ou des barres de défilement.'
   missingDFSyncState: 'Définissez-la à "true" pour indiquer que l''application peut synchroniser un état dans son URL (chemin et paramètres) que les portails peuvent utiliser pour créer des liens et captures plus utiles.'
   missingDFFilterConcepts: 'Définissez-la à "true" pour indiquer que l''application sait filtrer ses jeux de données selon les valeurs de concepts.'

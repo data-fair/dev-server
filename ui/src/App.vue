@@ -94,18 +94,20 @@
 
     <v-main>
       <v-container fluid>
-        <v-row>
+        <v-row no-gutters>
           <v-col
             md="6"
             lg="4"
+            class="pr-4"
             :style="configColStyle"
           >
-            <h2 class="text-h6 mt-2">
+            <h2 class="text-title-large font-weight-bold my-2">
               {{ t('config') }}
             </h2>
             <v-form
               ref="form"
               v-model="formValid"
+              class="ma-2"
             >
               <v-alert
                 v-if="!!compileError"
@@ -121,13 +123,15 @@
                 <p>{{ validationErrors }}</p>
               </v-alert>
 
-              <vjsf
-                v-if="schema && editConfig"
-                v-model="editConfig"
-                :schema="schema"
-                :options="vjsfOptions"
-                @update:model-value="validate"
-              />
+              <v-defaults-provider :defaults="{ global: { hideDetails: 'auto' } }">
+                <vjsf
+                  v-if="schema && editConfig"
+                  v-model="editConfig"
+                  :schema="schema"
+                  :options="vjsfOptions"
+                  @update:model-value="validate"
+                />
+              </v-defaults-provider>
             </v-form>
 
             <v-row class="ma-2">
@@ -155,7 +159,7 @@
               class="mt-4"
             >
               <v-col class="app-meta">
-                <h2 class="text-h6">
+                <h2 class="text-title-large font-weight-bold mb-2">
                   {{ t('metadata') }}
                 </h2>
 
@@ -167,14 +171,7 @@
                   :severity="field.severity"
                   :missing-key="field.missingKey"
                 >
-                  <img
-                    v-if="field.key === 'thumbnail' && meta?.thumbnail"
-                    width="25"
-                    :src="meta.thumbnail.startsWith('http://') || meta.thumbnail.startsWith('https://') ? meta.thumbnail : '/app/' + meta.thumbnail"
-                  >
-                  <template v-else>
-                    {{ metaDisplayValue(field) }}
-                  </template>
+                  {{ metaDisplayValue(field) }}
                 </meta-item>
               </v-col>
             </v-row>
@@ -215,10 +212,10 @@
 <i18n lang="yaml">
 en:
   metadata: "Metadata read from index.html"
-  config: "Configuration form created from config-schema.json"
+  config: "Configuration form from config-schema.json"
   showSchema: "Show schema"
   configSchema: "Config schema"
-  empty: "Empty"
+  empty: "Clear the configuration"
   refreshAppInfo: "Refresh app info"
   reloadIframe: "Reload preview"
   openFullPage: "Open in full page"
@@ -232,10 +229,10 @@ en:
   modeLegacyTip: "Previous behaviour: resizing driven by the df:overflow meta."
 fr:
   metadata: "Métadonnées lues depuis index.html"
-  config: "Formulaire de configuration créé depuis config-schema.json"
+  config: "Formulaire de configuration issu du config-schema.json"
   showSchema: "Voir le schéma"
   configSchema: "Schéma de configuration"
-  empty: "Vider"
+  empty: "Vider la configuration"
   refreshAppInfo: "Rafraîchir les infos de l'application"
   reloadIframe: "Recharger l'aperçu"
   openFullPage: "Ouvrir en pleine page"
@@ -283,13 +280,9 @@ ajvFormats(ajv)
 
 type Locale = 'fr' | 'en'
 type Meta = {
-  title?: Record<string, string>,
-  description?: Record<string, string>,
-  keywords?: Record<string, string>,
+  title?: string,
+  description?: string,
   'application-name'?: string,
-  'vocabulary-accept'?: string,
-  'vocabulary-require'?: string,
-  thumbnail?: string,
   'df:overflow'?: string,
   'df:sync-state'?: string,
   'df:filter-concepts'?: string,
@@ -311,18 +304,17 @@ const extraParams = ref<{ name: string, value: string }[]>()
 type MetaField = {
   key: string,
   severity: 'error' | 'info',
-  missingKey: string,
-  localized?: boolean
+  missingKey: string
 }
 
+// only the metadata actually consumed by data-fair: keywords, thumbnail, vocabulary-accept
+// and vocabulary-require have no consumer anywhere (data-fair, portals, registry, capture,
+// frame, lib) and must not be declared by an application anymore
+// "title" below is the <title> element, the meta tag of the same name is abandoned too
 const metaFields: MetaField[] = [
   { key: 'application-name', severity: 'error', missingKey: 'missingApplicationName' },
-  { key: 'thumbnail', severity: 'error', missingKey: 'missingThumbnail' },
-  { key: 'title', severity: 'error', missingKey: 'missingTitle', localized: true },
-  { key: 'description', severity: 'error', missingKey: 'missingDesc', localized: true },
-  { key: 'keywords', severity: 'error', missingKey: 'missingKeywords', localized: true },
-  { key: 'vocabulary-accept', severity: 'info', missingKey: 'missingVocabAccept' },
-  { key: 'vocabulary-require', severity: 'info', missingKey: 'missingVocabRequire' },
+  { key: 'title', severity: 'error', missingKey: 'missingTitle' },
+  { key: 'description', severity: 'error', missingKey: 'missingDesc' },
   { key: 'df:overflow', severity: 'info', missingKey: 'missingDFOverflow' },
   { key: 'df:sync-state', severity: 'info', missingKey: 'missingDFSyncState' },
   { key: 'df:filter-concepts', severity: 'info', missingKey: 'missingDFFilterConcepts' },
@@ -330,17 +322,9 @@ const metaFields: MetaField[] = [
   { key: 'df:sync-config', severity: 'info', missingKey: 'missingDFSyncConfig' }
 ]
 
-const metaIsPresent = (field: MetaField) => {
-  const value = (meta.value as any)?.[field.key]
-  if (field.localized) return !!value?.[locale.value]
-  return !!value
-}
+const metaIsPresent = (field: MetaField) => !!(meta.value as any)?.[field.key]
 
-const metaDisplayValue = (field: MetaField) => {
-  const value = (meta.value as any)?.[field.key]
-  if (field.localized) return value?.[locale.value] ?? ''
-  return value ?? ''
-}
+const metaDisplayValue = (field: MetaField) => (meta.value as any)?.[field.key] ?? ''
 
 let schemaValidate: ValidateFunction
 
@@ -495,48 +479,22 @@ const fetchInfo = useAsyncAction(async () => {
   const document = parse5.parse(htmlText)
   const html = document.childNodes.filter(isElementNode).find(c => c.tagName === 'html')
   if (!html) throw new Error('broken HTML')
-  const defaultLocale = html.attrs?.find(a => a.name === 'lang')?.value || 'fr'
   const head = html.childNodes.filter(isElementNode).find(c => c.tagName === 'head')
   if (!head) throw new Error('broken HTML, missing head tag')
 
+  // a single <title> and a single <meta name="description">: duplicating them with a lang
+  // attribute is invalid HTML, and data-fair only ever reads one value
   const parsedMeta: any = {}
-  for (const node of head.childNodes.filter(isElementNode).filter(c => c.tagName === 'title')) {
-    parsedMeta.title = parsedMeta.title ?? {}
-    parsedMeta.title[node?.attrs.find(a => a.name === 'lang')?.value || defaultLocale] = node.childNodes.filter(isTextNode)[0].value
-  }
+  const titleNode = head.childNodes.filter(isElementNode).find(c => c.tagName === 'title')
+  if (titleNode) parsedMeta.title = titleNode.childNodes.filter(isTextNode)[0]?.value
 
-  const metaTags = ['application-name', 'description', 'keywords', 'vocabulary-accept', 'vocabulary-require', 'thumbnail', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf', 'df:sync-config']
-  const localizedMetaTags = ['description', 'keywords']
-  const multiValuedMetaTags = ['keywords', 'vocabulary-accept', 'vocabulary-require']
+  const metaTags = ['application-name', 'description', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf', 'df:sync-config']
 
-  const metaNodes = head.childNodes
-    .filter(isElementNode)
-    .filter(c => c.tagName === 'meta')
-    .map(c => ({
-      name: c.attrs.find(a => a.name === 'name')?.value,
-      locale: c.attrs.find(a => a.name === 'lang')?.value || defaultLocale,
-      content: c.attrs.find(a => a.name === 'content')?.value
-    }))
-    .filter(m => m.name && metaTags.includes(m.name))
-
-  for (const metaNode of metaNodes) {
-    if (!metaNode.name || !metaNode.content) continue
-    if (localizedMetaTags.includes(metaNode.name)) {
-      parsedMeta[metaNode.name] = parsedMeta[metaNode.name] || {}
-      if (multiValuedMetaTags.includes(metaNode.name)) {
-        parsedMeta[metaNode.name][metaNode.locale] = parsedMeta[metaNode.name][metaNode.locale] || []
-        if (metaNode.content) parsedMeta[metaNode.name][metaNode.locale].push(metaNode.content)
-      } else {
-        parsedMeta[metaNode.name][metaNode.locale] = metaNode.content
-      }
-    } else {
-      if (multiValuedMetaTags.includes(metaNode.name)) {
-        parsedMeta[metaNode.name] = parsedMeta[metaNode.name] || []
-        if (metaNode.content) parsedMeta[metaNode.name].push(metaNode.content)
-      } else {
-        parsedMeta[metaNode.name] = metaNode.content
-      }
-    }
+  for (const node of head.childNodes.filter(isElementNode).filter(c => c.tagName === 'meta')) {
+    const name = node.attrs.find(a => a.name === 'name')?.value
+    const content = node.attrs.find(a => a.name === 'content')?.value
+    if (!name || !content || !metaTags.includes(name)) continue
+    parsedMeta[name] = parsedMeta[name] ?? content
   }
 
   meta.value = parsedMeta
@@ -544,11 +502,8 @@ const fetchInfo = useAsyncAction(async () => {
   // fetch config schema
   schema.value = undefined
   const newSchema = await ofetch('/app/config-schema.json')
-  if (meta.value?.['df:vjsf'] === '3') {
-    if (!newSchema.layout) newSchema.layout = 'tabs'
-  } else {
-    newSchema['x-display'] = 'tabs'
-  }
+  // same default as the data-fair config form, cf. completeSchema in application-config.vue
+  if (!newSchema.layout?.comp) newSchema.layout = 'expansion-panels'
 
   newSchema.$id = newSchema.$id ?? 'config-schema'
   resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')

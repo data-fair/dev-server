@@ -2,7 +2,7 @@
   <v-app>
     <v-main>
       <v-container data-iframe-height>
-        <h1 class="text-h5 mt-0 mb-2">{{ t('hello') }}</h1>
+        <h1 class="text-headline-small mt-0 mb-2">{{ t('hello') }}</h1>
         <p class="mb-4">{{ t('intro') }}</p>
 
         <v-card
