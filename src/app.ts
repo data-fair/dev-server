@@ -405,7 +405,19 @@ app.use('/app', createProxyMiddleware({
       proxyRes.on('data', (data) => { dataBuffers.push(data) })
       proxyRes.on('end', async () => {
         try {
-          let output = Buffer.concat(dataBuffers).toString()
+          const rawBody = Buffer.concat(dataBuffers)
+
+          // Only the HTML document is rewritten. Everything else — fonts, images, wasm, but also
+          // any js/css we have no reason to touch — is forwarded byte for byte: decoding it as
+          // utf8 replaces every invalid sequence with U+FFFD and destroys binary assets.
+          const contentType = proxyRes.headers['content-type']
+          if (!contentType?.includes('text/html')) {
+            res.writeHead(proxyRes.statusCode ?? 200, proxyRes.headers)
+            res.end(rawBody)
+            return
+          }
+
+          let output = rawBody.toString()
           if (output.includes('%APPLICATION%')) {
             try {
               configuration = await refreshConfigDatasets(configuration)
