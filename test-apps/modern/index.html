@@ -1,21 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html><!-- pas de lang : posé par le proxy data-fair -->
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>@layer vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final;</style>
+  <link href="/simple-directory/api/sites/_theme.css" rel="stylesheet">
+
+  <title>Data-Fair - modern</title>
+
+  <!-- contrat data-fair, lu à l'exécution -->
   <meta name="df:overflow" content="true">
   <meta name="df:vjsf" content="3">
   <meta name="df:sync-config" content="true">
   <meta name="df:sync-state" content="true">
   <meta name="df:filter-concepts" content="true">
+  <!-- en SECONDES, filet de sécurité : le chemin normal reste l'appel explicite à triggerCapture -->
+  <meta name="df:capture-delay" content="3">
+
+  <!-- catalogue, lu à l'import -->
   <meta name="application-name" content="data-fair-modern">
-  <meta name="description" content="A modern data-fair test application demonstrating theme, language, reactive search params and config schema with x-fromUrl.">
-  <title>Data-Fair - modern</title>
-  <link href="/simple-directory/api/sites/_theme.css" rel="stylesheet">
+  <meta name="description" content="A modern data-fair test application demonstrating theme, language, reactive search params, concept filters and the capture contract.">
+
   <script type="text/javascript">window.APPLICATION=%APPLICATION%;</script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app" style="height:100vh"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

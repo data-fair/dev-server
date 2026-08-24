@@ -11,7 +11,7 @@ import debugModule from 'debug'
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import * as parse5 from 'parse5'
 import chalk from 'chalk'
-import { isElementNode, createTextNode, createElement } from '@parse5/tools'
+import { isElementNode, createTextNode, createElement, appendChild } from '@parse5/tools'
 import escapeStringRegexp from 'escape-string-regexp'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
 import { createSpaMiddleware } from '@data-fair/lib-express/serve-spa.js'
@@ -89,10 +89,22 @@ const appPrefix = appUrl.pathname.endsWith('/') ? appUrl.pathname.substring(0, a
 
 // very basic CRUD of config
 app.get('/config', (req, res, next) => {
-  const devConfig = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+  const devConfig = readDevConfig()
   debug('read dev config', devConfig)
   res.send(devConfig)
 })
+
+// the config with datasets enriched from the remote data-fair, so the dev-server UI
+// can display schemas/concepts and build concept & dataset filter params with the
+// exact same data as the application receives in window.APPLICATION
+app.get('/config/enriched', async (req, res) => {
+  try {
+    res.send(await refreshConfigDatasets(readDevConfig()))
+  } catch (err: any) {
+    res.status(500).send({ error: err.message })
+  }
+})
+
 app.put('/config', (req, res, next) => {
   debug('save dev config', req.body)
   writeFileSync('.dev-config.json', JSON.stringify(req.body, null, 2))
@@ -138,6 +150,184 @@ const remoteFetch = async (path: string) => {
   })
   if (!res.ok) throw new Error(`error ${res.status} on remote data-fair: ${await res.text()}`)
   return res.json()
+}
+
+// Short-lived cache for the dataset enrichment below, so that every preview reload does not
+// hammer the remote data-fair API. Failures are cached too: a private dataset without an api
+// key would otherwise be re-fetched, and re-warned about, on every single reload.
+const datasetsCache = new Map<string, { data: any, fetchedAt: number }>()
+const DATASETS_CACHE_TTL = 30_000
+
+// The exact set of properties data-fair injects in a configuration dataset entry. Sticking to
+// it matters: forwarding the whole remote dataset would let an application rely, in dev, on a
+// property that production never sends.
+const INJECTED_DATASET_PROPS = ['id', 'href', 'page', 'title', 'slug', 'finalizedAt', 'schema', 'userPermissions'] as const
+
+// Rebuild a configuration dataset entry the same way data-fair does in production
+// (refreshConfigDatasetsRefs in api/src/applications/utils.ts): the app stores only
+// minimal references, data-fair injects the full schema (with concepts), finalizedAt,
+// slug and userPermissions at request time. We reproduce that so applications
+// following the skill contract read window.APPLICATION.configuration.datasets
+// identically in dev and in prod.
+const enrichDataset = async (dataset: any) => {
+  if (!dataset?.id) return dataset
+  const cached = datasetsCache.get(dataset.id)
+  if (cached && Date.now() - cached.fetchedAt < DATASETS_CACHE_TTL) {
+    return cached.data ? { ...dataset, ...cached.data } : dataset
+  }
+  try {
+    const fresh = await remoteFetch('/datasets/' + encodeURIComponent(dataset.id))
+    const localBase = `http://localhost:${config.port}/data-fair`
+    const data: Record<string, any> = {}
+    for (const prop of INJECTED_DATASET_PROPS) {
+      if (fresh[prop] !== undefined) data[prop] = fresh[prop]
+    }
+    if (typeof data.href === 'string') data.href = data.href.replace(config.dataFair.url, localBase)
+    data.userPermissions = fresh.userPermissions ?? []
+    datasetsCache.set(dataset.id, { data, fetchedAt: Date.now() })
+    return { ...dataset, ...data }
+  } catch (err) {
+    // a private dataset without an api key, or a network failure: keep the raw
+    // configuration entry so the app still loads, and warn in the dev-server UI
+    console.warn('[dev-server] failed to enrich dataset ' + dataset.id + ', keeping raw configuration entry', err)
+    datasetsCache.set(dataset.id, { data: null, fetchedAt: Date.now() })
+    return dataset
+  }
+}
+
+const refreshConfigDatasets = async (configuration: any) => {
+  const datasets = configuration?.datasets?.filter((d: any) => !!d)
+  if (!datasets?.length) return configuration
+  const enriched = await Promise.all(datasets.map(enrichDataset))
+  return { ...configuration, datasets: enriched }
+}
+
+// read the .dev-config.json file of the app under development
+const readDevConfig = () => existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+
+// Reproduce the waiting strategy of the capture service (capture/api/utils/page.ts) so that a
+// timing regression shows up in development instead of in production. Defaults of the service:
+// screenshotTimeout = 20s, gif cadenced at 15 fps, maxAnimationFrames = 1800 and a total budget
+// of 2 x screenshotTimeout for the whole animation (capture + decoding + encoding included).
+const SCREENSHOT_TIMEOUT = 20_000
+const MAX_ANIMATION_FRAMES = 1800
+const captureSimulationScript = (opts: { type: 'png' | 'gif', thumbnail: boolean, captureDelay?: string, legacyTrigger: boolean, testError: boolean }) => {
+  // df:capture-delay is expressed in seconds and capped at screenshotTimeout: a value in
+  // milliseconds silently means "wait the full timeout", which is worth showing as such.
+  const declaredDelay = opts.captureDelay === undefined ? null : Number(opts.captureDelay)
+  const delayMs = declaredDelay === null || isNaN(declaredDelay) ? null : Math.min(declaredDelay * 1000, SCREENSHOT_TIMEOUT)
+  return `
+;(function () {
+  var TYPE = ${JSON.stringify(opts.type)}
+  var DELAY_MS = ${delayMs === null ? 'null' : delayMs}
+  var DECLARED_DELAY = ${JSON.stringify(opts.captureDelay ?? null)}
+  var LEGACY_TRIGGER = ${opts.legacyTrigger}
+  var TIMEOUT = ${SCREENSHOT_TIMEOUT}
+  var MAX_FRAMES = ${MAX_ANIMATION_FRAMES}
+  var ANIMATION_BUDGET = TIMEOUT * 2
+  var triggerCalled = false
+
+  // ?capture is our own switch, production has no equivalent: drop it from the URL before any
+  // script of the app runs, so that reactiveSearchParams never sees a param it would not see in
+  // production. thumbnail and capture-test-error stay, data-fair really sends those.
+  try {
+    var currentUrl = new URL(window.location.href)
+    if (currentUrl.searchParams.has('capture')) {
+      currentUrl.searchParams.delete('capture')
+      window.history.replaceState(window.history.state, '', currentUrl.pathname + currentUrl.search + currentUrl.hash)
+    }
+  } catch (err) {
+    console.warn('[capture] failed to clean the capture param from the url', err)
+  }
+
+  console.log('[capture] contexte de capture simulé : type=' + TYPE + ', ' +
+    ${opts.thumbnail ? "'vignette par défaut (?thumbnail=true)'" : "'capture manuelle (pas de ?thumbnail)'"} +
+    (DELAY_MS === null ? ', aucune attente déclarée' : ', df:capture-delay=' + DECLARED_DELAY))
+  if (DELAY_MS !== null && isNaN(Number(DECLARED_DELAY))) {
+    console.error('[capture] df:capture-delay="' + DECLARED_DELAY + '" n\\'est pas un nombre')
+  } else if (DELAY_MS === TIMEOUT && Number(DECLARED_DELAY) > 60) {
+    console.error('[capture] df:capture-delay="' + DECLARED_DELAY + '" s\\'exprime en SECONDES et est plafonnée à ' +
+      (TIMEOUT / 1000) + 's : cette valeur vaut "attendre le timeout complet". Valeurs saines : 1 à 5.')
+  }
+  ${opts.testError
+    ? 'setTimeout(function () { console.error(\'[capture] capture-test-error=true : le service ferait échouer la capture après 1s (chemin de test de santé)\') }, 1000)'
+    : ''}
+
+  function startAnimation () {
+    if (typeof window.animateCaptureFrame !== 'function') {
+      console.error('[capture] animateCaptureFrame n\\'est pas définie quand le trigger se résout : en production le page.evaluate du service lève et TOUTE la capture échoue. La définir AVANT d\\'appeler triggerCapture(true).')
+      return
+    }
+    var frames = 0
+    var start = Date.now()
+    var interval = setInterval(function () {
+      var elapsed = Date.now() - start
+      if (elapsed > ANIMATION_BUDGET) {
+        console.error('[capture] budget d\\'horloge dépassé (' + Math.round(elapsed / 1000) + 's > ' + (ANIMATION_BUDGET / 1000) +
+          's = 2 x screenshotTimeout) après ' + frames + ' images : la capture réelle échouerait. Borner le nombre d\\'images indépendamment de la durée configurée.')
+        clearInterval(interval)
+        return
+      }
+      if (frames >= MAX_FRAMES) {
+        console.error('[capture] arrêt après le nombre maximum d\\'images (' + MAX_FRAMES + ')')
+        clearInterval(interval)
+        return
+      }
+      frames++
+      var stopped
+      try {
+        stopped = window.animateCaptureFrame()
+      } catch (err) {
+        console.error('[capture] animateCaptureFrame a levé, la capture réelle échouerait', err)
+        clearInterval(interval)
+        return
+      }
+      if (stopped) {
+        console.log('[capture] animation terminée après ' + frames + ' images (' + (frames / 15).toFixed(1) +
+          's de gif, ' + Math.round(elapsed / 1000) + 's de rendu ici — le service ajoute encore le décodage et l\\'encodage gifsicle dans le même budget)')
+        clearInterval(interval)
+      }
+    }, 1000 / 15)
+  }
+
+  // page.exposeFunction returns a promise: an app that forgets the await gets a truthy value
+  // whatever the real answer, cf. app-minimal. Resolving a promise here surfaces that bug.
+  window.triggerCapture = function (animationSupported) {
+    if (triggerCalled) console.warn('[capture] triggerCapture appelé plusieurs fois, le service ne retient que le premier appel')
+    triggerCalled = true
+    var animate = !!animationSupported && TYPE === 'gif'
+    console.log('[capture] triggerCapture(' + animationSupported + ') -> ' + animate +
+      (animationSupported && TYPE !== 'gif' ? ' (l\\'app supporte l\\'animation mais le service ne demande un gif que sur ?type=gif)' : ''))
+    if (animate) startAnimation()
+    else console.log('[capture] capture png immédiate de l\\'état courant')
+    return Promise.resolve(animate)
+  }
+
+  // approximation of the networkidle0 of the service: no request for 500ms after load
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      if (triggerCalled) return
+      if (DELAY_MS !== null) waitWithoutTrigger(DELAY_MS, 'df:capture-delay=' + DECLARED_DELAY + 's')
+      else if (LEGACY_TRIGGER) waitWithoutTrigger(TIMEOUT, 'x-capture="trigger" (déprécié)')
+      else {
+        setTimeout(function () {
+          if (triggerCalled) return
+          console.warn('[capture] network idle et aucune attente déclarée : le service capture 1s plus tard, sans jamais avoir eu triggerCapture. Déclarer df:capture-delay et appeler triggerCapture.')
+        }, 1000)
+      }
+    }, 500)
+  })
+
+  function waitWithoutTrigger (ms, why) {
+    console.log('[capture] network idle sans triggerCapture, le service attend ' + Math.round(ms / 1000) + 's (' + why + ')')
+    setTimeout(function () {
+      if (triggerCalled) return
+      console.error('[capture] triggerCapture n\\'a pas été appelé après ' + Math.round(ms / 1000) +
+        's : chaque capture en production paiera cette attente. L\\'appeler sur TOUS les chemins terminaux — données prêtes, résultat vide, erreur de données, configuration invalide.')
+    }, ms)
+  }
+})()
+`
 }
 
 // extract the major.minor part of a version, versions on remote base apps look like "1.3"
@@ -209,7 +399,7 @@ app.use('/app', createProxyMiddleware({
       proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
     },
     proxyRes (proxyRes, req, res) {
-      const configuration = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+      let configuration = readDevConfig()
       // console.log('inject config', configuration)
       const dataBuffers: Buffer[] = []
       proxyRes.on('data', (data) => { dataBuffers.push(data) })
@@ -217,8 +407,14 @@ app.use('/app', createProxyMiddleware({
         try {
           let output = Buffer.concat(dataBuffers).toString()
           if (output.includes('%APPLICATION%')) {
+            try {
+              configuration = await refreshConfigDatasets(configuration)
+            } catch (err) {
+              console.warn('[dev-server] failed to enrich configuration datasets', err)
+            }
             const filledBody = output.replace(/%APPLICATION%/g, JSON.stringify({
               id: 'dev-application',
+              slug: 'dev-application',
               title: 'Dev application',
               configuration,
               exposedUrl: `http://localhost:${config.port}/app`,
@@ -234,46 +430,6 @@ app.use('/app', createProxyMiddleware({
             const bodyNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'body')
             if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
 
-            // add a script to simulate instrumentation by capture service
-            // @ts-ignore
-            const query: Record<string, string> = req.query
-            if (query.thumbnail === 'true') {
-              const script = createElement('script', { type: 'text/javascript' })
-              script.childNodes.push(createTextNode(`
-              console.log('[capture] Simulate a screenshot capture context')
-              var triggerCalled = false
-              window.triggerCapture = function (animationSupported) {
-                triggerCalled = true
-                console.log('[capture] triggerCapture called')
-                if (animationSupported) {
-                  console.log('[capture] this application supports animated screenshots')
-                  var i = 0
-                  const interval = setInterval(function () {
-                    i++
-                    if (i === 1800) {
-                      console.error('[capture] stop after the maximum number of frames was attained')
-                      clearInterval(interval)
-                    }
-                    var stopped = window.animateCaptureFrame()
-                    if (stopped) {
-                      console.log('[capture] animation was stopped after ' + i + ' frames')
-                      clearInterval(interval)
-                    }
-                  }, 67)
-                  return true
-                } else {
-                  console.log('[capture] this application does not support animated screenshots')
-                }
-              }
-              setTimeout(function() {
-                if (!triggerCalled) {
-                  console.error('[capture] triggerCapture was not called after a 5s wait')
-                }
-              }, 5000)
-                              `))
-              headNode.childNodes.push(script)
-            }
-
             const meta: Record<string, string> = {}
             for (const node of headNode.childNodes.filter(isElementNode)) {
               if (node.tagName === 'meta') {
@@ -282,6 +438,33 @@ app.use('/app', createProxyMiddleware({
                 if (name !== undefined && content !== undefined) meta[name] = content
               }
             }
+
+            // simulate the instrumentation of the capture service.
+            // ?thumbnail=true is the default thumbnail context (data-fair only adds it when the
+            // request carries no other param, cf. isDefaultThumbnail) ; ?capture=png|gif is a
+            // dev-server only switch so that a manual capture — which has triggerCapture but no
+            // thumbnail param in production — can be simulated too.
+            // @ts-ignore
+            const query: Record<string, string> = req.query
+            const captureType = query.capture === 'gif' ? 'gif' : 'png'
+            if (query.thumbnail === 'true' || query.capture) {
+              const script = createElement('script', { type: 'text/javascript' })
+              // appendChild, not childNodes.push: the parse5 serializer decides to escape a text
+              // node from its parent, and would turn every && of the script into &amp;&amp;
+              appendChild(script, createTextNode(captureSimulationScript({
+                type: captureType,
+                thumbnail: query.thumbnail === 'true',
+                captureDelay: meta['df:capture-delay'],
+                legacyTrigger: meta['x-capture'] === 'trigger',
+                testError: query['capture-test-error'] === 'true'
+              })))
+              // the real service installs triggerCapture through page.exposeFunction, before
+              // page.goto : it exists before any script of the document, including the inline
+              // %APPLICATION% one. Inject first so that testing !!window.triggerCapture is as
+              // reliable here as in production.
+              headNode.childNodes.unshift(script)
+            }
+
             // companion script that lets the embedded app report its height / sync params
             // to the parent <d-frame> ; injected for every mode so the UI mode toggle works
             // without requiring a df:overflow meta (same variant & version as data-fair prod)
