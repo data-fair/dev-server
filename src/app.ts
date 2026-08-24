@@ -227,6 +227,19 @@ const captureSimulationScript = (opts: { type: 'png' | 'gif', thumbnail: boolean
   var ANIMATION_BUDGET = TIMEOUT * 2
   var triggerCalled = false
 
+  // ?capture is our own switch, production has no equivalent: drop it from the URL before any
+  // script of the app runs, so that reactiveSearchParams never sees a param it would not see in
+  // production. thumbnail and capture-test-error stay, data-fair really sends those.
+  try {
+    var currentUrl = new URL(window.location.href)
+    if (currentUrl.searchParams.has('capture')) {
+      currentUrl.searchParams.delete('capture')
+      window.history.replaceState(window.history.state, '', currentUrl.pathname + currentUrl.search + currentUrl.hash)
+    }
+  } catch (err) {
+    console.warn('[capture] failed to clean the capture param from the url', err)
+  }
+
   console.log('[capture] contexte de capture simulé : type=' + TYPE + ', ' +
     ${opts.thumbnail ? "'vignette par défaut (?thumbnail=true)'" : "'capture manuelle (pas de ?thumbnail)'"} +
     (DELAY_MS === null ? ', aucune attente déclarée' : ', df:capture-delay=' + DECLARED_DELAY))

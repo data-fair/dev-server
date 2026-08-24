@@ -122,15 +122,20 @@
           <code>{{ captureUrl }}</code>
         </p>
 
-        <!-- the frame keeps the exact requested size, the container scrolls: shrinking it to fit
-             would silently show the app at a width it will never be captured at -->
+        <!-- a plain iframe, not a d-frame: the capture service opens the application nude in a
+             headless page (cf. references/capture.md § 1), with no parent frame, no resize
+             negotiation and no param sync. Exact size and scrolling="no", because the screenshot
+             is the viewport: whatever overflows is cut from the image, so it must be cut here
+             too. The container scrolls rather than shrinking the frame, which would show the app
+             at a width it will never be captured at. -->
         <div style="overflow-x: auto;">
-          <d-frame
+          <iframe
             :key="captureUrl + ':' + width + 'x' + height"
-            :style="`border: 1px solid grey;width: ${width}px;`"
-            :height="height + 'px'"
-            resize="no"
             :src="captureUrl"
+            :width="width"
+            :height="height"
+            scrolling="no"
+            style="border: 1px solid grey; display: block;"
           />
         </div>
       </v-card-text>
