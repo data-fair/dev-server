@@ -1,49 +1,64 @@
 {
   "type": "object",
   "x-exports": ["types", "resolvedSchemaJson"],
-  "required": ["dataset"],
+  "required": ["datasets"],
   "properties": {
-    "dataset": {
-      "title": "Dataset",
-      "type": "object",
+    "datasets": {
+      "type": "array",
+      "title": "Jeux de données",
+      "description": "Le jeu de données dont les lignes sont comptées, et dont les concepts alimentent les filtres.",
+      "minItems": 1,
+      "maxItems": 1,
       "layout": {
         "getItems": {
-          "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50&sort=createdAt:-1&{context.datasetFilter}",
+          "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50&sort=createdAt:-1&${context.datasetFilter}",
           "itemKey": "data.href",
           "itemTitle": "data.title",
           "itemsResults": "data.results"
         }
       },
-      "properties": {
-        "id": { "type": "string" },
-        "href": { "type": "string" },
-        "title": { "type": "string" },
-        "page": { "type": "string" },
-        "schema": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["key", "type"],
-            "properties": {
-              "key": { "type": "string" },
-              "type": { "type": "string" },
-              "format": { "type": "string" },
-              "title": { "type": "string" },
-              "x-originalName": { "type": "string" },
-              "x-group": { "type": "string" },
-              "x-concept": {
-                "type": "object",
-                "properties": {
-                  "id": { "type": "string" },
-                  "title": { "type": "string" },
-                  "primary": { "type": "boolean" }
-                }
-              },
-              "x-labels": {
-                "type": "object",
-                "additionalProperties": { "type": "string" }
-              },
-              "x-labelsRestricted": { "type": "boolean" }
+      "items": {
+        "type": "object",
+        "title": "Dataset",
+        "properties": {
+          "id": { "type": "string" },
+          "href": { "type": "string" },
+          "title": { "type": "string" },
+          "slug": { "type": "string" },
+          "page": { "type": "string" },
+          "finalizedAt": { "type": "string" },
+          "userPermissions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "title": "Dataset field",
+              "required": ["key", "type"],
+              "properties": {
+                "key": { "type": "string" },
+                "type": { "type": "string" },
+                "format": { "type": "string" },
+                "title": { "type": "string" },
+                "x-originalName": { "type": "string" },
+                "x-group": { "type": "string" },
+                "x-concept": {
+                  "type": "object",
+                  "title": "Field concept",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "primary": { "type": "boolean" }
+                  }
+                },
+                "x-labels": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "x-labelsRestricted": { "type": "boolean" }
+              }
             }
           }
         }
@@ -51,7 +66,7 @@
     },
     "rows": {
       "type": "integer",
-      "title": "Rows",
+      "title": "Nombre de lignes affichées",
       "default": 5,
       "minimum": 5,
       "maximum": 50,

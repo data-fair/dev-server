@@ -4,9 +4,9 @@
     :close-on-content-click="false"
     max-width="640"
   >
-    <template #activator="{ props }">
+    <template #activator="{ props: activatorProps }">
       <v-btn
-        v-bind="props"
+        v-bind="activatorProps"
         :title="t('title')"
         :icon="mdiFilterVariant"
         class="mx-2"
@@ -28,7 +28,7 @@
           class="mb-2"
         />
         <v-alert
-          v-else-if="!enriched || !enriched.datasets?.length"
+          v-else-if="!datasets.length"
           type="info"
           :text="t('noDataset')"
           class="mb-2"
@@ -51,6 +51,7 @@
             v-model="kind"
             inline
             density="compact"
+            hide-details
             class="mb-1"
           >
             <v-radio
@@ -61,28 +62,52 @@
               :label="t('datasetField')"
               value="dataset"
             />
+            <v-radio
+              :label="t('universal')"
+              value="universal"
+            />
           </v-radio-group>
 
+          <v-alert
+            v-if="kind === 'concept' && !conceptOptions.length"
+            type="warning"
+            density="compact"
+            class="mb-2"
+            :text="t('noConcept')"
+          />
           <v-select
-            v-if="kind === 'concept'"
+            v-else-if="kind === 'concept'"
             v-model="conceptId"
             :items="conceptOptions"
             :label="t('conceptField')"
+            :hint="t('conceptHint')"
+            persistent-hint
             density="compact"
-            hide-details
+            class="mb-2"
+          />
+          <v-select
+            v-else-if="kind === 'dataset'"
+            v-model="fieldKey"
+            :items="fieldOptions"
+            :label="t('datasetField')"
+            :hint="t('datasetFieldHint')"
+            persistent-hint
+            density="compact"
             class="mb-2"
           />
           <v-select
             v-else
-            v-model="fieldKey"
-            :items="fieldOptions"
-            :label="t('datasetField')"
+            v-model="universalKey"
+            :items="universalOptions"
+            :label="t('universal')"
+            :hint="universalHint"
+            persistent-hint
             density="compact"
-            hide-details
             class="mb-2"
           />
 
           <v-select
+            v-if="kind !== 'universal'"
             v-model="operator"
             :items="operatorOptions"
             :label="t('operator')"
@@ -97,44 +122,37 @@
             :hint="t('valueHint')"
             persistent-hint
             density="compact"
-            hide-details
             class="mb-2"
+            @keyup.enter="apply"
           />
 
-          <v-row class="align-center mb-2">
-            <v-col cols="auto">
-              <v-btn
-                color="primary"
-                :disabled="!filterKey || !value"
-                @click="apply"
-              >
-                {{ t('apply') }}
-              </v-btn>
-              <v-btn
-                variant="text"
-                class="ml-2"
-                :disabled="!appliedKey"
-                @click="remove"
-              >
-                {{ t('remove') }}
-              </v-btn>
-            </v-col>
-          </v-row>
-
-          <v-alert
+          <v-btn
+            color="primary"
+            :disabled="!filterKey || !value"
+            @click="apply"
+          >
+            {{ t('apply') }}
+          </v-btn>
+          <code
             v-if="filterKey"
-            type="info"
-            density="compact"
-            class="mb-1"
-          >
-            <code>{{ filterKey }}={{ value }}</code>
-          </v-alert>
-          <p
-            v-if="appliedKey"
-            class="text-caption mb-0"
-          >
-            {{ t('applied') }}: <code>{{ appliedKey }}={{ appliedValue }}</code>
-          </p>
+            class="ml-2"
+          >{{ filterKey }}={{ value }}</code>
+
+          <template v-if="applied.length">
+            <h4 class="text-subtitle-2 font-weight-bold mt-4">
+              {{ t('applied') }}
+            </h4>
+            <v-chip
+              v-for="param in applied"
+              :key="param.name"
+              class="mr-1 mt-1"
+              size="small"
+              closable
+              @click:close="emit('applied', param.name, '')"
+            >
+              {{ param.name }}={{ param.value }}
+            </v-chip>
+          </template>
         </template>
       </v-card-text>
     </v-card>
@@ -144,32 +162,48 @@
 <i18n lang="yaml">
 en:
   title: "Test concept / dataset filters"
-  intro: "Build a concept (_c_) or dataset (_d_) filter param that is pushed to the preview URL. The app reads it through reactiveSearchParams / useConceptFilters."
+  intro: "Build a filter param following the URL convention and push it to the preview URL. The app reads it through reactiveSearchParams / useConceptFilters."
   noDataset: "No dataset in the current configuration. Select one in the configuration form first."
+  noConcept: "No field of this dataset carries a primary concept. Only x-concept.primary fields can be targeted by a _c_ filter; use a dataset field filter instead."
   dataset: "Dataset"
   concept: "Concept"
   datasetField: "Dataset field"
   conceptField: "Concept"
+  conceptHint: "_c_<concept>_<op>: dataset-agnostic, silently ignored if the target has no such concept."
+  datasetFieldHint: "_d_<datasetId>_<field>_<op>: scoped to this dataset, HTTP 400 if the field does not exist."
+  universal: "Universal"
   operator: "Operator"
   value: "Value"
-  valueHint: "Separate several values with commas for _in / _nin."
+  valueHint: "Comma separated values for _in / _nin, two keys (_gte + _lte) for a range."
   apply: "Apply"
-  remove: "Remove filter"
   applied: "Applied in the preview URL"
+  hint_c_q: "Fulltext search."
+  hint_c_date_match: "YYYY-MM-DD, or a range YYYY-MM-DD,YYYY-MM-DD."
+  hint_c_geo_distance: "lon,lat,radiusInMeters — e.g. 2.3522,48.8566,5000"
+  hint_c_bbox: "left,bottom,right,top"
+  hint_id_eq: "Filter on the id of a single line."
 fr:
   title: "Tester les filtres concepts / dataset"
-  intro: "Construisez un filtre par concept (_c_) ou par dataset (_d_) poussé dans l'URL de l'aperçu. L'application le lit via reactiveSearchParams / useConceptFilters."
+  intro: "Construisez un filtre suivant la convention d'URL et poussez-le dans l'URL de l'aperçu. L'application le lit via reactiveSearchParams / useConceptFilters."
   noDataset: "Aucun dataset dans la configuration courante. Sélectionnez-en un dans le formulaire de configuration d'abord."
+  noConcept: "Aucun champ de ce jeu de données ne porte de concept primaire. Seuls les champs x-concept.primary sont ciblables par un filtre _c_ ; utilisez plutôt un filtre par champ."
   dataset: "Jeu de données"
   concept: "Concept"
   datasetField: "Champ du dataset"
   conceptField: "Concept"
+  conceptHint: "_c_<concept>_<op> : indépendant du jeu de données, ignoré silencieusement si la cible ne porte pas ce concept."
+  datasetFieldHint: "_d_<datasetId>_<champ>_<op> : scopé à ce jeu de données, erreur 400 si le champ n'existe pas."
+  universal: "Universel"
   operator: "Opérateur"
   value: "Valeur"
-  valueHint: "Séparez plusieurs valeurs par des virgules pour _in / _nin."
+  valueHint: "Valeurs séparées par des virgules pour _in / _nin, deux clés (_gte + _lte) pour une plage."
   apply: "Appliquer"
-  remove: "Retirer le filtre"
-  applied: "Appliqué dans l'URL de l'aperçu"
+  applied: "Appliqués dans l'URL de l'aperçu"
+  hint_c_q: "Recherche fulltext."
+  hint_c_date_match: "YYYY-MM-DD, ou une plage YYYY-MM-DD,YYYY-MM-DD."
+  hint_c_geo_distance: "lon,lat,rayonEnMètres — ex. 2.3522,48.8566,5000"
+  hint_c_bbox: "gauche,bas,droite,haut"
+  hint_id_eq: "Filtre sur l'id d'une ligne."
 </i18n>
 
 <script lang="ts" setup>
@@ -178,6 +212,11 @@ import { mdiFilterVariant } from '@mdi/js'
 
 const { t } = useI18n()
 
+const props = defineProps<{
+  // the params currently on the preview URL, owned by App.vue
+  extraParams?: { name: string, value: string }[]
+}>()
+
 const emit = defineEmits<{ applied: [key: string, value: string] }>()
 
 const menuOpen = ref(false)
@@ -185,46 +224,37 @@ const enriched = ref<any>()
 const error = ref<string>()
 
 const datasetIndex = ref(0)
-const kind = ref<'concept' | 'dataset'>('concept')
+const kind = ref<'concept' | 'dataset' | 'universal'>('concept')
 const conceptId = ref<string>()
 const fieldKey = ref<string>()
+const universalKey = ref('_c_q')
 const operator = ref('eq')
 const value = ref('')
 
-const appliedKey = ref<string>()
-const appliedValue = ref<string>()
+// FILTER_CAPABILITIES, cf. references/filters-url-convention.md
+const operatorOptions = ['eq', 'neq', 'in', 'nin', 'lt', 'lte', 'gt', 'gte', 'starts', 'exists', 'nexists', 'contains', 'search']
+  .map(op => ({ title: '_' + op, value: op }))
 
-const operators = [
-  { value: 'eq', label: '_eq' },
-  { value: 'neq', label: '_neq' },
-  { value: 'in', label: '_in' },
-  { value: 'nin', label: '_nin' },
-  { value: 'gte', label: '_gte' },
-  { value: 'lte', label: '_lte' },
-  { value: 'starts', label: '_starts' },
-  { value: 'exists', label: '_exists' },
-  { value: 'nexists', label: '_nexists' },
-  { value: 'contains', label: '_contains' },
-  { value: 'search', label: '_search' }
-]
-const operatorOptions = computed(() => operators.map(o => ({ title: o.label, value: o.value })))
+// concepts that apply to any dataset, without targeting a column
+const universalOptions = ['_c_q', '_c_date_match', '_c_geo_distance', '_c_bbox', '_id_eq']
+  .map(key => ({ title: key, value: key }))
+const universalHint = computed(() => t('hint' + universalKey.value))
 
-const dataset = computed(() => enriched.value?.datasets?.[datasetIndex.value])
+const datasets = computed<any[]>(() => enriched.value?.datasets?.filter((d: any) => d?.id) ?? [])
+const dataset = computed(() => datasets.value[datasetIndex.value])
+const datasetOptions = computed(() => datasets.value.map((d, i) => ({ title: d.title || d.id, value: i })))
 
-const datasetOptions = computed(() => (enriched.value?.datasets ?? []).map((d: any, i: number) => ({ title: d.title || d.id, value: i })))
-
-// fields of the schema, with a readable label (title or key)
 const schemaFields = computed(() => (dataset.value?.schema ?? []) as any[])
 
-// concepts: fields that carry an x-concept.primary id
+// only x-concept.primary fields are resolved by the REST API against a _c_ filter
 const conceptOptions = computed(() =>
   schemaFields.value
-    .filter((f: any) => f['x-concept']?.id)
+    .filter((f: any) => f['x-concept']?.id && f['x-concept'].primary)
     .map((f: any) => ({ title: `${f['x-concept'].title || f['x-concept'].id} (${f.key})`, value: f['x-concept'].id }))
 )
 
 const fieldOptions = computed(() =>
-  schemaFields.value.map((f: any) => ({ title: f.label || f.title || f.key, value: f.key }))
+  schemaFields.value.map((f: any) => ({ title: `${f.title || f['x-originalName'] || f.key} (${f.key})`, value: f.key }))
 )
 
 // when switching dataset, reset the field/concept selections
@@ -234,12 +264,16 @@ watch(datasetIndex, () => {
 })
 
 const filterKey = computed(() => {
+  if (kind.value === 'universal') return universalKey.value
   if (!dataset.value) return undefined
   if (kind.value === 'concept') {
     return conceptId.value ? `_c_${conceptId.value}_${operator.value}` : undefined
   }
   return fieldKey.value ? `_d_${dataset.value.id}_${fieldKey.value}_${operator.value}` : undefined
 })
+
+// filters currently on the preview URL, single source of truth in App.vue
+const applied = computed(() => (props.extraParams ?? []).filter(p => p.name.startsWith('_c') || p.name.startsWith('_d_') || p.name.startsWith('_id_')))
 
 watch(menuOpen, async (open) => {
   if (!open) return
@@ -253,15 +287,6 @@ watch(menuOpen, async (open) => {
 
 const apply = () => {
   if (!filterKey.value || !value.value) return
-  appliedKey.value = filterKey.value
-  appliedValue.value = value.value
   emit('applied', filterKey.value, value.value)
-}
-
-const remove = () => {
-  if (!appliedKey.value) return
-  emit('applied', appliedKey.value, '')
-  appliedKey.value = undefined
-  appliedValue.value = undefined
 }
 </script>

@@ -38,11 +38,18 @@
 
       <config-importer @copied="onConfigCopied" />
 
-      <filter-tester @applied="onFilterApplied" />
+      <filter-tester
+        :extra-params="extraParams"
+        @applied="onFilterApplied"
+      />
 
       <v-spacer />
 
-      <screenshot-simulation />
+      <screenshot-simulation
+        :capture-width="meta?.['df:capture-width']"
+        :capture-height="meta?.['df:capture-height']"
+        :extra-params="extraParams"
+      />
       <v-btn
         :title="t('reloadIframe')"
         :icon="mdiRefresh"
@@ -195,28 +202,39 @@
                 <meta-item
                   v-for="field in metaFields"
                   :key="field.key"
-                  :label="field.key"
+                  :label="field.label ?? field.key"
                   :present="metaIsPresent(field)"
                   :severity="field.severity"
-                  :missing-key="field.missingKey"
+                  :message-key="field.messageKey"
+                >
+                  {{ metaDisplayValue(field) }}
+                </meta-item>
+                <meta-item
+                  v-for="field in optionalMetaFields"
+                  :key="field.key"
+                  mode="optional"
+                  :label="field.label ?? field.key"
+                  :present="metaIsPresent(field)"
+                  :severity="field.severity"
+                  :message-key="field.messageKey"
                 >
                   {{ metaDisplayValue(field) }}
                 </meta-item>
 
-                <h3 class="text-subtitle-1 font-weight-bold mt-4 mb-2">
-                  {{ t('deprecatedMetas') }}
-                </h3>
-                <meta-item
-                  v-for="field in forbiddenMetaFields"
-                  :key="field.key"
-                  mode="forbidden"
-                  :label="field.key"
-                  :present="metaIsPresent(field)"
-                  :severity="field.severity"
-                  :missing-key="field.missingKey"
-                >
-                  {{ metaDisplayValue(field) }}
-                </meta-item>
+                <template v-if="hasForbiddenMeta">
+                  <h3 class="text-subtitle-1 font-weight-bold mt-4 mb-2">
+                    {{ t('deprecatedMetas') }}
+                  </h3>
+                  <meta-item
+                    v-for="field in forbiddenMetaFields"
+                    :key="field.key"
+                    mode="forbidden"
+                    :label="field.label ?? field.key"
+                    :present="metaIsPresent(field)"
+                    :severity="field.severity"
+                    :message-key="field.messageKey"
+                  />
+                </template>
               </v-col>
             </v-row>
           </v-col>
@@ -272,6 +290,12 @@ en:
   modeAspectFixedTip: "Height fixed by the aspect ratio."
   modeAutoResizeTip: "Displayed using the aspect ratio by default, and resized when needed. A map application typically won't resize; an application that declared df:overflow will resize."
   modeLegacyTip: "Previous behaviour: resizing driven by the df:overflow meta."
+  missingThumbnailFile: 'No public/thumbnail.png served at the root of the app. The presence of that file is what matters: data-fair computes baseApp.image as url + "thumbnail.png". The thumbnail meta tag is never read.'
+  missingConfigSchemaFile: 'No public/config-schema.json served at the root of the app (generate it from src/config/schema.json with df-build-types). Never rename nor move it.'
+  duplicateTitle: 'Keep a single <title> element. Duplicating it with a lang attribute is invalid HTML and produces two W3C errors — catalog i18n goes through registry.'
+  duplicateDescription: 'Keep a single <meta name="description">. Duplicating it with a lang attribute is invalid HTML and produces two W3C errors.'
+  charsetMissing: 'No <meta charset> in the head. Add <meta charset="UTF-8"> as the very first element.'
+  charsetNotFirst: 'The <meta charset> starts at byte {offset}, beyond the first 1024 bytes of the document. Move it to the very top of <head>: a comment block placed before it is enough to push it out of that window and break validation.'
 fr:
   metadata: "Métadonnées lues depuis index.html"
   deprecatedMetas: "Métadonnées dépréciées ou inutiles (à retirer)"
@@ -290,6 +314,12 @@ fr:
   modeAspectFixedTip: "Hauteur figée par le ratio d'aspect."
   modeAutoResizeTip: "Affichée en aspect-ratio par défaut, et redimensionnée au besoin. Une application carte ne se redimensionne typiquement pas ; une application qui déclarait df:overflow se redimensionne."
   modeLegacyTip: "Ancien comportement : redimensionnement piloté par la métadonnée df:overflow."
+  missingThumbnailFile: 'Aucun public/thumbnail.png servi à la racine de l''application. C''est la présence de ce fichier qui compte : data-fair calcule baseApp.image comme url + "thumbnail.png". La balise méta thumbnail n''est jamais lue.'
+  missingConfigSchemaFile: 'Aucun public/config-schema.json servi à la racine de l''application (à générer depuis src/config/schema.json avec df-build-types). Ne le renommez ni ne le déplacez jamais.'
+  duplicateTitle: 'Ne gardez qu''un seul élément <title>. Le dupliquer avec un attribut lang est du HTML invalide et produit deux erreurs W3C — l''i18n du catalogue passe par registry.'
+  duplicateDescription: 'Ne gardez qu''une seule <meta name="description">. La dupliquer avec un attribut lang est du HTML invalide et produit deux erreurs W3C.'
+  charsetMissing: 'Aucune <meta charset> dans le head. Ajoutez <meta charset="UTF-8"> tout en premier.'
+  charsetNotFirst: 'La <meta charset> commence à l''octet {offset}, au-delà des 1024 premiers octets du document. Remontez-la tout en haut du <head> : un bloc de commentaire placé avant suffit à la repousser hors de cette fenêtre et à casser la validation.'
 </i18n>
 
 <script lang="ts" setup>
@@ -326,8 +356,12 @@ ajv.addFormat('hexcolor', /^#[0-9A-Fa-f]{6,8}$/)
 ajvFormats(ajv)
 
 type Locale = 'fr' | 'en'
+// "title" is the <title> element. <meta name="title"> is a different thing (it overrides
+// baseApp.meta.title in data-fair) and is abandoned, so it is parsed under "meta:title" to
+// keep the two apart.
 type Meta = {
   title?: string,
+  'meta:title'?: string,
   description?: string,
   'application-name'?: string,
   'df:overflow'?: string,
@@ -357,59 +391,72 @@ const showPreview = ref(true)
 const compileError = ref<string>()
 const formValid = ref(false)
 const meta = ref<Meta>()
-const rawMeta = ref<{ titleCount?: number, descriptionCount?: number, charsetFirst?: boolean }>()
+const headStructure = ref<{ titleCount: number, descriptionCount: number, charsetOffset: number }>()
 const appFiles = ref<{ thumbnail: boolean, configSchema: boolean }>()
 const extraParams = ref<{ name: string, value: string }[]>()
 
 type MetaField = {
   key: string,
+  // defaults to the key, for the entries whose key is not the name of the tag
+  label?: string,
   severity: 'error' | 'info' | 'warning',
-  missingKey: string
+  messageKey: string
 }
 
 // only the metadata actually consumed by data-fair: keywords, thumbnail, vocabulary-accept
 // and vocabulary-require have no consumer anywhere (data-fair, portals, registry, capture,
 // frame, lib) and must not be declared by an application anymore
-// "title" below is the <title> element, the meta tag of the same name is abandoned too
 const metaFields: MetaField[] = [
-  { key: 'application-name', severity: 'error', missingKey: 'missingApplicationName' },
-  { key: 'title', severity: 'error', missingKey: 'missingTitle' },
-  { key: 'description', severity: 'error', missingKey: 'missingDesc' },
-  { key: 'df:overflow', severity: 'info', missingKey: 'missingDFOverflow' },
-  { key: 'df:sync-state', severity: 'info', missingKey: 'missingDFSyncState' },
-  { key: 'df:filter-concepts', severity: 'info', missingKey: 'missingDFFilterConcepts' },
-  { key: 'df:vjsf', severity: 'info', missingKey: 'missingDFVsf' },
-  { key: 'df:sync-config', severity: 'info', missingKey: 'missingDFSyncConfig' },
-  { key: 'df:capture-delay', severity: 'info', missingKey: 'missingDFCaptureDelay' }
+  { key: 'application-name', severity: 'error', messageKey: 'missingApplicationName' },
+  { key: 'title', severity: 'error', messageKey: 'missingTitle' },
+  { key: 'description', severity: 'error', messageKey: 'missingDesc' },
+  { key: 'df:overflow', severity: 'info', messageKey: 'missingDFOverflow' },
+  { key: 'df:sync-state', severity: 'info', messageKey: 'missingDFSyncState' },
+  { key: 'df:filter-concepts', severity: 'info', messageKey: 'missingDFFilterConcepts' },
+  { key: 'df:vjsf', severity: 'info', messageKey: 'missingDFVsf' },
+  { key: 'df:sync-config', severity: 'info', messageKey: 'missingDFSyncConfig' },
+  { key: 'df:capture-delay', severity: 'info', messageKey: 'missingDFCaptureDelay' }
+]
+
+// declaring them is legitimate but rare, so they are only displayed when present
+const optionalMetaFields: MetaField[] = [
+  { key: 'df:capture-width', severity: 'info', messageKey: 'optionalDFCaptureWidth' },
+  { key: 'df:capture-height', severity: 'info', messageKey: 'optionalDFCaptureHeight' }
 ]
 
 // metadata that no application should declare anymore: either deprecated or with no
 // consumer anywhere in the ecosystem (data-fair, portals, registry, capture, frame, lib)
 const forbiddenMetaFields: MetaField[] = [
-  { key: 'x-capture', severity: 'warning', missingKey: 'forbiddenXCapture' },
-  { key: 'df:concept-filters', severity: 'warning', missingKey: 'forbiddenConceptFilters' },
-  { key: 'keywords', severity: 'warning', missingKey: 'forbiddenKeywords' },
-  { key: 'thumbnail', severity: 'warning', missingKey: 'forbiddenThumbnailMeta' },
-  { key: 'vocabulary-accept', severity: 'warning', missingKey: 'forbiddenVocabulary' },
-  { key: 'vocabulary-require', severity: 'warning', missingKey: 'forbiddenVocabulary' },
-  { key: 'version', severity: 'warning', missingKey: 'forbiddenVersionMeta' },
-  { key: 'title', severity: 'warning', missingKey: 'forbiddenTitleMeta' },
-  { key: '{VERSION}', severity: 'warning', missingKey: 'forbiddenVersionPlaceholder' }
+  { key: 'x-capture', severity: 'warning', messageKey: 'forbiddenXCapture' },
+  { key: 'df:concept-filters', severity: 'warning', messageKey: 'forbiddenConceptFilters' },
+  { key: 'keywords', severity: 'warning', messageKey: 'forbiddenKeywords' },
+  { key: 'thumbnail', severity: 'warning', messageKey: 'forbiddenThumbnailMeta' },
+  { key: 'vocabulary-accept', severity: 'warning', messageKey: 'forbiddenVocabulary' },
+  { key: 'vocabulary-require', severity: 'warning', messageKey: 'forbiddenVocabulary' },
+  { key: 'version', severity: 'warning', messageKey: 'forbiddenVersionMeta' },
+  { key: 'meta:title', label: 'title', severity: 'warning', messageKey: 'forbiddenTitleMeta' },
+  { key: '{VERSION}', severity: 'warning', messageKey: 'forbiddenVersionPlaceholder' }
 ]
 
 const metaIsPresent = (field: MetaField) => !!(meta.value as any)?.[field.key]
 
+const hasForbiddenMeta = computed(() => forbiddenMetaFields.some(metaIsPresent))
+
 const metaDisplayValue = (field: MetaField) => (meta.value as any)?.[field.key] ?? ''
 
-// structural warnings computed from the parsed <head>: duplicate title/description
-// (invalid HTML, produces two W3C errors) and a charset that is not first
+// structural warnings computed from the raw index.html: duplicate title/description (invalid
+// HTML, two W3C errors) and a charset pushed out of the first 1024 bytes. The byte offset is
+// the actual constraint, and it is also what keeps the check usable behind a vite dev server,
+// which injects its own client script at the very top of the <head>.
+const CHARSET_MAX_OFFSET = 1024
 const metaWarnings = computed<string[]>(() => {
-  const r = rawMeta.value
-  if (!r) return []
+  const structure = headStructure.value
+  if (!structure) return []
   const warnings: string[] = []
-  if ((r.titleCount ?? 0) > 1) warnings.push(t('duplicateTitle'))
-  if ((r.descriptionCount ?? 0) > 1) warnings.push(t('duplicateDescription'))
-  if (r.charsetFirst === false) warnings.push(t('charsetNotFirst'))
+  if (structure.titleCount > 1) warnings.push(t('duplicateTitle'))
+  if (structure.descriptionCount > 1) warnings.push(t('duplicateDescription'))
+  if (structure.charsetOffset < 0) warnings.push(t('charsetMissing'))
+  else if (structure.charsetOffset > CHARSET_MAX_OFFSET) warnings.push(t('charsetNotFirst', { offset: structure.charsetOffset }))
   return warnings
 })
 
@@ -560,12 +607,24 @@ const onConfigCopied = async (configuration: any) => {
   await save(configuration, true)
 }
 
-// apply or remove a concept (_c_) / dataset (_d_) filter param on the preview URL,
-// so the app under development reads it through reactiveSearchParams / useConceptFilters
+// apply or remove a concept (_c_) / dataset (_d_) filter param on the preview URL, so the app
+// under development reads it through reactiveSearchParams / useConceptFilters.
+// Deliberately no draftPreviewInc: changing the src is enough, d-frame pushes it to the child
+// with an updateSrc message — exactly what a dashboard or a portal parent does. Forcing a
+// reload on top would race with it, d-frame reloading the iframe on its previous URL.
 const onFilterApplied = (key: string, value: string) => {
   extraParams.value = (extraParams.value ?? []).filter(p => p.name !== key)
   if (value) extraParams.value.push({ name: key, value })
-  draftPreviewInc.value++
+}
+
+const appFileExists = async (path: string) => {
+  try {
+    const res = await ofetch.raw(path, { method: 'HEAD', ignoreResponseError: true })
+    return res.status >= 200 && res.status < 400
+  } catch (err) {
+    console.warn('failed to probe ' + path, err)
+    return true // do not raise a false alarm when the app server is unreachable
+  }
 }
 
 const fetchInfo = useAsyncAction(async () => {
@@ -583,30 +642,38 @@ const fetchInfo = useAsyncAction(async () => {
   const titleNodes = head.childNodes.filter(isElementNode).filter(c => c.tagName === 'title')
   if (titleNodes[0]) parsedMeta.title = titleNodes[0].childNodes.filter(isTextNode)[0]?.value
 
+  // "title" is deliberately absent: it is the <title> element above. <meta name="title">
+  // is parsed under "meta:title", it is a deprecated metadata of its own.
   const metaTags = ['application-name', 'description', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:concept-filters', 'df:vjsf', 'df:sync-config', 'df:capture-delay', 'df:capture-width', 'df:capture-height', 'x-capture', 'keywords', 'thumbnail', 'vocabulary-accept', 'vocabulary-require', 'version', '{VERSION}']
 
   let descriptionCount = 0
-  let charsetFirst: boolean | undefined
-  const childNodes = head.childNodes.filter(isElementNode)
-  for (let i = 0; i < childNodes.length; i++) {
-    const node = childNodes[i]
-    if (node.tagName === 'meta') {
-      const name = node.attrs.find(a => a.name === 'name')?.value
-      const content = node.attrs.find(a => a.name === 'content')?.value
-      if (name === 'description' && content) descriptionCount++
-      if (i === 0 && node.attrs.find(a => a.name === 'charset')) charsetFirst = true
-      if (!name || !content || !metaTags.includes(name)) continue
-      parsedMeta[name] = parsedMeta[name] ?? content
-    }
+  for (const node of head.childNodes.filter(isElementNode)) {
+    if (node.tagName !== 'meta') continue
+    const name = node.attrs.find(a => a.name === 'name')?.value
+    const content = node.attrs.find(a => a.name === 'content')?.value
+    if (!name || !content) continue
+    if (name === 'description') descriptionCount++
+    const key = name === 'title' ? 'meta:title' : name
+    if (key !== 'meta:title' && !metaTags.includes(key)) continue
+    parsedMeta[key] = parsedMeta[key] ?? content
   }
-  if (charsetFirst === undefined) charsetFirst = false
 
+  // the constraint on <meta charset> is a byte offset, not a node position: measuring it on
+  // the raw text also covers the comment-before-charset case, and does not false-positive on
+  // the client script a vite dev server injects at the top of the <head>.
+  const charsetMatch = /<meta[^>]+charset\s*=/i.exec(htmlText)
   meta.value = parsedMeta
-  rawMeta.value = { titleCount: titleNodes.length, descriptionCount, charsetFirst }
-  try {
-    appFiles.value = await ofetch('/app/files')
-  } catch (err) {
-    console.warn('failed to fetch app files info', err)
+  headStructure.value = {
+    titleCount: titleNodes.length,
+    descriptionCount,
+    charsetOffset: charsetMatch ? new TextEncoder().encode(htmlText.slice(0, charsetMatch.index)).length : -1
+  }
+
+  // data-fair reads thumbnail.png over HTTP (baseApp.url + "thumbnail.png"), so probe it the
+  // same way through the app proxy rather than looking at the filesystem
+  appFiles.value = {
+    thumbnail: await appFileExists('/app/thumbnail.png'),
+    configSchema: await appFileExists('/app/config-schema.json')
   }
 
   // fetch config schema
