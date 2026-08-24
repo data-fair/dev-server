@@ -89,9 +89,32 @@ const appPrefix = appUrl.pathname.endsWith('/') ? appUrl.pathname.substring(0, a
 
 // very basic CRUD of config
 app.get('/config', (req, res, next) => {
-  const devConfig = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+  const devConfig = readDevConfig()
   debug('read dev config', devConfig)
   res.send(devConfig)
+})
+
+// the config with datasets enriched from the remote data-fair, so the dev-server UI
+// can display schemas/concepts and build concept & dataset filter params with the
+// exact same data as the application receives in window.APPLICATION
+app.get('/config/enriched', async (req, res) => {
+  try {
+    res.send(await refreshConfigDatasets(readDevConfig()))
+  } catch (err: any) {
+    res.status(500).send({ error: err.message })
+  }
+})
+
+// report the presence of the mandatory public files of the app under development,
+// looked up relative to the directory where the dev server runs (same convention as
+// the .dev-config.json lookup): the thumbnail.png file is what data-fair actually
+// uses (the thumbnail meta tag has no consumer), config-schema.json must never be
+// renamed nor moved
+app.get('/app/files', (req, res) => {
+  res.send({
+    thumbnail: existsSync('public/thumbnail.png'),
+    configSchema: existsSync('public/config-schema.json')
+  })
 })
 app.put('/config', (req, res, next) => {
   debug('save dev config', req.body)
@@ -139,6 +162,51 @@ const remoteFetch = async (path: string) => {
   if (!res.ok) throw new Error(`error ${res.status} on remote data-fair: ${await res.text()}`)
   return res.json()
 }
+
+// Short-lived cache for the dataset enrichment below, so that every preview reload
+// does not hammer the remote data-fair API.
+const datasetsCache = new Map<string, { data: any, fetchedAt: number }>()
+const DATASETS_CACHE_TTL = 30_000
+
+// Rebuild a configuration dataset entry the same way data-fair does in production
+// (refreshConfigDatasetsRefs in api/src/applications/utils.ts): the app stores only
+// minimal references, data-fair injects the full schema (with concepts), finalizedAt,
+// slug and userPermissions at request time. We reproduce that so applications
+// following the skill contract read window.APPLICATION.configuration.datasets
+// identically in dev and in prod.
+const enrichDataset = async (dataset: any) => {
+  if (!dataset?.id) return dataset
+  const cached = datasetsCache.get(dataset.id)
+  if (cached && Date.now() - cached.fetchedAt < DATASETS_CACHE_TTL) {
+    return { ...dataset, ...cached.data }
+  }
+  try {
+    const fresh = await remoteFetch('/datasets/' + encodeURIComponent(dataset.id))
+    const localBase = `http://localhost:${config.port}/data-fair`
+    const data = {
+      ...fresh,
+      href: fresh.href?.replace(config.dataFair.url, localBase),
+      userPermissions: fresh.userPermissions ?? []
+    }
+    datasetsCache.set(dataset.id, { data, fetchedAt: Date.now() })
+    return { ...dataset, ...data }
+  } catch (err) {
+    // a private dataset without an api key, or a network failure: keep the raw
+    // configuration entry so the app still loads, and warn in the dev-server UI
+    console.warn('[dev-server] failed to enrich dataset ' + dataset.id + ', keeping raw configuration entry', err)
+    return dataset
+  }
+}
+
+const refreshConfigDatasets = async (configuration: any) => {
+  const datasets = configuration?.datasets?.filter((d: any) => !!d)
+  if (!datasets?.length) return configuration
+  const enriched = await Promise.all(datasets.map(enrichDataset))
+  return { ...configuration, datasets: enriched }
+}
+
+// read the .dev-config.json file of the app under development
+const readDevConfig = () => existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
 
 // extract the major.minor part of a version, versions on remote base apps look like "1.3"
 const minorVersion = (version: string) => version.split('.').slice(0, 2).join('.')
@@ -209,7 +277,7 @@ app.use('/app', createProxyMiddleware({
       proxyReq.setHeader('Accept-Encoding', 'identity') // disable compression
     },
     proxyRes (proxyRes, req, res) {
-      const configuration = existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}
+      let configuration = readDevConfig()
       // console.log('inject config', configuration)
       const dataBuffers: Buffer[] = []
       proxyRes.on('data', (data) => { dataBuffers.push(data) })
@@ -217,8 +285,14 @@ app.use('/app', createProxyMiddleware({
         try {
           let output = Buffer.concat(dataBuffers).toString()
           if (output.includes('%APPLICATION%')) {
+            try {
+              configuration = await refreshConfigDatasets(configuration)
+            } catch (err) {
+              console.warn('[dev-server] failed to enrich configuration datasets', err)
+            }
             const filledBody = output.replace(/%APPLICATION%/g, JSON.stringify({
               id: 'dev-application',
+              slug: 'dev-application',
               title: 'Dev application',
               configuration,
               exposedUrl: `http://localhost:${config.port}/app`,

@@ -30,7 +30,7 @@
           style="border: 1px solid grey;width: 1050px;"
           :aspect-ratio="21/9"
           resize="false"
-          src="/app?thumbnail=true"
+          :src="screenshotUrl"
         />
       </v-card-text>
     </v-card>
@@ -58,9 +58,25 @@ fr:
 
 <script lang="ts" setup>
 import { mdiCamera } from '@mdi/js'
+import { withQuery } from 'ufo'
 
 const { t } = useI18n()
 const dialog = ref(false)
+
+// reproduce the capture service behaviour (api/src/misc/utils/capture.ts): it opens
+// the app at /app?thumbnail=true and forwards any app_<key> param to <key> on the
+// target URL, so the app can render in a specific state for the screenshot
+const screenshotUrl = computed(() => {
+  const params: Record<string, string> = { thumbnail: 'true' }
+  const searchParams = new URLSearchParams(window.location.search)
+  for (const key of searchParams.keys()) {
+    if (key.startsWith('app_')) {
+      const value = searchParams.get(key)
+      if (value) params[key.replace('app_', '')] = value
+    }
+  }
+  return withQuery('/app', params)
+})
 </script>
 
 <style lang="css" scoped>

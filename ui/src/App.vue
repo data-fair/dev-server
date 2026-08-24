@@ -38,6 +38,8 @@
 
       <config-importer @copied="onConfigCopied" />
 
+      <filter-tester @applied="onFilterApplied" />
+
       <v-spacer />
 
       <screenshot-simulation />
@@ -163,9 +165,51 @@
                   {{ t('metadata') }}
                 </h2>
 
+                <v-alert
+                  v-if="appFiles && !appFiles.thumbnail"
+                  type="error"
+                  :text="t('missingThumbnailFile')"
+                  density="compact"
+                  class="mb-2"
+                />
+                <v-alert
+                  v-if="appFiles && !appFiles.configSchema"
+                  type="error"
+                  :text="t('missingConfigSchemaFile')"
+                  density="compact"
+                  class="mb-2"
+                />
+                <v-alert
+                  v-if="metaWarnings.length"
+                  type="warning"
+                  class="mb-2"
+                >
+                  <div
+                    v-for="w in metaWarnings"
+                    :key="w"
+                  >
+                    {{ w }}
+                  </div>
+                </v-alert>
+
                 <meta-item
                   v-for="field in metaFields"
                   :key="field.key"
+                  :label="field.key"
+                  :present="metaIsPresent(field)"
+                  :severity="field.severity"
+                  :missing-key="field.missingKey"
+                >
+                  {{ metaDisplayValue(field) }}
+                </meta-item>
+
+                <h3 class="text-subtitle-1 font-weight-bold mt-4 mb-2">
+                  {{ t('deprecatedMetas') }}
+                </h3>
+                <meta-item
+                  v-for="field in forbiddenMetaFields"
+                  :key="field.key"
+                  mode="forbidden"
                   :label="field.key"
                   :present="metaIsPresent(field)"
                   :severity="field.severity"
@@ -212,6 +256,7 @@
 <i18n lang="yaml">
 en:
   metadata: "Metadata read from index.html"
+  deprecatedMetas: "Deprecated or useless metadata (to remove)"
   config: "Configuration form from config-schema.json"
   showSchema: "Show schema"
   configSchema: "Config schema"
@@ -229,6 +274,7 @@ en:
   modeLegacyTip: "Previous behaviour: resizing driven by the df:overflow meta."
 fr:
   metadata: "Métadonnées lues depuis index.html"
+  deprecatedMetas: "Métadonnées dépréciées ou inutiles (à retirer)"
   config: "Formulaire de configuration issu du config-schema.json"
   showSchema: "Voir le schéma"
   configSchema: "Schéma de configuration"
@@ -268,6 +314,7 @@ import metaItem from './components/meta-item.vue'
 import screenshotSimulation from './components/screenshot-simulation.vue'
 import themeSwitcher from './components/theme-switcher.vue'
 import configImporter from './components/config-importer.vue'
+import filterTester from './components/filter-tester.vue'
 import { withQuery } from 'ufo'
 import { useWindowSize } from '@vueuse/core'
 import debugModule from 'debug'
@@ -286,8 +333,19 @@ type Meta = {
   'df:overflow'?: string,
   'df:sync-state'?: string,
   'df:filter-concepts'?: string,
-  'df:vjsf'?: string
-  'df:sync-config'?: string
+  'df:concept-filters'?: string,
+  'df:vjsf'?: string,
+  'df:sync-config'?: string,
+  'df:capture-delay'?: string,
+  'df:capture-width'?: string,
+  'df:capture-height'?: string,
+  'x-capture'?: string,
+  keywords?: string,
+  thumbnail?: string,
+  'vocabulary-accept'?: string,
+  'vocabulary-require'?: string,
+  version?: string,
+  '{VERSION}'?: string
 }
 
 const { t, locale } = useI18n()
@@ -299,11 +357,13 @@ const showPreview = ref(true)
 const compileError = ref<string>()
 const formValid = ref(false)
 const meta = ref<Meta>()
+const rawMeta = ref<{ titleCount?: number, descriptionCount?: number, charsetFirst?: boolean }>()
+const appFiles = ref<{ thumbnail: boolean, configSchema: boolean }>()
 const extraParams = ref<{ name: string, value: string }[]>()
 
 type MetaField = {
   key: string,
-  severity: 'error' | 'info',
+  severity: 'error' | 'info' | 'warning',
   missingKey: string
 }
 
@@ -319,12 +379,39 @@ const metaFields: MetaField[] = [
   { key: 'df:sync-state', severity: 'info', missingKey: 'missingDFSyncState' },
   { key: 'df:filter-concepts', severity: 'info', missingKey: 'missingDFFilterConcepts' },
   { key: 'df:vjsf', severity: 'info', missingKey: 'missingDFVsf' },
-  { key: 'df:sync-config', severity: 'info', missingKey: 'missingDFSyncConfig' }
+  { key: 'df:sync-config', severity: 'info', missingKey: 'missingDFSyncConfig' },
+  { key: 'df:capture-delay', severity: 'info', missingKey: 'missingDFCaptureDelay' }
+]
+
+// metadata that no application should declare anymore: either deprecated or with no
+// consumer anywhere in the ecosystem (data-fair, portals, registry, capture, frame, lib)
+const forbiddenMetaFields: MetaField[] = [
+  { key: 'x-capture', severity: 'warning', missingKey: 'forbiddenXCapture' },
+  { key: 'df:concept-filters', severity: 'warning', missingKey: 'forbiddenConceptFilters' },
+  { key: 'keywords', severity: 'warning', missingKey: 'forbiddenKeywords' },
+  { key: 'thumbnail', severity: 'warning', missingKey: 'forbiddenThumbnailMeta' },
+  { key: 'vocabulary-accept', severity: 'warning', missingKey: 'forbiddenVocabulary' },
+  { key: 'vocabulary-require', severity: 'warning', missingKey: 'forbiddenVocabulary' },
+  { key: 'version', severity: 'warning', missingKey: 'forbiddenVersionMeta' },
+  { key: 'title', severity: 'warning', missingKey: 'forbiddenTitleMeta' },
+  { key: '{VERSION}', severity: 'warning', missingKey: 'forbiddenVersionPlaceholder' }
 ]
 
 const metaIsPresent = (field: MetaField) => !!(meta.value as any)?.[field.key]
 
 const metaDisplayValue = (field: MetaField) => (meta.value as any)?.[field.key] ?? ''
+
+// structural warnings computed from the parsed <head>: duplicate title/description
+// (invalid HTML, produces two W3C errors) and a charset that is not first
+const metaWarnings = computed<string[]>(() => {
+  const r = rawMeta.value
+  if (!r) return []
+  const warnings: string[] = []
+  if ((r.titleCount ?? 0) > 1) warnings.push(t('duplicateTitle'))
+  if ((r.descriptionCount ?? 0) > 1) warnings.push(t('duplicateDescription'))
+  if (r.charsetFirst === false) warnings.push(t('charsetNotFirst'))
+  return warnings
+})
 
 let schemaValidate: ValidateFunction
 
@@ -473,6 +560,14 @@ const onConfigCopied = async (configuration: any) => {
   await save(configuration, true)
 }
 
+// apply or remove a concept (_c_) / dataset (_d_) filter param on the preview URL,
+// so the app under development reads it through reactiveSearchParams / useConceptFilters
+const onFilterApplied = (key: string, value: string) => {
+  extraParams.value = (extraParams.value ?? []).filter(p => p.name !== key)
+  if (value) extraParams.value.push({ name: key, value })
+  draftPreviewInc.value++
+}
+
 const fetchInfo = useAsyncAction(async () => {
   // read meta from index.html
   const htmlText = await ofetch<string>('/app/index.html')
@@ -485,19 +580,34 @@ const fetchInfo = useAsyncAction(async () => {
   // a single <title> and a single <meta name="description">: duplicating them with a lang
   // attribute is invalid HTML, and data-fair only ever reads one value
   const parsedMeta: any = {}
-  const titleNode = head.childNodes.filter(isElementNode).find(c => c.tagName === 'title')
-  if (titleNode) parsedMeta.title = titleNode.childNodes.filter(isTextNode)[0]?.value
+  const titleNodes = head.childNodes.filter(isElementNode).filter(c => c.tagName === 'title')
+  if (titleNodes[0]) parsedMeta.title = titleNodes[0].childNodes.filter(isTextNode)[0]?.value
 
-  const metaTags = ['application-name', 'description', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:vjsf', 'df:sync-config']
+  const metaTags = ['application-name', 'description', 'df:overflow', 'df:sync-state', 'df:filter-concepts', 'df:concept-filters', 'df:vjsf', 'df:sync-config', 'df:capture-delay', 'df:capture-width', 'df:capture-height', 'x-capture', 'keywords', 'thumbnail', 'vocabulary-accept', 'vocabulary-require', 'version', '{VERSION}']
 
-  for (const node of head.childNodes.filter(isElementNode).filter(c => c.tagName === 'meta')) {
-    const name = node.attrs.find(a => a.name === 'name')?.value
-    const content = node.attrs.find(a => a.name === 'content')?.value
-    if (!name || !content || !metaTags.includes(name)) continue
-    parsedMeta[name] = parsedMeta[name] ?? content
+  let descriptionCount = 0
+  let charsetFirst: boolean | undefined
+  const childNodes = head.childNodes.filter(isElementNode)
+  for (let i = 0; i < childNodes.length; i++) {
+    const node = childNodes[i]
+    if (node.tagName === 'meta') {
+      const name = node.attrs.find(a => a.name === 'name')?.value
+      const content = node.attrs.find(a => a.name === 'content')?.value
+      if (name === 'description' && content) descriptionCount++
+      if (i === 0 && node.attrs.find(a => a.name === 'charset')) charsetFirst = true
+      if (!name || !content || !metaTags.includes(name)) continue
+      parsedMeta[name] = parsedMeta[name] ?? content
+    }
   }
+  if (charsetFirst === undefined) charsetFirst = false
 
   meta.value = parsedMeta
+  rawMeta.value = { titleCount: titleNodes.length, descriptionCount, charsetFirst }
+  try {
+    appFiles.value = await ofetch('/app/files')
+  } catch (err) {
+    console.warn('failed to fetch app files info', err)
+  }
 
   // fetch config schema
   schema.value = undefined

@@ -7,10 +7,14 @@
     "dataset": {
       "title": "Dataset",
       "type": "object",
-      "x-fromUrl": "api/v1/datasets?status=finalized&q={q}&{context.datasetFilter}",
-      "x-itemsProp": "results",
-      "x-itemTitle": "title",
-      "x-itemKey": "href",
+      "layout": {
+        "getItems": {
+          "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50&sort=createdAt:-1&{context.datasetFilter}",
+          "itemKey": "data.href",
+          "itemTitle": "data.title",
+          "itemsResults": "data.results"
+        }
+      },
       "properties": {
         "id": {
           "type": "string"
@@ -50,13 +54,6 @@
               },
               "x-group": {
                 "type": "string"
-              },
-              "x-refersTo": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "deprecated": true
               },
               "x-concept": {
                 "type": "object",
