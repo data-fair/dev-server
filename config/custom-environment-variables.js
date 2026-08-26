@@ -1,4 +1,5 @@
 export default {
+  port: 'DEV_SERVER_PORT',
   dataFair: {
     url: 'DATAFAIR_URL',
     owner: {

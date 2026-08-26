@@ -541,7 +541,7 @@ if (debugEditConfigBinding.enabled) {
   })
 }
 
-const socketDevServer = new ReconnectingWebSocket('ws://localhost:5888')
+const socketDevServer = new ReconnectingWebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`)
 socketDevServer.onopen = () => {
   socketDevServer.onmessage = (event) => {
     const data = JSON.parse(event.data)

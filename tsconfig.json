@@ -7,5 +7,5 @@
     "declaration": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "public", "data", "ui", "test-apps", "config", "*.mjs"]
+  "exclude": ["node_modules", "public", "data", "ui", "test-apps", "config", "test", "*.mjs"]
 }

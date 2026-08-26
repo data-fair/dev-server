@@ -2,6 +2,7 @@
 
 import config from './config.js'
 import uiConfig from './ui-config.js'
+import { localizeConfig } from './localize.js'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
@@ -99,7 +100,7 @@ app.get('/config', (req, res, next) => {
 // exact same data as the application receives in window.APPLICATION
 app.get('/config/enriched', async (req, res) => {
   try {
-    res.send(await refreshConfigDatasets(readDevConfig()))
+    res.send(await prepareConfig(readDevConfig()))
   } catch (err: any) {
     res.status(500).send({ error: err.message })
   }
@@ -177,12 +178,10 @@ const enrichDataset = async (dataset: any) => {
   }
   try {
     const fresh = await remoteFetch('/datasets/' + encodeURIComponent(dataset.id))
-    const localBase = `http://localhost:${config.port}/data-fair`
     const data: Record<string, any> = {}
     for (const prop of INJECTED_DATASET_PROPS) {
       if (fresh[prop] !== undefined) data[prop] = fresh[prop]
     }
-    if (typeof data.href === 'string') data.href = data.href.replace(config.dataFair.url, localBase)
     data.userPermissions = fresh.userPermissions ?? []
     datasetsCache.set(dataset.id, { data, fetchedAt: Date.now() })
     return { ...dataset, ...data }
@@ -195,11 +194,15 @@ const enrichDataset = async (dataset: any) => {
   }
 }
 
-const refreshConfigDatasets = async (configuration: any) => {
+// Enrich the datasets from the remote data-fair, then rewrite every remote origin to ours.
+// The rewrite is applied even when there is no dataset to enrich: a configuration can carry
+// remote urls anywhere (logos, links, tileserver styles), not only in datasets[].href.
+const prepareConfig = async (configuration: any) => {
   const datasets = configuration?.datasets?.filter((d: any) => !!d)
-  if (!datasets?.length) return configuration
-  const enriched = await Promise.all(datasets.map(enrichDataset))
-  return { ...configuration, datasets: enriched }
+  const enriched = datasets?.length
+    ? { ...configuration, datasets: await Promise.all(datasets.map(enrichDataset)) }
+    : configuration
+  return localizeConfig(enriched, new URL(config.dataFair.url).origin, `http://localhost:${config.port}`)
 }
 
 // read the .dev-config.json file of the app under development
@@ -364,14 +367,13 @@ app.get('/configurations', async (req, res) => {
   }
 })
 
-// copy a configuration from the remote data-fair, replacing all references to the
-// remote origin by the local one so that data goes through the local proxies
+// copy a configuration from the remote data-fair, keeping its remote origins so that
+// .dev-config.json stays portable — see localize.ts
 app.get('/configurations/:id', async (req, res) => {
   try {
-    const configuration = await remoteFetch('/applications/' + encodeURIComponent(req.params.id) + '/configuration')
-    const remoteOrigin = new URL(config.dataFair.url).origin
-    const localOrigin = `http://localhost:${config.port}`
-    res.send(JSON.parse(JSON.stringify(configuration).replaceAll(remoteOrigin, localOrigin)))
+    // Sent as-is, with its remote origins: the UI stores this straight into .dev-config.json,
+    // which must stay portable. Origins are rewritten on the read path, in prepareConfig.
+    res.send(await remoteFetch('/applications/' + encodeURIComponent(req.params.id) + '/configuration'))
   } catch (err: any) {
     res.status(500).send({ error: err.message })
   }
@@ -420,7 +422,7 @@ app.use('/app', createProxyMiddleware({
           let output = rawBody.toString()
           if (output.includes('%APPLICATION%')) {
             try {
-              configuration = await refreshConfigDatasets(configuration)
+              configuration = await prepareConfig(configuration)
             } catch (err) {
               console.warn('[dev-server] failed to enrich configuration datasets', err)
             }
