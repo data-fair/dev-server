@@ -12,6 +12,14 @@ E2E_PORT=${base + 2}
 APP_PATH=${appPath}
 `
 
+// Reads one variable out of an already written .env. Used to tell a .env that carries our ports
+// from one written for another purpose, and to keep the APP_PATH a developer chose when --force
+// redraws the ports. Deliberately naive: the file we read is the one we wrote.
+export const readEnvVar = (content: string, name: string): string | undefined => {
+  const line = content.split('\n').find(l => l.startsWith(name + '='))
+  return line === undefined ? undefined : line.slice(name.length + 1).trim()
+}
+
 export const findBase = async (
   isFree: (port: number) => Promise<boolean>,
   draw: () => number,

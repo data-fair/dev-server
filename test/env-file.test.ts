@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { renderEnv, findBase, MIN_BASE, MAX_BASE } from '../src/env-file.ts'
+import { renderEnv, findBase, readEnvVar, MIN_BASE, MAX_BASE } from '../src/env-file.ts'
 
 test('renders the three ports and the app path', () => {
   assert.equal(renderEnv(24730, '/app/'), `# généré par df-dev-env — ne pas commiter
@@ -33,4 +33,24 @@ test('throws after exhausting its attempts', async () => {
     findBase(async () => false, () => 21000, 3),
     /no free port range found/
   )
+})
+
+test('reads a variable back from a generated .env', () => {
+  const content = renderEnv(24730, '/app/')
+  assert.equal(readEnvVar(content, 'APP_PORT'), '24730')
+  assert.equal(readEnvVar(content, 'E2E_PORT'), '24732')
+  assert.equal(readEnvVar(content, 'APP_PATH'), '/app/')
+})
+
+test('reads an empty APP_PATH as an empty string, not as absent', () => {
+  assert.equal(readEnvVar(renderEnv(24730, ''), 'APP_PATH'), '')
+})
+
+test('reports an absent variable, so a foreign .env can be told apart', () => {
+  assert.equal(readEnvVar('PUBLIC_URL=https://example.org\n', 'APP_PORT'), undefined)
+})
+
+test('does not confuse a variable with one whose name it prefixes', () => {
+  const content = 'APP_PATH_EXTRA=x\nAPP_PATH=/app/\n'
+  assert.equal(readEnvVar(content, 'APP_PATH'), '/app/')
 })

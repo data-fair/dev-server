@@ -20,7 +20,15 @@ APP_PATH=/app/          # chemin sous lequel l'application est servie
 ```
 
 Le fichier est généré une fois, au premier `npm run dev`, puis laissé tel quel.
-`df-dev-env --force` retire de nouveaux ports en cas de collision.
+`df-dev-env --force` retire de nouveaux ports en cas de collision, en
+conservant l'`APP_PATH` déjà choisi : le remède à une collision de ports ne
+doit pas replacer en silence sous `/app/` une application servie à la racine.
+`--app-path` explicite prime sur la valeur conservée.
+
+Un `.env` déjà présent est laissé intact — mais `df-dev-env` prévient quand ce
+silence n'est pas ce qu'on attendait : quand le fichier ne porte pas `APP_PORT`
+(un `.env` écrit pour une autre raison, qui ne recevrait donc aucun port), et
+quand un `--app-path` explicite diffère de celui déjà stocké.
 
 `df-dev-server` lit ce `.env` (`dotenv`) : `DEV_SERVER_PORT` fixe son port, et
 `app.url` est dérivée de `APP_PORT` + `APP_PATH`. `APP_URL` reste prioritaire

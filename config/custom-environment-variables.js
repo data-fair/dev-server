@@ -1,5 +1,10 @@
 export default {
-  port: 'DEV_SERVER_PORT',
+  port: {
+    __name: 'DEV_SERVER_PORT',
+    // __format, otherwise the config module hands over the raw string: the declared type is a
+    // number, and ajv cannot coerce it back since the config object is frozen before assertValid.
+    __format: 'json'
+  },
   dataFair: {
     url: 'DATAFAIR_URL',
     owner: {
