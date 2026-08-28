@@ -7,3 +7,4 @@ src/*.js
 src/*.d.ts
 config/local-*
 .dev-config.json
+.dev-attachments/

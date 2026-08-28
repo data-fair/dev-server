@@ -3,6 +3,7 @@
 import config from './config.js'
 import uiConfig from './ui-config.js'
 import { localizeConfig } from './localize.js'
+import { ATTACHMENTS_DIR, attachmentPath, copyAttachments, listAttachments } from './attachments.js'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
@@ -16,7 +17,7 @@ import { isElementNode, createTextNode, createElement, appendChild } from '@pars
 import escapeStringRegexp from 'escape-string-regexp'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
 import { createSpaMiddleware } from '@data-fair/lib-express/serve-spa.js'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 
 const debug = debugModule('df-dev-server')
 
@@ -119,6 +120,29 @@ app.post('/config/error', (req, res) => {
   res.send()
 })
 
+// The attachments of the application under development, read by the dev-server UI to feed the
+// `context.attachments` of the configuration form — data-fair feeds it with
+// application.attachments, and an application configuration references an attachment by name.
+app.get('/config/attachments', (req, res) => {
+  res.send(listAttachments())
+})
+
+// window.APPLICATION.href points at /config, so an application building an attachment url the
+// production way — application.href + '/attachments/' + name — lands here. Same path shape as
+// data-fair (applications/:id/attachments/*), same no-cache: a re-copied file shows up at once.
+app.get('/config/attachments/*attachmentPath', (req, res) => {
+  const relFilePath = join(...(req.params as any).attachmentPath as string[])
+  const filePath = attachmentPath(ATTACHMENTS_DIR, relFilePath)
+  if (!filePath || !existsSync(filePath)) {
+    res.status(404).send({ error: `attachment "${relFilePath}" not found in ${ATTACHMENTS_DIR}` })
+    return
+  }
+  res.setHeader('Cache-Control', 'no-cache')
+  // served from a root, and not from the absolute path: send() refuses any path holding a
+  // hidden segment, and the attachments directory is itself a dotted one
+  res.sendFile(relFilePath, { root: resolve(ATTACHMENTS_DIR) })
+})
+
 // Identification of the app under development: its name is read from the
 // "application-name" meta tag of the local index.html and its version from the
 // package.json of the current directory.
@@ -144,13 +168,34 @@ const localAppInfo = async () => {
   return { name, version }
 }
 
+// The owner the dev-server works on behalf of, in the "type:id[:department]" form the
+// data-fair api expects for its owner and privateAccess filters.
+const ownerFilter = () => {
+  const owner = config.dataFair.owner
+  let filter = `${owner.type}:${owner.id}`
+  if (owner.department) filter += ':' + owner.department
+  return filter
+}
+
 // Fetch a resource from the remote data-fair api
 const remoteFetch = async (path: string) => {
+  const res = await remoteFetchRaw(path)
+  return res.json()
+}
+
+// Same, for an attachment: a file, never json, and never decoded as text — see the app proxy
+// below, where decoding a binary body as utf8 destroys it.
+const remoteFetchBuffer = async (path: string) => {
+  const res = await remoteFetchRaw(path)
+  return Buffer.from(await res.arrayBuffer())
+}
+
+const remoteFetchRaw = async (path: string) => {
   const res = await fetch(config.dataFair.url + '/api/v1' + path, {
     headers: config.dataFair.apiKey ? { 'x-apiKey': config.dataFair.apiKey } : {}
   })
   if (!res.ok) throw new Error(`error ${res.status} on remote data-fair: ${await res.text()}`)
-  return res.json()
+  return res
 }
 
 // Short-lived cache for the dataset enrichment below, so that every preview reload does not
@@ -350,9 +395,19 @@ app.get('/configurations', async (req, res) => {
     return
   }
   response.minorVersion = minorVersion(version)
+  // a base application restricted to an organization is invisible to an anonymous request, and
+  // without it the listing below finds nothing at all — the applications are then never reached,
+  // however public they are. privateAccess is what makes it visible, and data-fair answers 401
+  // to it without credentials, so it is only sent when an api key is configured.
+  response.authenticated = !!config.dataFair.apiKey
   try {
-    const baseApps = await remoteFetch('/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false')
+    let baseAppsQuery = '/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false'
+    if (response.authenticated) baseAppsQuery += '&privateAccess=' + encodeURIComponent(ownerFilter())
+    const baseApps = await remoteFetch(baseAppsQuery)
     const matchingBaseApps = (baseApps.results ?? []).filter((b: any) => typeof b.version === 'string' && minorVersion(b.version) === response.minorVersion)
+    // told apart from "the base application exists but carries no application": the UI has no
+    // other way to explain an empty list, and a missing api key is by far the likeliest cause
+    response.baseAppFound = matchingBaseApps.length > 0
     response.results = []
     for (const baseApp of matchingBaseApps) {
       const applications = await remoteFetch('/applications?base-application=' + encodeURIComponent(baseApp.url) + '&size=1000&count=false&select=id,title,owner')
@@ -370,10 +425,23 @@ app.get('/configurations', async (req, res) => {
 // copy a configuration from the remote data-fair, keeping its remote origins so that
 // .dev-config.json stays portable — see localize.ts
 app.get('/configurations/:id', async (req, res) => {
+  const id = encodeURIComponent(req.params.id)
   try {
     // Sent as-is, with its remote origins: the UI stores this straight into .dev-config.json,
     // which must stay portable. Origins are rewritten on the read path, in prepareConfig.
-    res.send(await remoteFetch('/applications/' + encodeURIComponent(req.params.id) + '/configuration'))
+    const configuration = await remoteFetch('/applications/' + id + '/configuration')
+    // The attachments come along: a configuration references them by name only, so without the
+    // files a copied production configuration renders with every image broken. Fetched from the
+    // application itself rather than from the configuration, which never lists them.
+    const application = await remoteFetch('/applications/' + id + '?select=attachments')
+    const attachments = await copyAttachments(
+      application.attachments ?? [],
+      (name) => remoteFetchBuffer('/applications/' + id + '/attachments/' + encodeURIComponent(name))
+    )
+    if (attachments.failed.length) {
+      console.warn('[dev-server] failed to copy attachments ' + attachments.failed.join(', ') + ', images referencing them will be broken')
+    }
+    res.send({ configuration, attachments })
   } catch (err: any) {
     res.status(500).send({ error: err.message })
   }
@@ -433,6 +501,8 @@ app.use('/app', createProxyMiddleware({
               configuration,
               exposedUrl: `http://localhost:${config.port}/app`,
               href: `http://localhost:${config.port}/config`,
+              // data-fair serializes the whole application document, attachments included
+              attachments: listAttachments(),
               apiUrl: `http://localhost:${config.port}/data-fair/api/v1`,
               wsUrl: `ws://localhost:${config.port}/data-fair`,
               owner: config.dataFair && config.dataFair.owner

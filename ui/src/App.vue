@@ -474,6 +474,10 @@ const extraParamsSchema = {
   }
 }
 
+// the attachments of the application under development, offered by the configuration form as
+// the items of every attachment-typed property, and served under /config/attachments
+const attachments = useFetch<any[]>('/config/attachments')
+
 const vjsfOptions = computed<VjsfOptions | null>(() => {
   const owner = $uiConfig.dataFair.owner
   let ownerFilter = `${owner.type}:${owner.id}`
@@ -489,16 +493,10 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
       owner,
       ownerFilter,
       datasetFilter,
-      remoteServiceFilter, // a pseudo attachments array, temporary until we have a real one
-      attachments: [
-        {
-          title: 'Attachment 1',
-          name: 'attachment.png',
-          size: 4705,
-          mimetype: 'image/png',
-          updatedAt: '2025-01-15T09:00:48.787Z'
-        }
-      ]
+      remoteServiceFilter,
+      // the files sitting in .dev-attachments, exactly as data-fair passes
+      // application.attachments to the same form
+      attachments: attachments.data.value ?? []
     },
     updateOn: 'blur',
     initialValidation: 'always',

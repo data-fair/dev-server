@@ -42,6 +42,39 @@ partagent rien d'autre que le fichier `.env`, écrit une seule fois par
 à la racine) il faut régénérer `.env` avant de lancer le dev-server :
 `node src/dev-env.js --force --app-path=`.
 
+## Configurations et pièces jointes distantes
+
+Le bouton « Copier une configuration distante » liste les applications qui, sur
+le data-fair distant, tournent sur l'application de base en cours de
+développement, dans la même version mineure. La recherche part du nom lu dans la
+balise `<meta name="application-name">` de l'`index.html` local et de la version
+du `package.json`.
+
+Une application de base réservée à une organisation (`privateAccess`) est
+invisible à une requête anonyme : sans elle la liste est vide, quand bien même
+les applications qui l'utilisent seraient publiques. Le paramètre
+`privateAccess` la rend visible, mais data-fair répond 401 sans
+authentification — il n'est donc envoyé que si `DATAFAIR_API_KEY` est
+renseignée. Une clé d'API se crée depuis le compte ou l'organisation sur le
+data-fair distant, et se met dans le `.env` de l'application :
+
+```
+DATAFAIR_API_KEY=xxx
+```
+
+Ce `.env` est celui que `df-dev-env` génère, et qu'il laisse intact tant qu'on
+ne passe pas `--force` — qui, lui, le réécrit entièrement et emporte la clé.
+
+La copie ramène aussi les pièces jointes de l'application distante dans
+`.dev-attachments/` (git-ignoré). Une configuration ne référence une pièce
+jointe que par son nom et reconstruit son URL à l'affichage
+(`application.href + '/attachments/' + name`) : sans les fichiers, une
+configuration de production copiée s'affiche avec toutes ses images cassées.
+Elles sont servies sous `/config/attachments/`, listées dans
+`window.APPLICATION.attachments`, et proposées par le formulaire de
+configuration comme data-fair le fait avec `context.attachments`. Un fichier
+déposé à la main dans `.dev-attachments/` est listé et servi de la même façon.
+
 ## Development
 
 Run development server :
