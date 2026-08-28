@@ -54,12 +54,12 @@
             </v-list-item>
           </v-list>
           <v-alert
-            v-if="!info.baseAppFound"
+            v-if="!info.results?.length"
             type="info"
             variant="tonal"
             density="compact"
             class="mt-2"
-            :text="info.authenticated ? t('noBaseApp', { appName: info.appName, version: info.minorVersion }) : t('noBaseAppAnonymous', { appName: info.appName, version: info.minorVersion })"
+            :text="info.authenticated ? t('noConfiguration', { appName: info.appName, version: info.minorVersion }) : t('noConfigurationAnonymous', { appName: info.appName, version: info.minorVersion })"
           />
         </template>
         <div
@@ -130,8 +130,8 @@ en:
   remoteConfigurations: "Configurations of {appName} v{version} on {remoteUrl}"
   search: "Search"
   noResult: "No matching configuration"
-  noBaseApp: "No base application {appName} in version {version} is declared on this data-fair."
-  noBaseAppAnonymous: "No base application {appName} in version {version} is visible without credentials. A base application restricted to an organization only shows up to an authenticated request: set DATAFAIR_API_KEY in the .env of the application."
+  noConfiguration: "No application runs on {appName} in version {version} on this data-fair."
+  noConfigurationAnonymous: "No application running on {appName} in version {version} is visible without credentials. Public applications are found without a key; a private one only shows up to an authenticated request: set DATAFAIR_API_KEY in the .env of the application."
   attachmentsFailed: "The configuration was copied, but these attachments could not be: {names}. The images referencing them will be broken."
   confirmTitle: "Confirm copy"
   confirmText: "This configuration will replace the current one:"
@@ -144,8 +144,8 @@ fr:
   remoteConfigurations: "Configurations de {appName} v{version} sur {remoteUrl}"
   search: "Rechercher"
   noResult: "Aucune configuration correspondante"
-  noBaseApp: "Aucune application de base {appName} en version {version} n'est déclarée sur ce data-fair."
-  noBaseAppAnonymous: "Aucune application de base {appName} en version {version} n'est visible sans authentification. Une application de base réservée à une organisation n'apparaît qu'à une requête authentifiée : renseigner DATAFAIR_API_KEY dans le .env de l'application."
+  noConfiguration: "Aucune application ne tourne sur {appName} en version {version} sur ce data-fair."
+  noConfigurationAnonymous: "Aucune application tournant sur {appName} en version {version} n'est visible sans authentification. Les applications publiques sont trouvées sans clé ; une application privée n'apparaît qu'à une requête authentifiée : renseigner DATAFAIR_API_KEY dans le .env de l'application."
   attachmentsFailed: "La configuration a été copiée, mais pas ces pièces jointes : {names}. Les images qui les référencent seront cassées."
   confirmTitle: "Confirmer la copie"
   confirmText: "Cette configuration remplacera la configuration actuelle :"
@@ -163,7 +163,7 @@ const { t } = useI18n()
 const emit = defineEmits<{ copied: [configuration: any] }>()
 
 const menuOpen = ref(false)
-const info = ref<{ error?: string, appName?: string, minorVersion?: string, remoteUrl?: string, results?: any[], baseAppFound?: boolean, authenticated?: boolean }>()
+const info = ref<{ error?: string, appName?: string, minorVersion?: string, remoteUrl?: string, results?: any[], authenticated?: boolean }>()
 const search = ref('')
 const selected = ref<any>()
 const confirmOpen = ref(false)

@@ -51,12 +51,23 @@ balise `<meta name="application-name">` de l'`index.html` local et de la version
 du `package.json`.
 
 Une application de base réservée à une organisation (`privateAccess`) est
-invisible à une requête anonyme : sans elle la liste est vide, quand bien même
-les applications qui l'utilisent seraient publiques. Le paramètre
-`privateAccess` la rend visible, mais data-fair répond 401 sans
-authentification — il n'est donc envoyé que si `DATAFAIR_API_KEY` est
-renseignée. Une clé d'API se crée depuis le compte ou l'organisation sur le
-data-fair distant, et se met dans le `.env` de l'application :
+invisible à une requête anonyme. Le paramètre `privateAccess` la rend visible,
+mais data-fair répond 401 sans authentification — il n'est donc envoyé que si
+`DATAFAIR_API_KEY` est renseignée.
+
+Ne pas la trouver n'arrête pas la recherche pour autant : les applications qui
+tournent dessus sont souvent publiques, et il suffit de connaître son URL pour
+les lister. Les URL des applications de base publiées suivent deux conventions
+(`<data-fair>/apps/<slug>/<mineure>/` et
+`https://cdn.jsdelivr.net/npm/@scope/<paquet>@<mineure>/dist/`), et le filtre
+de `/applications` est une égalité stricte : une URL devinée ne peut que ne
+rien renvoyer, jamais renvoyer autre chose. Les candidates sont donc essayées
+en une requête, ce qui suffit à lister les configurations publiques d'une
+application de base privée, sans aucune clé.
+
+Une clé reste nécessaire pour une application, elle, privée. Elle se crée
+depuis le compte ou l'organisation sur le data-fair distant, et se met dans le
+`.env` de l'application :
 
 ```
 DATAFAIR_API_KEY=xxx

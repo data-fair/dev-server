@@ -6,6 +6,7 @@ import { localizeConfig } from './localize.js'
 import { remoteFetch, remoteFetchBuffer } from './remote.js'
 import { prepareConfig as prepareRemoteConfig } from './enrich.js'
 import { ATTACHMENTS_DIR, attachmentPath, copyAttachments, listAttachments } from './attachments.js'
+import { candidateBaseAppUrls } from './base-app-urls.js'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
@@ -162,12 +163,15 @@ const localAppInfo = async () => {
     debug('failed to fetch local app index.html', err)
   }
   let version: string | undefined
+  let packageName: string | undefined
   try {
-    version = JSON.parse(readFileSync('package.json', 'utf8')).version
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+    version = pkg.version
+    packageName = pkg.name
   } catch (err) {
     debug('failed to read local package.json', err)
   }
-  return { name, version }
+  return { name, version, packageName }
 }
 
 // The owner the dev-server works on behalf of, in the "type:id[:department]" form the
@@ -322,7 +326,7 @@ const minorVersion = (version: string) => version.split('.').slice(0, 2).join('.
 // list configurations of the app under development that exist on the remote data-fair
 // with the same minor version, useful to test quickly for regressions
 app.get('/configurations', async (req, res) => {
-  const { name, version } = await localAppInfo()
+  const { name, version, packageName } = await localAppInfo()
   const response: any = { appName: name, localVersion: version, remoteUrl: config.dataFair.url }
   if (!name) {
     res.status(400).send({ ...response, error: 'The "application-name" meta tag was not found in the local app index.html' })
@@ -333,26 +337,30 @@ app.get('/configurations', async (req, res) => {
     return
   }
   response.minorVersion = minorVersion(version)
-  // a base application restricted to an organization is invisible to an anonymous request, and
-  // without it the listing below finds nothing at all — the applications are then never reached,
-  // however public they are. privateAccess is what makes it visible, and data-fair answers 401
-  // to it without credentials, so it is only sent when an api key is configured.
+  // a base application restricted to an organization is invisible to an anonymous request.
+  // privateAccess is what makes it visible, and data-fair answers 401 to it without
+  // credentials, so it is only sent when an api key is configured.
   response.authenticated = !!config.dataFair.apiKey
   try {
     let baseAppsQuery = '/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false'
     if (response.authenticated) baseAppsQuery += '&privateAccess=' + encodeURIComponent(ownerFilter())
     const baseApps = await remoteFetch(baseAppsQuery)
     const matchingBaseApps = (baseApps.results ?? []).filter((b: any) => typeof b.version === 'string' && minorVersion(b.version) === response.minorVersion)
-    // told apart from "the base application exists but carries no application": the UI has no
-    // other way to explain an empty list, and a missing api key is by far the likeliest cause
-    response.baseAppFound = matchingBaseApps.length > 0
-    response.results = []
-    for (const baseApp of matchingBaseApps) {
-      const applications = await remoteFetch('/applications?base-application=' + encodeURIComponent(baseApp.url) + '&size=1000&count=false&select=id,title,owner')
-      for (const application of applications.results ?? []) {
-        response.results.push({ id: application.id, title: application.title, owner: application.owner, baseAppVersion: baseApp.version })
-      }
-    }
+    // Not finding the base application is not the end of the search: it may simply be private
+    // while the applications running on it are public, and those are reachable as soon as its
+    // url is known. Guessing the url costs nothing — the filter below is an exact match.
+    const versionByUrl = new Map<string, string>(matchingBaseApps.map((b: any) => [b.url, b.version]))
+    const baseAppUrls = matchingBaseApps.length
+      ? [...versionByUrl.keys()]
+      : candidateBaseAppUrls(config.dataFair.url, name, packageName, response.minorVersion)
+    // one request for the whole set: the data-fair list filters accept comma separated values
+    const applications = await remoteFetch('/applications?base-application=' + encodeURIComponent(baseAppUrls.join(',')) + '&size=1000&count=false&select=id,title,owner,url')
+    response.results = (applications.results ?? []).map((application: any) => ({
+      id: application.id,
+      title: application.title,
+      owner: application.owner,
+      baseAppVersion: versionByUrl.get(application.url) ?? response.minorVersion
+    }))
     response.results.sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''))
     res.send(response)
   } catch (err: any) {
