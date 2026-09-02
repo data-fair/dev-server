@@ -373,13 +373,16 @@ app.get('/configurations', async (req, res) => {
 app.get('/configurations/:id', async (req, res) => {
   const id = encodeURIComponent(req.params.id)
   try {
-    // Sent as-is, with its remote origins: the UI stores this straight into .dev-config.json,
-    // which must stay portable. Origins are rewritten on the read path, in prepareConfig.
-    const configuration = await remoteFetch('/applications/' + id + '/configuration')
-    // The attachments come along: a configuration references them by name only, so without the
-    // files a copied production configuration renders with every image broken. Fetched from the
-    // application itself rather than from the configuration, which never lists them.
-    const application = await remoteFetch('/applications/' + id + '?select=attachments')
+    // The configuration is sent as-is, with its remote origins: the UI stores it straight into
+    // .dev-config.json, which must stay portable. Origins are rewritten on the read path, in
+    // prepareConfig. The attachments come along, since a configuration references them by name
+    // only and without the files a copied production configuration renders with every image
+    // broken; they are read from the application, which is where data-fair lists them.
+    // Neither read depends on the other, so they leave together instead of one after the other.
+    const [configuration, application] = await Promise.all([
+      remoteFetch('/applications/' + id + '/configuration'),
+      remoteFetch('/applications/' + id + '?select=attachments')
+    ])
     const attachments = await copyAttachments(
       application.attachments ?? [],
       (name) => remoteFetchBuffer('/applications/' + id + '/attachments/' + encodeURIComponent(name))

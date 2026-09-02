@@ -112,3 +112,35 @@ test('refuses to write an attachment whose name escapes the directory', withDir(
   assert.deepEqual(result, { copied: ['ok.png'], failed: ['../escaped.png'] })
   assert.equal(existsSync(join(dir, '..', 'escaped.png')), false)
 }))
+
+// the tests above resolve instantly, so they pass whatever the order downloads complete in
+test('downloads in parallel, and keeps the order of the configuration in both lists', withDir(async (dir) => {
+  // a.png and c.png fail, and the four entries answer in reverse: an implementation appending
+  // results as they land would report every one of them out of order
+  const plan: Record<string, { delay: number, fails: boolean }> = {
+    'a.png': { delay: 30, fails: true },
+    'b.png': { delay: 20, fails: false },
+    'c.png': { delay: 10, fails: true },
+    'd.png': { delay: 0, fails: false }
+  }
+  let running = 0
+  let peak = 0
+  const result = await copyAttachments(
+    Object.keys(plan).map(name => ({ name })),
+    async (name) => {
+      running++
+      peak = Math.max(peak, running)
+      try {
+        await new Promise(resolve => setTimeout(resolve, plan[name].delay))
+        if (plan[name].fails) throw new Error('error 403 on remote data-fair')
+        return Buffer.from('content of ' + name)
+      } finally {
+        running--
+      }
+    },
+    dir
+  )
+  assert.ok(peak > 1, `the downloads ran one at a time, ${peak} was the highest seen at once`)
+  assert.deepEqual(result, { copied: ['b.png', 'd.png'], failed: ['a.png', 'c.png'] })
+  assert.deepEqual(listAttachments(dir).map(a => a.name), ['b.png', 'd.png'])
+}))

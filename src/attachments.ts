@@ -94,6 +94,14 @@ export const attachmentPath = (dir: string, name: string): string | undefined =>
 
 export type CopyAttachmentsResult = { copied: string[], failed: string[] }
 
+// Attachments used to be downloaded one after the other, each waiting for a full round trip
+// to the remote data-fair before the next one started, so an application carrying a dozen
+// images cost a dozen round trips to copy. They go in parallel now, bounded so that a
+// configuration with many attachments does not open as many connections at once.
+const DOWNLOAD_CONCURRENCY = 5
+
+type Downloaded = { attachment: { name: string, title?: string, mimetype?: string }, body: Buffer }
+
 // Replace the whole local attachments directory with the attachments of a remote application.
 // Replace, and not merge: copying a configuration replaces the current one entirely, so leaving
 // behind the images of the previously copied application would only produce a directory whose
@@ -109,31 +117,44 @@ export const copyAttachments = async (
   fetchAttachment: (name: string) => Promise<Buffer>,
   dir: string = ATTACHMENTS_DIR
 ): Promise<CopyAttachmentsResult> => {
-  const result: CopyAttachmentsResult = { copied: [], failed: [] }
-  const downloaded: { attachment: { name: string, title?: string, mimetype?: string }, body: Buffer }[] = []
-  for (const attachment of attachments ?? []) {
-    // a name with a path separator would write outside the directory, and data-fair has no
-    // reason to send one: skip it rather than sanitize a name the configuration still refers to
-    if (!attachment?.name || attachmentPath(dir, attachment.name) === undefined) {
-      if (attachment?.name) result.failed.push(attachment.name)
-      continue
-    }
-    try {
-      downloaded.push({ attachment: { ...attachment, name: attachment.name }, body: await fetchAttachment(attachment.name) })
-    } catch (err) {
-      result.failed.push(attachment.name)
+  const entries = attachments ?? []
+  // indexed rather than appended: downloads no longer finish in the order they started, and
+  // both lists below are read by a developer against the configuration they came from
+  const downloaded: (Downloaded | undefined)[] = new Array(entries.length)
+  const failures: (string | undefined)[] = new Array(entries.length)
+
+  let next = 0
+  const worker = async () => {
+    while (next < entries.length) {
+      const index = next++
+      const attachment = entries[index]
+      // a name with a path separator would write outside the directory, and data-fair has no
+      // reason to send one: skip it rather than sanitize a name the configuration still refers to
+      if (!attachment?.name || attachmentPath(dir, attachment.name) === undefined) {
+        if (attachment?.name) failures[index] = attachment.name
+        continue
+      }
+      try {
+        downloaded[index] = { attachment: { ...attachment, name: attachment.name }, body: await fetchAttachment(attachment.name) }
+      } catch (err) {
+        failures[index] = attachment.name
+      }
     }
   }
+  await Promise.all(Array.from({ length: Math.min(DOWNLOAD_CONCURRENCY, entries.length) }, worker))
+
+  const kept = downloaded.filter(entry => entry !== undefined)
+  const result: CopyAttachmentsResult = { copied: [], failed: failures.filter(name => name !== undefined) }
 
   // written aside then swapped in, so an interrupted copy leaves the previous directory intact
   const tmpDir = dir + '.tmp'
   rmSync(tmpDir, { recursive: true, force: true })
   mkdirSync(tmpDir, { recursive: true })
-  for (const { attachment, body } of downloaded) {
+  for (const { attachment, body } of kept) {
     writeFileSync(join(tmpDir, attachment.name), body)
     result.copied.push(attachment.name)
   }
-  writeFileSync(join(tmpDir, METADATA_FILE), JSON.stringify(downloaded.map(d => d.attachment), null, 2))
+  writeFileSync(join(tmpDir, METADATA_FILE), JSON.stringify(kept.map(d => d.attachment), null, 2))
   rmSync(dir, { recursive: true, force: true })
   renameSync(tmpDir, dir)
   return result
