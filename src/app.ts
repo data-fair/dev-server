@@ -469,6 +469,18 @@ app.use('/app', createProxyMiddleware({
             const bodyNode = html.childNodes.filter(isElementNode).find(c => c.tagName === 'body')
             if (!headNode || !bodyNode) throw new Error('HTML structure is broken, expect html, head and body elements')
 
+            // data-fair owns the language and the title of the served document (proxy.ts): it
+            // replaces whatever the application declares, because a <title> declared by an
+            // application names its model in the catalog, not the visualization being served, and
+            // a document with no language — or the wrong one — fails WCAG 3.1.1 / 2.4.2. Doing it
+            // here too means a developer sees the document production will actually serve.
+            html.attrs = (html.attrs ?? []).filter(attr => attr.name !== 'lang')
+            html.attrs.push({ name: 'lang', value: config.lang?.default ?? 'fr' })
+            headNode.childNodes = headNode.childNodes.filter(c => !isElementNode(c) || c.tagName !== 'title')
+            const titleNode = createElement('title')
+            appendChild(titleNode, createTextNode('Dev application'))
+            headNode.childNodes.push(titleNode)
+
             const meta: Record<string, string> = {}
             for (const node of headNode.childNodes.filter(isElementNode)) {
               if (node.tagName === 'meta') {
