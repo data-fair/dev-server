@@ -460,7 +460,9 @@ const metaWarnings = computed<string[]>(() => {
   return warnings
 })
 
-let schemaValidate: ValidateFunction
+// a ref, not a plain variable: it is assigned off the critical path (see fetchInfo), and
+// validationErrors below has to re-run once it lands
+const schemaValidate = shallowRef<ValidateFunction>()
 
 const extraParamsSchema = {
   type: 'array',
@@ -504,13 +506,14 @@ const vjsfOptions = computed<VjsfOptions | null>(() => {
 })
 
 const validationErrors = computed(() => {
-  if (!schema.value || !schemaValidate) return
+  const validate = schemaValidate.value
+  if (!schema.value || !validate) return
   debugEditConfigBinding('validate editConfig')
-  const valid = schemaValidate(editConfig.value)
+  const valid = validate(editConfig.value)
   debugEditConfigBinding('valid ?', valid)
   if (!valid) {
-    ajvLocalize[locale.value as Locale](schemaValidate.errors)
-    return schemaValidate.errors
+    ajvLocalize[locale.value as Locale](validate.errors)
+    return validate.errors
   }
   return null
 })
@@ -682,15 +685,26 @@ const fetchInfo = useAsyncAction(async () => {
 
   newSchema.$id = newSchema.$id ?? 'config-schema'
   resolveLocaleRefs(newSchema, ajv, locale.value, 'fr')
-  schema.value = meta.value?.['df:vjsf'] === '3' ? newSchema : v2compat(newSchema)
-  try {
-    ajv.removeSchema(newSchema.$id)
-    schemaValidate = ajv.compile(schema.value)
-    compileError.value = undefined
-  } catch (err: any) {
-    console.error(err)
-    compileError.value = err.message
+  const compiledSchema = meta.value?.['df:vjsf'] === '3' ? newSchema : v2compat(newSchema)
+  schema.value = compiledSchema
+
+  // Ajv codegen on an application config schema is expensive — hundreds of ms, seconds on a
+  // schema that inlines its $refs — and this validation only feeds a developer-facing sanity
+  // check ("the form says valid but the model does not match the schema"). Compiling it here
+  // would delay the form itself, which does its own compilation as soon as schema.value is
+  // set, so it waits for an idle slot and lands a moment later.
+  const compileValidate = () => {
+    try {
+      ajv.removeSchema(newSchema.$id)
+      schemaValidate.value = ajv.compile(compiledSchema)
+      compileError.value = undefined
+    } catch (err: any) {
+      console.error(err)
+      compileError.value = err.message
+    }
   }
+  if (window.requestIdleCallback) window.requestIdleCallback(compileValidate, { timeout: 5000 })
+  else setTimeout(compileValidate, 200)
 })
 fetchInfo.execute()
 
