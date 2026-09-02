@@ -19,6 +19,17 @@
       :title="t('importConfigTitle')"
       variant="flat"
     >
+      <template #append>
+        <v-btn
+          :title="t('refresh')"
+          :icon="mdiRefresh"
+          :loading="loading"
+          size="small"
+          variant="text"
+          density="comfortable"
+          @click="load(true)"
+        />
+      </template>
       <v-card-text>
         <v-alert
           v-if="info?.error"
@@ -38,18 +49,29 @@
             hide-details
             class="mb-2"
           />
+          <!-- virtualised: /configurations asks the remote for size=1000, and a data-fair
+               that hosts many applications on this minor version used to mount every one of
+               them as a v-list-item in the tick that opens the menu -->
           <v-list
             height="400"
             max-height="400"
           >
-            <v-list-item
-              v-for="item in filteredResults"
-              :key="item.id"
-              :title="item.title"
-              :subtitle="`${item.owner?.name ?? ''} · v${item.baseAppVersion}`"
-              @click="select(item)"
-            />
-            <v-list-item v-if="!filteredResults.length">
+            <v-virtual-scroll
+              v-if="filteredResults.length"
+              :items="filteredResults"
+              height="400"
+              item-height="56"
+            >
+              <template #default="{ item }">
+                <v-list-item
+                  :key="item.id"
+                  :title="item.title"
+                  :subtitle="`${item.owner?.name ?? ''} · v${item.baseAppVersion}`"
+                  @click="select(item)"
+                />
+              </template>
+            </v-virtual-scroll>
+            <v-list-item v-else>
               <v-list-item-title>{{ t('noResult') }}</v-list-item-title>
             </v-list-item>
           </v-list>
@@ -88,6 +110,22 @@
         <p class="text-caption">
           {{ selected?.owner?.name }} · v{{ selected?.baseAppVersion }}
         </p>
+        <!-- the configuration page on the remote data-fair, so that what is about to
+             overwrite the local one can be read before confirming -->
+        <a
+          v-if="configUrl"
+          :href="configUrl"
+          target="_blank"
+          rel="noopener"
+          class="text-caption"
+        >
+          <!-- icon first: after the label it lands alone at the end of the wrapped line -->
+          <v-icon
+            :icon="mdiOpenInNew"
+            size="x-small"
+            class="mr-1"
+          />{{ t('openRemote') }}
+        </a>
         <v-alert
           v-if="copyError"
           type="error"
@@ -129,12 +167,14 @@ en:
   importConfigTitle: "Copy a remote configuration"
   remoteConfigurations: "Configurations of {appName} v{version} on {remoteUrl}"
   search: "Search"
+  refresh: "Refresh the list from the remote data-fair"
   noResult: "No matching configuration"
   noConfiguration: "No application runs on {appName} in version {version} on this data-fair."
   noConfigurationAnonymous: "No application running on {appName} in version {version} is visible without credentials. Public applications are found without a key; a private one only shows up to an authenticated request: set DATAFAIR_API_KEY in the .env of the application."
   attachmentsFailed: "The configuration was copied, but these attachments could not be: {names}. The images referencing them will be broken."
   confirmTitle: "Confirm copy"
   confirmText: "This configuration will replace the current one:"
+  openRemote: "See this configuration on the remote data-fair"
   cancel: "Cancel"
   copy: "Copy"
   copyAnyway: "Copy anyway"
@@ -143,12 +183,14 @@ fr:
   importConfigTitle: "Copier une configuration distante"
   remoteConfigurations: "Configurations de {appName} v{version} sur {remoteUrl}"
   search: "Rechercher"
+  refresh: "Actualiser la liste depuis le data-fair distant"
   noResult: "Aucune configuration correspondante"
   noConfiguration: "Aucune application ne tourne sur {appName} en version {version} sur ce data-fair."
   noConfigurationAnonymous: "Aucune application tournant sur {appName} en version {version} n'est visible sans authentification. Les applications publiques sont trouvées sans clé ; une application privée n'apparaît qu'à une requête authentifiée : renseigner DATAFAIR_API_KEY dans le .env de l'application."
   attachmentsFailed: "La configuration a été copiée, mais pas ces pièces jointes : {names}. Les images qui les référencent seront cassées."
   confirmTitle: "Confirmer la copie"
   confirmText: "Cette configuration remplacera la configuration actuelle :"
+  openRemote: "Voir cette configuration sur le data-fair distant"
   cancel: "Annuler"
   copy: "Copier"
   copyAnyway: "Copier quand même"
@@ -156,7 +198,7 @@ fr:
 
 <script lang="ts" setup>
 import { ofetch } from 'ofetch'
-import { mdiContentCopy, mdiMagnify } from '@mdi/js'
+import { mdiContentCopy, mdiMagnify, mdiOpenInNew, mdiRefresh } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -174,15 +216,36 @@ const attachmentsFailed = ref<string[]>([])
 // the attachments that could not be copied with it
 const pending = ref<any>()
 
-watch(menuOpen, async (open) => {
+const loading = ref(false)
+
+/**
+ * Fetching on every open is what made the menu feel slow: `/configurations` is two chained
+ * requests to the remote data-fair, and nothing was on screen until both came back. The
+ * result is kept between openings instead, and `force` is the refresh button — the remote
+ * list does change while the dev server runs, so it must stay refreshable on demand.
+ *
+ * An error is never what gets kept: it would outlive the incident that produced it and turn
+ * one unreachable moment into a menu that never loads again. It is dropped before the retry
+ * too, so a failure that is being retried shows the spinner rather than the stale message.
+ */
+const load = async (force = false) => {
+  if (loading.value) return
+  if (info.value && !info.value.error && !force) return
+  loading.value = true
+  info.value = undefined
+  try {
+    info.value = await ofetch('/configurations')
+  } catch (err: any) {
+    info.value = { error: err.data?.error ?? err.message }
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(menuOpen, (open) => {
   if (open) {
     search.value = ''
-    info.value = undefined
-    try {
-      info.value = await ofetch('/configurations')
-    } catch (err: any) {
-      info.value = { error: err.data?.error ?? err.message }
-    }
+    load()
   }
 })
 
@@ -191,6 +254,13 @@ const filteredResults = computed(() => {
   const results = info.value?.results ?? []
   if (!q) return results
   return results.filter((r: any) => (r.title ?? '').toLowerCase().includes(q) || (r.owner?.name ?? '').toLowerCase().includes(q))
+})
+
+// data-fair serves the configuration form of an application at /application/<id>/config,
+// under the same url the API is read from (config.dataFair.url, echoed back as remoteUrl)
+const configUrl = computed(() => {
+  if (!info.value?.remoteUrl || !selected.value?.id) return undefined
+  return `${info.value.remoteUrl}/application/${encodeURIComponent(selected.value.id)}/config`
 })
 
 const select = (item: any) => {

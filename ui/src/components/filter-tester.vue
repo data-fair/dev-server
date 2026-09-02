@@ -20,9 +20,28 @@
       :title="t('title')"
       variant="flat"
     >
+      <template #append>
+        <v-btn
+          :title="t('refresh')"
+          :icon="mdiRefresh"
+          :loading="loading"
+          size="small"
+          variant="text"
+          density="comfortable"
+          @click="load(true)"
+        />
+      </template>
       <v-card-text>
+        <!-- while the enriched configuration is on its way `datasets` is empty, and the
+             card used to answer "no dataset" — a wrong message, then replaced -->
+        <div
+          v-if="!enriched && !error"
+          class="d-flex justify-center pa-4"
+        >
+          <v-progress-circular indeterminate />
+        </div>
         <v-alert
-          v-if="error"
+          v-else-if="error"
           type="error"
           :text="error"
           class="mb-2"
@@ -162,6 +181,7 @@
 <i18n lang="yaml">
 en:
   title: "Test concept / dataset filters"
+  refresh: "Refresh the configuration"
   intro: "Build a filter param following the URL convention and push it to the preview URL. The app reads it through reactiveSearchParams / useConceptFilters."
   noDataset: "No dataset in the current configuration. Select one in the configuration form first."
   noConcept: "No field of this dataset carries a primary concept. Only x-concept.primary fields can be targeted by a _c_ filter; use a dataset field filter instead."
@@ -184,6 +204,7 @@ en:
   hint_id_eq: "Filter on the id of a single line."
 fr:
   title: "Tester les filtres concepts / dataset"
+  refresh: "Actualiser la configuration"
   intro: "Construisez un filtre suivant la convention d'URL et poussez-le dans l'URL de l'aperçu. L'application le lit via reactiveSearchParams / useConceptFilters."
   noDataset: "Aucun dataset dans la configuration courante. Sélectionnez-en un dans le formulaire de configuration d'abord."
   noConcept: "Aucun champ de ce jeu de données ne porte de concept primaire. Seuls les champs x-concept.primary sont ciblables par un filtre _c_ ; utilisez plutôt un filtre par champ."
@@ -208,7 +229,7 @@ fr:
 
 <script lang="ts" setup>
 import { ofetch } from 'ofetch'
-import { mdiFilterVariant } from '@mdi/js'
+import { mdiFilterVariant, mdiRefresh } from '@mdi/js'
 
 const { t } = useI18n()
 
@@ -275,14 +296,32 @@ const filterKey = computed(() => {
 // filters currently on the preview URL, single source of truth in App.vue
 const applied = computed(() => (props.extraParams ?? []).filter(p => p.name.startsWith('_c') || p.name.startsWith('_d_') || p.name.startsWith('_id_')))
 
-watch(menuOpen, async (open) => {
-  if (!open) return
+const loading = ref(false)
+
+/**
+ * Refetched on every opening, with the previous answer left on screen meanwhile: the
+ * enriched configuration is a remote call, and the menu had nothing to show until it came
+ * back. Unlike the remote application list, this one changes under the developer's hands —
+ * a cached copy would go stale in seconds — so it is refreshed rather than kept, and
+ * `force` (the refresh button) also drops what is displayed so a failed refresh cannot pass
+ * for fresh data.
+ */
+const load = async (force = false) => {
+  if (loading.value) return
+  loading.value = true
   error.value = undefined
+  if (force) enriched.value = undefined
   try {
     enriched.value = await ofetch('/config/enriched')
   } catch (err: any) {
     error.value = err.data?.error ?? err.message
+  } finally {
+    loading.value = false
   }
+}
+
+watch(menuOpen, (open) => {
+  if (open) load()
 })
 
 const apply = () => {
