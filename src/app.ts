@@ -443,7 +443,12 @@ app.use('/app', createProxyMiddleware({
             } catch (err) {
               console.warn('[dev-server] failed to enrich configuration datasets', err)
             }
-            const filledBody = output.replace(/%APPLICATION%/g, JSON.stringify({
+            // Same substitution as data-fair's proxy (api/src/applications/proxy.ts), on purpose:
+            // anchored on the assignment the contract defines rather than on the bare placeholder,
+            // so an application naming %APPLICATION% elsewhere (a comment documenting the contract)
+            // does not consume it — and with < / > escaped so no string of the application can
+            // close the script or a comment. An application that loads here must load there.
+            const applicationJson = JSON.stringify({
               id: 'dev-application',
               slug: 'dev-application',
               title: 'Dev application',
@@ -455,7 +460,8 @@ app.use('/app', createProxyMiddleware({
               apiUrl: `http://localhost:${config.port}/data-fair/api/v1`,
               wsUrl: `ws://localhost:${config.port}/data-fair`,
               owner: config.dataFair && config.dataFair.owner
-            }))
+            }).replace(/</g, '\\u003C').replace(/>/g, '\\u003E')
+            const filledBody = output.replace(/window\.APPLICATION\s*=\s*%APPLICATION%/g, () => `window.APPLICATION=${applicationJson}`)
             const document = parse5.parse(filledBody)
             const html = document.childNodes.filter(isElementNode).find(c => c.tagName === 'html')
             if (!html) throw new Error('HTML structure is broken, expect html, head and body elements')
