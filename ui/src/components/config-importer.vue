@@ -52,10 +52,10 @@
           <!-- virtualised: /configurations asks the remote for size=1000, and a data-fair
                that hosts many applications on this minor version used to mount every one of
                them as a v-list-item in the tick that opens the menu -->
-          <v-list
-            height="400"
-            max-height="400"
-          >
+          <!-- no height/overflow on the list itself: the virtual scroll below is the only
+               scroller, and a 400px list around a 400px scroller (plus the list padding)
+               produced a second, 16px-long scrollbar next to it -->
+          <v-list class="py-0">
             <v-virtual-scroll
               v-if="filteredResults.length"
               :items="filteredResults"
