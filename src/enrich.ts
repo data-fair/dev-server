@@ -15,12 +15,18 @@ const datasetsCache = new Map<string, { data: any, fetchedAt: number }>()
 const DATASETS_CACHE_TTL = 30_000
 
 // The set of properties data-fair injects in a configuration dataset entry. Sticking to it
-// matters: forwarding the whole remote dataset would let an application rely, in dev, on a
-// property that production never sends. data-fair refreshes the keys stored in the entry plus
-// the `select` of the app's config schema dataset selector — this list covers that contract,
-// including `isRest`, carried by the select of editing apps and used as the gate deciding
-// whether rest line editing (POST/PATCH/DELETE /lines) is offered at all.
-export const INJECTED_DATASET_PROPS = ['id', 'href', 'page', 'title', 'slug', 'finalizedAt', 'schema', 'isRest', 'userPermissions'] as const
+// matters in both directions: forwarding the whole remote dataset would let an application rely,
+// in dev, on a property production never sends — and omitting one production does send makes an
+// application work in production and not here, which is worse still.
+//
+// data-fair derives the set per request (refreshConfigDatasetsRefs, api/src/applications/utils.ts):
+// the keys already stored in the entry, plus `finalizedAt` and `slug`, plus the `select` of the
+// dataset selector declared in the application's own config schema. We cannot derive it without
+// parsing that schema, so this list mirrors it and has to track it: it is the union of the
+// selects used by the published applications. `isRest` gates whether rest line editing
+// (POST/PATCH/DELETE /lines) is offered at all; `bbox` and `timePeriod` drive the initial map
+// bounds and period pickers; `attachmentsAsImage` switches list apps to thumbnail mode.
+export const INJECTED_DATASET_PROPS = ['id', 'href', 'page', 'title', 'slug', 'finalizedAt', 'schema', 'isRest', 'userPermissions', 'bbox', 'timePeriod', 'attachmentsAsImage', 'count'] as const
 
 export const enrichDataset = async (dataset: any, fetchJson: (path: string) => Promise<any>) => {
   if (!dataset?.id) return dataset

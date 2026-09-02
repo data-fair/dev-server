@@ -66,9 +66,28 @@ test('ignores a dataset entry without id', async () => {
 })
 
 test('covers the properties production injects, so the list cannot silently drift', () => {
-  for (const prop of ['isRest', 'userPermissions', 'schema', 'finalizedAt', 'slug']) {
+  // the union of the dataset selects declared by the published applications: production forwards
+  // each of them, so omitting one makes an application work there and not here
+  for (const prop of ['isRest', 'userPermissions', 'schema', 'finalizedAt', 'slug', 'bbox', 'timePeriod', 'attachmentsAsImage', 'count']) {
     assert.ok(INJECTED_DATASET_PROPS.includes(prop as any), 'missing property ' + prop)
   }
+})
+
+test('injects the properties carried by map, calendar and list selects', async () => {
+  const dataset = await enrichDataset({ id: 'enrich-selects' }, async () => ({
+    id: 'enrich-selects',
+    title: 'Carto',
+    bbox: [-5, 47, -1, 48],
+    timePeriod: { startDate: '2026-01-01', endDate: '2026-12-31' },
+    attachmentsAsImage: true,
+    count: 1200,
+    owner: { type: 'user', id: 'someone' }
+  }))
+  assert.deepEqual(dataset.bbox, [-5, 47, -1, 48])
+  assert.deepEqual(dataset.timePeriod, { startDate: '2026-01-01', endDate: '2026-12-31' })
+  assert.equal(dataset.attachmentsAsImage, true)
+  assert.equal(dataset.count, 1200)
+  assert.equal(dataset.owner, undefined)
 })
 
 test('prepareConfig enriches the datasets and rewrites the remote origin', async () => {
