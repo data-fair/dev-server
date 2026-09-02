@@ -596,8 +596,21 @@ const save = async (config: any, resetUrl = false) => {
   }
   if (meta.value?.['df:sync-config'] === 'true') {
     debugEditConfigBinding('send new config to iframe')
+    // Push the enriched copy, not the raw one: data-fair injects the dataset schema (and
+    // finalizedAt, slug, isRest, userPermissions) on every serve, so an application receiving a
+    // hot config change must see the same datasets it sees on a reload — otherwise it silently
+    // loses its schema, and with it its concepts, until the next reload.
+    // The enrichment stays out of editConfig and out of .dev-config.json, which must remain the
+    // minimal portable reference (see localize.ts).
+    let content = toRaw(config)
+    try {
+      content = await ofetch('/config/enriched')
+    } catch (err) {
+      // remote data-fair unreachable: a raw config is better than no hot reload at all
+      console.warn('failed to enrich the configuration sent to the application', err)
+    }
     // @ts-ignore
-    frame.value?.postMessageToChild({ type: 'set-config', content: toRaw(config) })
+    frame.value?.postMessageToChild({ type: 'set-config', content })
   } else {
     draftPreviewInc.value++
   }
