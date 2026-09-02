@@ -3,6 +3,8 @@
 import config from './config.js'
 import uiConfig from './ui-config.js'
 import { localizeConfig } from './localize.js'
+import { remoteFetch, remoteFetchBuffer } from './remote.js'
+import { prepareConfig as prepareRemoteConfig } from './enrich.js'
 import { ATTACHMENTS_DIR, attachmentPath, copyAttachments, listAttachments } from './attachments.js'
 import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
@@ -177,78 +179,14 @@ const ownerFilter = () => {
   return filter
 }
 
-// Fetch a resource from the remote data-fair api
-const remoteFetch = async (path: string) => {
-  const res = await remoteFetchRaw(path)
-  return res.json()
-}
-
-// Same, for an attachment: a file, never json, and never decoded as text — see the app proxy
-// below, where decoding a binary body as utf8 destroys it.
-const remoteFetchBuffer = async (path: string) => {
-  const res = await remoteFetchRaw(path)
-  return Buffer.from(await res.arrayBuffer())
-}
-
-const remoteFetchRaw = async (path: string) => {
-  const res = await fetch(config.dataFair.url + '/api/v1' + path, {
-    headers: config.dataFair.apiKey ? { 'x-apiKey': config.dataFair.apiKey } : {}
-  })
-  if (!res.ok) throw new Error(`error ${res.status} on remote data-fair: ${await res.text()}`)
-  return res
-}
-
-// Short-lived cache for the dataset enrichment below, so that every preview reload does not
-// hammer the remote data-fair API. Failures are cached too: a private dataset without an api
-// key would otherwise be re-fetched, and re-warned about, on every single reload.
-const datasetsCache = new Map<string, { data: any, fetchedAt: number }>()
-const DATASETS_CACHE_TTL = 30_000
-
-// The exact set of properties data-fair injects in a configuration dataset entry. Sticking to
-// it matters: forwarding the whole remote dataset would let an application rely, in dev, on a
-// property that production never sends.
-const INJECTED_DATASET_PROPS = ['id', 'href', 'page', 'title', 'slug', 'finalizedAt', 'schema', 'userPermissions'] as const
-
-// Rebuild a configuration dataset entry the same way data-fair does in production
-// (refreshConfigDatasetsRefs in api/src/applications/utils.ts): the app stores only
-// minimal references, data-fair injects the full schema (with concepts), finalizedAt,
-// slug and userPermissions at request time. We reproduce that so applications
-// following the skill contract read window.APPLICATION.configuration.datasets
-// identically in dev and in prod.
-const enrichDataset = async (dataset: any) => {
-  if (!dataset?.id) return dataset
-  const cached = datasetsCache.get(dataset.id)
-  if (cached && Date.now() - cached.fetchedAt < DATASETS_CACHE_TTL) {
-    return cached.data ? { ...dataset, ...cached.data } : dataset
-  }
-  try {
-    const fresh = await remoteFetch('/datasets/' + encodeURIComponent(dataset.id))
-    const data: Record<string, any> = {}
-    for (const prop of INJECTED_DATASET_PROPS) {
-      if (fresh[prop] !== undefined) data[prop] = fresh[prop]
-    }
-    data.userPermissions = fresh.userPermissions ?? []
-    datasetsCache.set(dataset.id, { data, fetchedAt: Date.now() })
-    return { ...dataset, ...data }
-  } catch (err) {
-    // a private dataset without an api key, or a network failure: keep the raw
-    // configuration entry so the app still loads, and warn in the dev-server UI
-    console.warn('[dev-server] failed to enrich dataset ' + dataset.id + ', keeping raw configuration entry', err)
-    datasetsCache.set(dataset.id, { data: null, fetchedAt: Date.now() })
-    return dataset
-  }
-}
-
-// Enrich the datasets from the remote data-fair, then rewrite every remote origin to ours.
-// The rewrite is applied even when there is no dataset to enrich: a configuration can carry
-// remote urls anywhere (logos, links, tileserver styles), not only in datasets[].href.
-const prepareConfig = async (configuration: any) => {
-  const datasets = configuration?.datasets?.filter((d: any) => !!d)
-  const enriched = datasets?.length
-    ? { ...configuration, datasets: await Promise.all(datasets.map(enrichDataset)) }
-    : configuration
-  return localizeConfig(enriched, new URL(config.dataFair.url).origin, `http://localhost:${config.port}`)
-}
+// Enrich the datasets from the remote data-fair and rewrite every remote origin to ours
+// (pure helpers in enrich.ts, wired here to our remote api and local origins).
+const prepareConfig = (configuration: any) => prepareRemoteConfig(configuration, {
+  fetchJson: remoteFetch,
+  localize: localizeConfig,
+  remoteOrigin: new URL(config.dataFair.url).origin,
+  localOrigin: `http://localhost:${config.port}`
+})
 
 // read the .dev-config.json file of the app under development
 const readDevConfig = () => existsSync('.dev-config.json') ? JSON.parse(readFileSync('.dev-config.json', 'utf8')) : {}

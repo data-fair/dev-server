@@ -1,0 +1,65 @@
+// Rebuild the configuration dataset entries the same way data-fair does in production
+// (refreshConfigDatasetsRefs in api/src/applications/utils.ts): an application stores only
+// minimal dataset references, data-fair injects the full schema (with concepts), finalizedAt,
+// slug, isRest and the per-request userPermissions at serving time. We reproduce that so
+// applications following the skill contract read window.APPLICATION.configuration.datasets
+// identically in dev and in prod.
+//
+// Pure module, no imports: it takes its remote accessor and origin rewrite as dependencies,
+// wired in app.ts — so it can be unit tested without a build (test/enrich.test.ts).
+
+// Short-lived cache for the dataset enrichment below, so that every preview reload does not
+// hammer the remote data-fair API. Failures are cached too: a private dataset without an api
+// key would otherwise be re-fetched, and re-warned about, on every single reload.
+const datasetsCache = new Map<string, { data: any, fetchedAt: number }>()
+const DATASETS_CACHE_TTL = 30_000
+
+// The set of properties data-fair injects in a configuration dataset entry. Sticking to it
+// matters: forwarding the whole remote dataset would let an application rely, in dev, on a
+// property that production never sends. data-fair refreshes the keys stored in the entry plus
+// the `select` of the app's config schema dataset selector — this list covers that contract,
+// including `isRest`, carried by the select of editing apps and used as the gate deciding
+// whether rest line editing (POST/PATCH/DELETE /lines) is offered at all.
+export const INJECTED_DATASET_PROPS = ['id', 'href', 'page', 'title', 'slug', 'finalizedAt', 'schema', 'isRest', 'userPermissions'] as const
+
+export const enrichDataset = async (dataset: any, fetchJson: (path: string) => Promise<any>) => {
+  if (!dataset?.id) return dataset
+  const cached = datasetsCache.get(dataset.id)
+  if (cached && Date.now() - cached.fetchedAt < DATASETS_CACHE_TTL) {
+    return cached.data ? { ...dataset, ...cached.data } : dataset
+  }
+  try {
+    const fresh = await fetchJson('/datasets/' + encodeURIComponent(dataset.id))
+    const data: Record<string, any> = {}
+    for (const prop of INJECTED_DATASET_PROPS) {
+      if (fresh[prop] !== undefined) data[prop] = fresh[prop]
+    }
+    data.userPermissions = fresh.userPermissions ?? []
+    datasetsCache.set(dataset.id, { data, fetchedAt: Date.now() })
+    return { ...dataset, ...data }
+  } catch (err) {
+    // a private dataset without an api key, or a network failure: keep the raw
+    // configuration entry so the app still loads, and warn in the dev-server UI
+    console.warn('[dev-server] failed to enrich dataset ' + dataset.id + ', keeping raw configuration entry', err)
+    datasetsCache.set(dataset.id, { data: null, fetchedAt: Date.now() })
+    return dataset
+  }
+}
+
+export interface PrepareConfigDeps {
+  fetchJson: (path: string) => Promise<any>
+  localize: (configuration: any, remoteOrigin: string, localOrigin: string) => any
+  remoteOrigin: string
+  localOrigin: string
+}
+
+// Enrich the datasets from the remote data-fair, then rewrite every remote origin to ours.
+// The rewrite is applied even when there is no dataset to enrich: a configuration can carry
+// remote urls anywhere (logos, links, tileserver styles), not only in datasets[].href.
+export const prepareConfig = async (configuration: any, deps: PrepareConfigDeps) => {
+  const datasets = configuration?.datasets?.filter((d: any) => !!d)
+  const enriched = datasets?.length
+    ? { ...configuration, datasets: await Promise.all((datasets as any[]).map(d => enrichDataset(d, deps.fetchJson))) }
+    : configuration
+  return deps.localize(enriched, deps.remoteOrigin, deps.localOrigin)
+}
