@@ -519,7 +519,9 @@ const validationErrors = computed(() => {
 })
 
 const iframeExtraParams = computed(() => {
-  const base: Record<string, string> = { draft: 'true' }
+  // `d-frame=true` is what data-fair and portals always pass to an embedded app: an app
+  // sizing itself to its content when framed relies on it (auto-resize without inner scroll)
+  const base: Record<string, string> = { draft: 'true', 'd-frame': 'true' }
   const primary = $uiConfig.site?.primaryColor
   if (primary) base.primary = primary
   return (extraParams.value ?? [])
