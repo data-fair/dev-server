@@ -14,7 +14,7 @@ declare global {
 const ANIMATION_FRAMES = 120
 
 /**
- * Reference implementation of the capture contract, cf. skill-apps references/capture.md.
+ * Reference implementation of the capture contract, cf. data-fair-app references/capture.md.
  *
  * - `inCapture` tells a capture context apart from a normal display, so the render can drop
  *   the controls an image cannot use. It stays true for a manual capture, which has no
