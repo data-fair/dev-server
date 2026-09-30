@@ -50,10 +50,9 @@ développement, dans la même version mineure. La recherche part du nom lu dans 
 balise `<meta name="application-name">` de l'`index.html` local et de la version
 du `package.json`.
 
-Une application de base réservée à une organisation (`privateAccess`) est
-invisible à une requête anonyme. Le paramètre `privateAccess` la rend visible,
-mais data-fair répond 401 sans authentification — il n'est donc envoyé que si
-`DATAFAIR_API_KEY` est renseignée.
+Une application de base réservée à une organisation (`privateAccess`) reste
+invisible : data-fair ne lit pas la clé d'API sur `/base-applications` et répond
+401 au paramètre `privateAccess`, que le dev-server n'envoie donc pas.
 
 Ne pas la trouver n'arrête pas la recherche pour autant : les applications qui
 tournent dessus sont souvent publiques, et il suffit de connaître son URL pour

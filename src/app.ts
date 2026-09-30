@@ -35,42 +35,59 @@ let dataFairWS: WebSocket[] = []
 const dataFairWSChannels = new Map<WebSocket, string[]>()
 
 const dfWsUrl = config.dataFair.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/'
-const dataFairOutputWS = new WebSocket(dfWsUrl)
-dataFairOutputWS.on('open', () => {
-  debug('connect to external websocket server ' + dfWsUrl)
-})
-dataFairOutputWS.on('message', (data) => {
-  const dataStr = data.toString()
-  const message = JSON.parse(dataStr)
-  debug('incoming message from data-fair socket', message)
-  for (const ws of dataFairWS) {
-    if (dataFairWSChannels.get(ws)?.includes(message.channel)) {
-      ws.send(dataStr)
+// the connection to data-fair is reopened whenever it closes (network change, data-fair restart),
+// and the channels of the connected apps are subscribed again on it
+let dataFairOutputWS: WebSocket
+const subscribe = (channel: string) => {
+  const message: any = { type: 'subscribe', channel }
+  if (config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
+  dataFairOutputWS.send(JSON.stringify(message))
+}
+const connectDataFairWS = () => {
+  dataFairOutputWS = new WebSocket(dfWsUrl)
+  dataFairOutputWS.on('open', () => {
+    debug('connect to external websocket server ' + dfWsUrl)
+    for (const channel of new Set([...dataFairWSChannels.values()].flat())) subscribe(channel)
+  })
+  dataFairOutputWS.on('message', (data) => {
+    const dataStr = data.toString()
+    const message = JSON.parse(dataStr)
+    debug('incoming message from data-fair socket', message)
+    for (const ws of dataFairWS) {
+      if (dataFairWSChannels.get(ws)?.includes(message.channel)) {
+        ws.send(dataStr)
+      }
     }
-  }
-})
-dataFairOutputWS.on('error', (err) => console.error('failed to connect to external websocket server', dfWsUrl, err))
-dataFairOutputWS.on('close', () => console.error('external websocket was closed', dfWsUrl))
+  })
+  dataFairOutputWS.on('error', (err) => console.error('failed to connect to external websocket server', dfWsUrl, err))
+  dataFairOutputWS.on('close', () => {
+    console.error('external websocket was closed, reconnecting in 2s', dfWsUrl)
+    setTimeout(connectDataFairWS, 2000)
+  })
+}
+connectDataFairWS()
 
 server.on('upgrade', function upgrade (req, socket, head) {
   wss.handleUpgrade(req, socket, head, (ws) => {
     debug('Opening websocket ' + req.url)
     if (req.url === '/data-fair' || req.url === '/data-fair/') {
       dataFairWS.push(ws)
-      ws.on('close', () => { dataFairWS = dataFairWS.filter(_ws => _ws !== ws) })
+      ws.on('close', () => {
+        dataFairWS = dataFairWS.filter(_ws => _ws !== ws)
+        dataFairWSChannels.delete(ws)
+      })
       ws.on('message', (data: string) => {
-        if (dataFairOutputWS) {
-          const message = JSON.parse(data)
-          debug('outgoing message to data-fair socket', message)
-          if (message.type === 'subscribe') {
-            dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).concat([message.channel]))
-            if (config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
-          }
-          if (message.type === 'unsubscribe') {
-            dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).filter(c => c !== message.channel))
-          }
-          dataFairOutputWS.send(JSON.stringify(message))
+        const message = JSON.parse(data)
+        debug('outgoing message to data-fair socket', message)
+        if (message.type === 'subscribe') {
+          dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).concat([message.channel]))
+          if (config.dataFair.apiKey) message.apiKey = config.dataFair.apiKey
         }
+        if (message.type === 'unsubscribe') {
+          dataFairWSChannels.set(ws, (dataFairWSChannels.get(ws) ?? []).filter(c => c !== message.channel))
+        }
+        // while data-fair is unreachable the subscriptions are only recorded, the open handler sends them
+        if (dataFairOutputWS.readyState === WebSocket.OPEN) dataFairOutputWS.send(JSON.stringify(message))
       })
     } else if (req.url === '/') {
       debug('connect main dev-server WS')
@@ -172,15 +189,6 @@ const localAppInfo = async () => {
     debug('failed to read local package.json', err)
   }
   return { name, version, packageName }
-}
-
-// The owner the dev-server works on behalf of, in the "type:id[:department]" form the
-// data-fair api expects for its owner and privateAccess filters.
-const ownerFilter = () => {
-  const owner = config.dataFair.owner
-  let filter = `${owner.type}:${owner.id}`
-  if (owner.department) filter += ':' + owner.department
-  return filter
 }
 
 // Enrich the datasets from the remote data-fair and rewrite every remote origin to ours
@@ -337,14 +345,12 @@ app.get('/configurations', async (req, res) => {
     return
   }
   response.minorVersion = minorVersion(version)
-  // a base application restricted to an organization is invisible to an anonymous request.
-  // privateAccess is what makes it visible, and data-fair answers 401 to it without
-  // credentials, so it is only sent when an api key is configured.
   response.authenticated = !!config.dataFair.apiKey
   try {
-    let baseAppsQuery = '/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false'
-    if (response.authenticated) baseAppsQuery += '&privateAccess=' + encodeURIComponent(ownerFilter())
-    const baseApps = await remoteFetch(baseAppsQuery)
+    // no privateAccess filter: data-fair reads no api key on /base-applications and answers 401
+    // to it, so a base application restricted to an organization stays invisible here and is
+    // reached by guessing its url below
+    const baseApps = await remoteFetch('/base-applications?applicationName=' + encodeURIComponent(name) + '&size=1000&count=false')
     const matchingBaseApps = (baseApps.results ?? []).filter((b: any) => typeof b.version === 'string' && minorVersion(b.version) === response.minorVersion)
     // Not finding the base application is not the end of the search: it may simply be private
     // while the applications running on it are public, and those are reachable as soon as its
