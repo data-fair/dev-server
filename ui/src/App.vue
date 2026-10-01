@@ -45,6 +45,31 @@
 
       <v-spacer />
 
+      <v-chip
+        v-if="consoleCounts.error"
+        :title="t('consoleErrors', consoleCounts.error)"
+        :prepend-icon="mdiAlertCircle"
+        color="error"
+        size="small"
+        class="mx-1"
+        closable
+        @click:close="consoleCounts.error = 0"
+      >
+        {{ consoleCounts.error }}
+      </v-chip>
+      <v-chip
+        v-if="consoleCounts.warning"
+        :title="t('consoleWarnings', consoleCounts.warning)"
+        :prepend-icon="mdiAlert"
+        color="warning"
+        size="small"
+        class="mx-1"
+        closable
+        @click:close="consoleCounts.warning = 0"
+      >
+        {{ consoleCounts.warning }}
+      </v-chip>
+
       <screenshot-simulation
         :capture-width="meta?.['df:capture-width']"
         :capture-height="meta?.['df:capture-height']"
@@ -96,7 +121,7 @@
         </template>
       </v-select>
 
-      <theme-switcher @change="draftPreviewInc++" />
+      <theme-switcher />
 
       <lang-switcher />
     </v-app-bar>
@@ -295,6 +320,8 @@ en:
   duplicateTitle: 'Keep a single <title> element. Duplicating it with a lang attribute is invalid HTML and produces two W3C errors — catalog i18n goes through registry.'
   duplicateDescription: 'Keep a single <meta name="description">. Duplicating it with a lang attribute is invalid HTML and produces two W3C errors.'
   charsetMissing: 'No <meta charset> in the head. Add <meta charset="UTF-8"> as the very first element.'
+  consoleErrors: "{n} console error in the application — open the DevTools console | {n} console errors in the application — open the DevTools console"
+  consoleWarnings: "{n} console warning in the application — open the DevTools console | {n} console warnings in the application — open the DevTools console"
   charsetNotFirst: 'The <meta charset> starts at byte {offset}, beyond the first 1024 bytes of the document. Move it to the very top of <head>: a comment block placed before it is enough to push it out of that window and break validation.'
 fr:
   metadata: "Métadonnées lues depuis index.html"
@@ -319,6 +346,8 @@ fr:
   duplicateTitle: 'Ne gardez qu''un seul élément <title>. Le dupliquer avec un attribut lang est du HTML invalide et produit deux erreurs W3C — l''i18n du catalogue passe par registry.'
   duplicateDescription: 'Ne gardez qu''une seule <meta name="description">. La dupliquer avec un attribut lang est du HTML invalide et produit deux erreurs W3C.'
   charsetMissing: 'Aucune <meta charset> dans le head. Ajoutez <meta charset="UTF-8"> tout en premier.'
+  consoleErrors: "{n} erreur dans la console de l'application — ouvrez la console des DevTools | {n} erreurs dans la console de l'application — ouvrez la console des DevTools"
+  consoleWarnings: "{n} avertissement dans la console de l'application — ouvrez la console des DevTools | {n} avertissements dans la console de l'application — ouvrez la console des DevTools"
   charsetNotFirst: 'La <meta charset> commence à l''octet {offset}, au-delà des 1024 premiers octets du document. Remontez-la tout en haut du <head> : un bloc de commentaire placé avant suffit à la repousser hors de cette fenêtre et à casser la validation.'
 </i18n>
 
@@ -335,7 +364,7 @@ import { $uiConfig } from './context'
 import '@data-fair/frame/lib/d-frame.js'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { mdiOpenInNew, mdiRefresh, mdiTextBox, mdiMonitorScreenshot } from '@mdi/js'
+import { mdiAlert, mdiAlertCircle, mdiOpenInNew, mdiRefresh, mdiTextBox, mdiMonitorScreenshot } from '@mdi/js'
 import { ofetch } from 'ofetch'
 import { isElementNode, isTextNode } from '@parse5/tools'
 import { resolveLocaleRefs } from '@json-layout/core/compile'
@@ -554,7 +583,18 @@ socketDevServer.onopen = () => {
   }
 }
 
+// counts of the console errors / warnings of the previewed app, reported by the script the
+// /app proxy injects ; 'reset' is posted by every new document so a reload starts from zero
+const consoleCounts = reactive({ error: 0, warning: 0 })
+
 window.addEventListener('message', async msg => {
+  if (msg.data?.type === 'df-dev-server:console') {
+    // @ts-ignore
+    if (frame.value?.iframeElement?.contentWindow !== msg.source) return
+    if (msg.data.level === 'reset') Object.assign(consoleCounts, { error: 0, warning: 0 })
+    else if (msg.data.level === 'error' || msg.data.level === 'warning') consoleCounts[msg.data.level as 'error' | 'warning']++
+    return
+  }
   console.log('received message from iframe', msg.data)
   // @ts-ignore
   if (frame.value?.iframeElement?.contentWindow === msg.source && msg.data.type === 'set-config') {

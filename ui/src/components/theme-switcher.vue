@@ -52,16 +52,14 @@ const themeLabels: Record<Theme, string> = {
   'hc-dark': 'themeHcDark'
 }
 
-const emit = defineEmits<{ change: [Theme] }>()
-
-const current = ref<Theme>(($uiConfig.theme?.default as Theme) ?? 'default')
+const current = ref<Theme>((document.cookie.match(/(?:^|;\s*)theme=([^;]+)/)?.[1] as Theme) ?? ($uiConfig.theme?.default as Theme) ?? 'default')
 
 const writeCookie = (th: Theme) => { document.cookie = `theme=${th}; path=/` }
 
+// the UI reads the same cookie through its session: reload it, the preview with it
 const setTheme = (th: Theme) => {
-  current.value = th
   writeCookie(th)
-  emit('change', th)
+  window.location.reload()
 }
 
 // set the initial cookie so the very first frame load already uses the default theme

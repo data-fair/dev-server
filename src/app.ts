@@ -328,6 +328,23 @@ const captureSimulationScript = (opts: { type: 'png' | 'gif', thumbnail: boolean
 `
 }
 
+// Count what the previewed app writes to the console as error / warning and report it to the
+// dev-server UI, which shows the counts as chips nudging toward the DevTools console.
+// Failed requests are counted from their HTTP status (what Chrome logs as "Failed to load
+// resource", caught by the app or not), not from the resource's error event, which also fires
+// on a decoding failure Chrome never logs (an image answered by Vite's SPA fallback). Kept on a
+// single line so that the inline source map (one "AAAA" segment) covers all of it and its
+// x_google_ignoreList hides the wrapper: DevTools then locates console.error / console.warn at
+// the app's call site instead of here.
+const CONSOLE_COUNTER_SOURCE_MAP = Buffer.from(JSON.stringify({
+  version: 3, sources: ['df-dev-server-console-counter.js'], mappings: 'AAAA', x_google_ignoreList: [0]
+})).toString('base64')
+const CONSOLE_COUNTER_SCRIPT = [
+  ";(function () { if (window.parent === window) return; var post = function (level) { window.parent.postMessage({ type: 'df-dev-server:console', level: level }, '*') }; post('reset'); ['error', 'warn'].forEach(function (method) { var original = console[method]; console[method] = function () { original.apply(console, arguments); post(method === 'warn' ? 'warning' : 'error') } }); window.addEventListener('error', function (e) { if (!/^ResizeObserver loop/.test(e.message)) post('error') }); new PerformanceObserver(function (list) { list.getEntries().forEach(function (e) { if (e.responseStatus >= 400) post('error') }) }).observe({ type: 'resource', buffered: true }); window.addEventListener('unhandledrejection', function () { post('error') }) })()",
+  '//# sourceURL=df-dev-server-console-counter.js',
+  '//# sourceMappingURL=data:application/json;base64,' + CONSOLE_COUNTER_SOURCE_MAP
+].join('\n')
+
 // extract the major.minor part of a version, versions on remote base apps look like "1.3"
 const minorVersion = (version: string) => version.split('.').slice(0, 2).join('.')
 
@@ -521,6 +538,15 @@ app.use('/app', createProxyMiddleware({
               // reliable here as in production.
               headNode.childNodes.unshift(script)
             }
+
+            // right after <meta charset>, so that the byte offset of the charset (checked by the
+            // UI on this same proxied document) stays unaffected, and before the app's own scripts
+            // so that errors raised while it boots are counted too (vite's client script placed
+            // above is a module, it runs later anyway)
+            const consoleScript = createElement('script', { type: 'text/javascript' })
+            appendChild(consoleScript, createTextNode(CONSOLE_COUNTER_SCRIPT))
+            const charsetIndex = headNode.childNodes.findIndex(c => isElementNode(c) && c.tagName === 'meta' && c.attrs.some(a => a.name === 'charset'))
+            headNode.childNodes.splice(charsetIndex + 1, 0, consoleScript)
 
             // companion script that lets the embedded app report its height / sync params
             // to the parent <d-frame> ; injected for every mode so the UI mode toggle works

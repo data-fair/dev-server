@@ -22,8 +22,8 @@ import App from './App.vue'
 ;(window as any).vIframeOptions = { reactiveParams: reactiveSearchParams }
 
 async function init () {
-  // siteInfo: true is mandatory, vuetifySessionOptions throws without session.site.value
-  const session = await createSession({ directoryUrl: '/simple-directory', siteInfo: true })
+  // _public.js (index.html) sets the site info, the deprecated fetch is only a fallback
+  const session = await createSession({ directoryUrl: '/simple-directory', siteInfo: !(window as any).__PUBLIC_SITE_INFO })
   // legacy: false, otherwise vue-i18n 11 starts in the legacy mode, removed in v12.
   // fallbackLocale: simple-directory serves fr/en/es/pt/it/de, our messages only fr/en.
   const i18n = createI18n({ legacy: false, locale: session.state.lang, fallbackLocale: 'en' })
