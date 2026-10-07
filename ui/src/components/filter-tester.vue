@@ -312,7 +312,7 @@ const load = async (force = false) => {
   error.value = undefined
   if (force) enriched.value = undefined
   try {
-    enriched.value = await ofetch('/config/enriched')
+    enriched.value = await ofetch('/config/enriched', { query: { select: 'title,schema' } })
   } catch (err: any) {
     error.value = err.data?.error ?? err.message
   } finally {

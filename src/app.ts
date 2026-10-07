@@ -116,12 +116,13 @@ app.get('/config', (req, res, next) => {
   res.send(devConfig)
 })
 
-// the config with datasets enriched from the remote data-fair, so the dev-server UI
-// can display schemas/concepts and build concept & dataset filter params with the
-// exact same data as the application receives in window.APPLICATION
+// the config with datasets enriched from the remote data-fair, as the application receives it in
+// window.APPLICATION ; ?select= adds dataset properties for a dev-server tool that needs them
+// whatever the application selects (the filter tester and its schema fields)
 app.get('/config/enriched', async (req, res) => {
   try {
-    res.send(await prepareConfig(readDevConfig()))
+    const extraSelect = typeof req.query.select === 'string' ? req.query.select.split(',') : undefined
+    res.send(await prepareConfig(readDevConfig(), extraSelect))
   } catch (err: any) {
     res.status(500).send({ error: err.message })
   }
@@ -193,8 +194,15 @@ const localAppInfo = async () => {
 
 // Enrich the datasets from the remote data-fair and rewrite every remote origin to ours
 // (pure helpers in enrich.ts, wired here to our remote api and local origins).
-const prepareConfig = (configuration: any) => prepareRemoteConfig(configuration, {
+const prepareConfig = (configuration: any, extraSelect?: string[]) => prepareRemoteConfig(configuration, {
   fetchJson: remoteFetch,
+  // the local file, as data-fair reads the one of the base application to deduce its selects
+  fetchConfigSchema: async () => {
+    const res = await fetch(appUrl.origin + appPrefix + '/config-schema.json')
+    if (!res.ok) throw new Error('config-schema.json ' + res.status)
+    return res.json()
+  },
+  extraSelect,
   localize: localizeConfig,
   remoteOrigin: new URL(config.dataFair.url).origin,
   localOrigin: `http://localhost:${config.port}`

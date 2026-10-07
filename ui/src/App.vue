@@ -638,10 +638,10 @@ const save = async (config: any, resetUrl = false) => {
   }
   if (meta.value?.['df:sync-config'] === 'true') {
     debugEditConfigBinding('send new config to iframe')
-    // Push the enriched copy, not the raw one: data-fair injects the dataset schema (and
-    // finalizedAt, slug, isRest, userPermissions) on every serve, so an application receiving a
-    // hot config change must see the same datasets it sees on a reload — otherwise it silently
-    // loses its schema, and with it its concepts, until the next reload.
+    // Push the enriched copy, not the raw one: data-fair injects finalizedAt, slug and the select
+    // of the app's dataset selector (schema, isRest, userPermissions...) on every serve, so an
+    // application receiving a hot config change must see the same datasets it sees on a reload —
+    // otherwise it silently loses its schema, and with it its concepts, until the next reload.
     // The enrichment stays out of editConfig and out of .dev-config.json, which must remain the
     // minimal portable reference (see localize.ts).
     let content = toRaw(config)
