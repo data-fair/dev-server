@@ -580,6 +580,8 @@ socketDevServer.onopen = () => {
     if (data.type === 'app-error') {
       error.value = data.data.message
     }
+    // .dev-config.json edited by hand: reload rather than swap the form config in place
+    if (data.type === 'config-file-changed') window.location.reload()
   }
 }
 

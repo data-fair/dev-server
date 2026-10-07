@@ -11,7 +11,7 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from 'node:http'
 import express from 'express'
 import cors from 'cors'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, watchFile } from 'node:fs'
 import debugModule from 'debug'
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import * as parse5 from 'parse5'
@@ -128,10 +128,26 @@ app.get('/config/enriched', async (req, res) => {
   }
 })
 
+// what the UI last wrote, to tell its own saves from a hand edit of the file
+let lastWrittenConfig: string | undefined
 app.put('/config', (req, res, next) => {
   debug('save dev config', req.body)
-  writeFileSync('.dev-config.json', JSON.stringify(req.body, null, 2))
+  lastWrittenConfig = JSON.stringify(req.body, null, 2)
+  writeFileSync('.dev-config.json', lastWrittenConfig)
   res.send(req.body)
+})
+
+// A hand edit of .dev-config.json (an editor, an agent) reloads the UI, otherwise the form state
+// would overwrite it on its next save. Polled rather than fs.watch'ed: editors that save through
+// a rename would detach a watcher. A file that does not parse yet is a save in progress, skipped.
+watchFile('.dev-config.json', { interval: 500 }, () => {
+  if (!existsSync('.dev-config.json')) return
+  const content = readFileSync('.dev-config.json', 'utf8')
+  if (content === lastWrittenConfig) return
+  try { JSON.parse(content) } catch { return }
+  lastWrittenConfig = content
+  debug('.dev-config.json edited outside of the UI')
+  for (const ws of devServerWS) ws.send(JSON.stringify({ type: 'config-file-changed' }))
 })
 app.post('/config/error', (req, res) => {
   console.log('Application sent an error', req.body)
