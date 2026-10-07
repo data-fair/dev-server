@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { renderEnv, findBase, readEnvVar, MIN_BASE, MAX_BASE } from '../src/env-file.ts'
+import { renderEnv, mergeEnv, findBase, readEnvVar, MIN_BASE, MAX_BASE } from '../src/env-file.ts'
 
 test('renders the three ports and the app path', () => {
   assert.equal(renderEnv(24730, '/app/'), `# généré par df-dev-env — ne pas commiter
@@ -53,4 +53,11 @@ test('reports an absent variable, so a foreign .env can be told apart', () => {
 test('does not confuse a variable with one whose name it prefixes', () => {
   const content = 'APP_PATH_EXTRA=x\nAPP_PATH=/app/\n'
   assert.equal(readEnvVar(content, 'APP_PATH'), '/app/')
+})
+
+test('--force keeps the lines it does not own, and replaces the ones it does', () => {
+  const existing = renderEnv(21000, '/') + 'DATAFAIR_URL=https://staging-koumoul.com/data-fair\nDATAFAIR_API_KEY=secret\n\n'
+  const merged = mergeEnv(existing, renderEnv(24730, '/'))
+  assert.equal(merged, renderEnv(24730, '/') + 'DATAFAIR_URL=https://staging-koumoul.com/data-fair\nDATAFAIR_API_KEY=secret\n')
+  assert.equal(mergeEnv(renderEnv(21000, '/'), renderEnv(24730, '/')), renderEnv(24730, '/'))
 })

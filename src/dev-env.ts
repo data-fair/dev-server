@@ -3,7 +3,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { parseArgs } from 'node:util'
-import { MIN_BASE, MAX_BASE, renderEnv, findBase, readEnvVar } from './env-file.js'
+import { MIN_BASE, MAX_BASE, renderEnv, mergeEnv, findBase, readEnvVar } from './env-file.js'
 
 const { values } = parseArgs({
   options: {
@@ -42,5 +42,6 @@ const draw = () => MIN_BASE + Math.floor(Math.random() * (MAX_BASE - MIN_BASE + 
 const appPath = values['app-path'] ?? storedAppPath ?? '/app/'
 
 const base = await findBase(isFree, draw)
-writeFileSync('.env', renderEnv(base, appPath))
+const generated = renderEnv(base, appPath)
+writeFileSync('.env', existing === undefined ? generated : mergeEnv(existing, generated))
 console.log(`.env généré — app ${base}, dev-server ${base + 1}, e2e ${base + 2}, chemin ${appPath || '/ (racine)'}`)

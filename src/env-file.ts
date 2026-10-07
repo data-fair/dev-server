@@ -12,6 +12,15 @@ E2E_PORT=${base + 2}
 APP_PATH=${appPath}
 `
 
+// --force redraws our own lines and keeps every other one of an existing .env: the remote
+// settings a developer added there (DATAFAIR_URL, DATAFAIR_API_KEY...) are not ours to drop.
+const OWN_LINE = /^(# généré par df-dev-env|(APP_PORT|DEV_SERVER_PORT|E2E_PORT|APP_PATH)=)/
+export const mergeEnv = (existing: string, generated: string) => {
+  const kept = existing.split('\n').filter(l => !OWN_LINE.test(l))
+  while (kept.length && kept[kept.length - 1].trim() === '') kept.pop()
+  return kept.length ? generated + kept.join('\n') + '\n' : generated
+}
+
 // Reads one variable out of an already written .env. Used to tell a .env that carries our ports
 // from one written for another purpose, and to keep the APP_PATH a developer chose when --force
 // redraws the ports. Deliberately naive: the file we read is the one we wrote.
