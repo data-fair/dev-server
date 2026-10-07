@@ -610,9 +610,12 @@ app.use('/data-fair', createProxyMiddleware({
     proxyRes (proxyRes, req, res) {
       // console.log('DF RES', proxyRes)
       if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].startsWith('application/json')) {
-        let body = ''
-        proxyRes.on('data', (data) => { body += data.toString() })
+        // decode the whole body once: decoding chunk by chunk turns a multi-byte character
+        // split across two chunks into U+FFFD (« Repr��sentation »)
+        const chunks: Buffer[] = []
+        proxyRes.on('data', (data: Buffer) => { chunks.push(data) })
         proxyRes.on('end', () => {
+          const body = Buffer.concat(chunks).toString()
           const output = body.replace(new RegExp(escapeStringRegexp(config.dataFair.url), 'g'), `http://localhost:${config.port}/data-fair`)
           // proxyRes.headers['content-length'] = output.length
           delete proxyRes.headers['content-length']
@@ -645,9 +648,12 @@ app.use('/tileserver', createProxyMiddleware({
     },
     proxyRes (proxyRes, req, res) {
       if (proxyRes.headers['content-type'] && proxyRes.headers['content-type'].startsWith('application/json')) {
-        let body = ''
-        proxyRes.on('data', (data) => { body += data.toString() })
+        // decode the whole body once: decoding chunk by chunk turns a multi-byte character
+        // split across two chunks into U+FFFD (« Repr��sentation »)
+        const chunks: Buffer[] = []
+        proxyRes.on('data', (data: Buffer) => { chunks.push(data) })
         proxyRes.on('end', () => {
+          const body = Buffer.concat(chunks).toString()
           // make all references to the tileserver url point to the local proxy
           const output = body.replace(new RegExp(escapeStringRegexp(tileserverUrl), 'g'), `http://localhost:${config.port}/tileserver`)
           delete proxyRes.headers['content-length']
