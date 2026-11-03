@@ -17,12 +17,12 @@
     "dayjs": "^1.11.23",
     "ofetch": "^1.5.1",
     "vue": "^3.5.41",
-    "vue-i18n": "^11.4.9",
+    "vue-i18n": "^11.4.18",
     "vuetify": "^4.1.11"
   },
   "devDependencies": {
     "@data-fair/lib-types-builder": "^1.14.3",
-    "@intlify/unplugin-vue-i18n": "^11.2.5",
+    "@intlify/unplugin-vue-i18n": "^11.2.8",
     "@vitejs/plugin-vue": "^6.0.8",
     "sass-embedded": "^1.103.1",
     "typescript": "^5.9.3",
